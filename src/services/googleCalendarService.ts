@@ -133,10 +133,11 @@ export async function importGoogleEventsAsTasks(importAll = false): Promise<numb
       ? '09:00'
       : new Date(ev.start).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false })
 
+    const sanitizedTitle = (ev.summary || '').replace(/[\0\r\n]/g, ' ').trim().slice(0, 500)
     const task: Task = {
       id: crypto.randomUUID(),
       profileId: profile.id,
-      title: ev.summary,
+      title: sanitizedTitle,
       time,
       session: getSessionFromTime(time),
       notes: 'Imported from Google Calendar',

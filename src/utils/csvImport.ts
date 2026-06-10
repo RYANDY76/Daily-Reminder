@@ -2,6 +2,13 @@ import { saveTask } from '../database'
 import { getSessionFromTime, getTodayDate } from '../dates'
 import type { Task, TaskPriority } from '../types'
 
+const MAX_ROWS = 5000
+const MAX_FIELD_LENGTH = 500
+
+function sanitizeField(value: string): string {
+  return value.replace(/[\0\r\n]/g, ' ').trim().slice(0, MAX_FIELD_LENGTH)
+}
+
 export interface CsvImportResult {
   imported: number
   skipped: number
@@ -40,14 +47,19 @@ export async function importTasksFromCsv(csvText: string, profileId: string): Pr
   let skipped = 0
   const errors: string[] = []
 
-  for (let i = 1; i < lines.length; i++) {
-    const cols = parseCsvLine(lines[i])
-    const title = cols[titleIdx]?.trim()
+  const dataLines = lines.slice(1)
+  if (dataLines.length > MAX_ROWS) {
+    return { imported: 0, skipped: 0, errors: [`Maksimal ${MAX_ROWS} baris per import`] }
+  }
+
+  for (let i = 0; i < dataLines.length; i++) {
+    const cols = parseCsvLine(dataLines[i])
+    const title = sanitizeField(cols[titleIdx] || '')
     if (!title) { skipped++; continue }
 
-    const date = dateIdx >= 0 ? cols[dateIdx] || getTodayDate() : getTodayDate()
-    const time = timeIdx >= 0 ? cols[timeIdx] || '09:00' : '09:00'
-    const priority = (priorityIdx >= 0 ? cols[priorityIdx] : 'medium') as TaskPriority
+    const date = dateIdx >= 0 ? sanitizeField(cols[dateIdx]) || getTodayDate() : getTodayDate()
+    const time = timeIdx >= 0 ? sanitizeField(cols[timeIdx]) || '09:00' : '09:00'
+    const priority = (priorityIdx >= 0 ? sanitizeField(cols[priorityIdx]) : 'medium') as TaskPriority
 
     try {
       const task: Task = {
@@ -79,7 +91,7 @@ export async function importTasksFromCsv(csvText: string, profileId: string): Pr
       await saveTask(task)
       imported++
     } catch (err) {
-      errors.push(`Baris ${i + 1}: ${(err as Error).message}`)
+      errors.push(`Baris ${i + 2}: ${(err as Error).message}`)
       skipped++
     }
   }

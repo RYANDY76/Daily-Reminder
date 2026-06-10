@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { X, Image as ImageIcon, Send, MessageSquare } from 'lucide-react'
 import type { Task } from '../types'
 import { useProfileStore } from '../stores/useProfileStore'
@@ -20,6 +20,17 @@ export default function TaskDetailsModal({ task, onClose }: TaskDetailsModalProp
   const updateTask = useTaskStore(s => s.updateTask)
   const [commentText, setCommentText] = useState('')
   const [comments, setComments] = useState<TaskComment[]>([])
+
+  const safeAttachmentUrl = useMemo(() => {
+    if (!task.attachmentUrl) return null
+    try {
+      const url = new URL(task.attachmentUrl)
+      if (url.protocol !== 'https:' && url.protocol !== 'http:') return null
+      return url.href
+    } catch {
+      return null
+    }
+  }, [task.attachmentUrl])
   
   useEffect(() => {
     if (!connection?.id) {
@@ -86,7 +97,7 @@ export default function TaskDetailsModal({ task, onClose }: TaskDetailsModalProp
             <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">{t('taskDetails.photoProof')}</h3>
             {task.attachmentUrl ? (
               <div className="relative group rounded-lg overflow-hidden border border-gray-200 dark:border-dark-border">
-                <img src={task.attachmentUrl} alt={t('taskDetails.altProof')} className="w-full h-48 object-cover" />
+                <img src={safeAttachmentUrl ?? undefined} alt={t('taskDetails.altProof')} className="w-full h-48 object-cover" />
                 <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                   <button onClick={handlePhotoUpload} className="px-4 py-2 bg-white rounded-lg text-sm font-medium text-gray-900">{t('taskDetails.changePhoto')}</button>
                 </div>

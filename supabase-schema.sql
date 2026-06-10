@@ -190,14 +190,26 @@ DROP POLICY IF EXISTS "app_goals_owner" ON app_goals;
 -- SECURITY POLICIES: couple_connections
 -- ===================================================================
 
--- SELECT: Allow read if the user is user1 or user2, OR if they are searching by invite_code
+-- SELECT: Allow read if the user is user1 or user2.
+-- For invite_code lookups, use a dedicated function instead of exposing all pending connections.
 CREATE POLICY "connections_select" ON couple_connections
   FOR SELECT TO authenticated
   USING (
     auth_user1_id = auth.uid() 
-    OR auth_user2_id = auth.uid() 
-    OR invite_code IS NOT NULL
+    OR auth_user2_id = auth.uid()
   );
+
+-- Function for invite code lookup: only returns matching row if the caller is authenticated.
+-- This prevents enumeration of all pending connections.
+CREATE OR REPLACE FUNCTION lookup_by_invite_code(code TEXT)
+RETURNS SETOF couple_connections
+LANGUAGE sql
+SECURITY DEFINER
+AS $$
+  SELECT * FROM couple_connections
+  WHERE invite_code = code AND status = 'pending'
+  LIMIT 1;
+$$;
 
 -- INSERT: Only allow creating a connection for yourself
 CREATE POLICY "connections_insert" ON couple_connections
@@ -207,17 +219,31 @@ CREATE POLICY "connections_insert" ON couple_connections
     AND status = 'pending'
   );
 
--- UPDATE: Allow user2 to join, or allow members to update status
+-- UPDATE: Allow user2 to join (via invite code lookup function), or allow members to update status
 CREATE POLICY "connections_update" ON couple_connections
   FOR UPDATE TO authenticated
   USING (
     auth_user1_id = auth.uid() 
-    OR auth_user2_id = auth.uid() 
-    OR (auth_user2_id IS NULL AND invite_code IS NOT NULL) -- joining
+    OR auth_user2_id = auth.uid()
   )
   WITH CHECK (
     auth_user1_id = auth.uid() 
     OR auth_user2_id = auth.uid()
+  );
+
+-- Allow joining via invite_code: only pending connections can be updated by the joiner
+-- This is scoped via the lookup_by_invite_code function, not via a broad USING clause.
+CREATE POLICY "connections_join" ON couple_connections
+  FOR UPDATE TO authenticated
+  USING (
+    auth_user2_id IS NULL 
+    AND invite_code IS NOT NULL 
+    AND status = 'pending'
+  )
+  WITH CHECK (
+    auth_user2_id = auth.uid()
+    AND status = 'active'
+    AND invite_code IS NULL
   );
 
 CREATE POLICY "connections_delete" ON couple_connections

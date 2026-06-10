@@ -44,7 +44,9 @@ export default function PinRecoveryModal({ onClose, onSuccess }: PinRecoveryModa
       const { error: signInError } = await sb.auth.signInWithPassword({ email, password })
       if (signInError) throw signInError
 
-      const pinHash = await hashPin(newPin)
+      const profile = useProfileStore.getState().currentProfile
+      if (!profile) throw new Error('Profile not found')
+      const pinHash = await hashPin(newPin, profile.id)
       await updateProfile({ pin: pinHash })
       unlockProfile()
       onSuccess()

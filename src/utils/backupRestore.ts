@@ -55,6 +55,8 @@ export async function exportBackup(): Promise<void> {
   URL.revokeObjectURL(url)
 }
 
+const BACKUP_SIZE_LIMIT = 10 * 1024 * 1024
+
 export function validateBackup(data: unknown): data is BackupData {
   if (!data || typeof data !== 'object') return false
   const obj = data as Record<string, unknown>
@@ -67,6 +69,9 @@ export function validateBackup(data: unknown): data is BackupData {
 }
 
 export async function importBackup(data: BackupData, mode: 'merge' | 'replace'): Promise<{ profiles: number; tasks: number; history: number }> {
+  const isValid = validateBackup(data)
+  if (!isValid) throw new Error('Backup tidak valid, import dibatalkan')
+
   let profilesImported = 0
   let tasksImported = 0
   let historyImported = 0
@@ -116,6 +121,9 @@ export async function importBackup(data: BackupData, mode: 'merge' | 'replace'):
 }
 
 export function readFileAsJSON(file: File): Promise<unknown> {
+  if (file.size > BACKUP_SIZE_LIMIT) {
+    return Promise.reject(new Error('File terlalu besar (maks 10MB)'))
+  }
   return new Promise((resolve, reject) => {
     const reader = new FileReader()
     reader.onload = () => {

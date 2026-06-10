@@ -54,12 +54,13 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
   },
 
   createProfile: async (name, pin) => {
+    const id = crypto.randomUUID()
     const profile: Profile = {
-      id: crypto.randomUUID(),
+      id,
       name,
       avatar: AVATARS[Math.floor(Math.random() * AVATARS.length)],
       accentColor: '#1D9E75',
-      pin: pin ? await hashPin(pin) : null,
+      pin: pin ? await hashPin(pin, id) : null,
       darkMode: 'system',
       googleId: null,
       googleEmail: null,

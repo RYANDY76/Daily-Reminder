@@ -117,11 +117,7 @@ export async function syncJoinConnection(
   }
 
   const { data: rows, error: findErr } = await sb
-    .from('couple_connections')
-    .select('*')
-    .eq('invite_code', inviteCode)
-    .eq('status', 'pending')
-    .limit(1)
+    .rpc('lookup_by_invite_code', { code: inviteCode })
 
   if (findErr || !rows?.length) return null
 
@@ -135,6 +131,8 @@ export async function syncJoinConnection(
       invite_code: null
     })
     .eq('id', rows[0].id)
+    .eq('invite_code', inviteCode)
+    .eq('status', 'pending')
     .select()
     .single()
 

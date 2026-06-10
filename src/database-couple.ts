@@ -218,7 +218,10 @@ export async function disconnectCouple(connectionId: string): Promise<void> {
 }
 
 function generateInviteCode(): string {
-  return Math.random().toString(36).substring(2, 8).toUpperCase()
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
+  const array = new Uint8Array(6)
+  crypto.getRandomValues(array)
+  return Array.from(array, (b) => chars[b % chars.length]).join('')
 }
 
 export async function addPointsToConnection(connectionId: string, pointsToAdd: number): Promise<CoupleConnection | null> {
