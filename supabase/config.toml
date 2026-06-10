@@ -1,0 +1,28 @@
+# Supabase local development config
+# Docs: https://supabase.com/docs/guides/cli
+
+project_id = "daily-reminder"
+
+[api]
+enabled = true
+port = 54321
+schemas = ["public"]
+extra_search_path = ["public", "extensions"]
+max_rows = 1000
+
+[db]
+port = 54322
+major_version = 15
+
+[studio]
+enabled = true
+port = 54323
+
+[functions.send-push]
+verify_jwt = true
+
+[functions.check-reminders]
+verify_jwt = false
+
+[edge_runtime]
+policy = "per_worker"
