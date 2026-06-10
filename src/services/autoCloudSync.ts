@@ -1,4 +1,3 @@
-import { syncCurrentProfileBidirectional } from './cloudSync'
 import { useSyncStore } from '../stores/useSyncStore'
 import { useAppStore } from '../stores/useAppStore'
 import { t } from '../i18n'
@@ -32,6 +31,7 @@ export async function runAutoCloudSync(): Promise<{ ok: boolean; error?: string 
   useSyncStore.getState().setSyncing()
 
   try {
+    const { syncCurrentProfileBidirectional } = await import('./cloudSync')
     await syncCurrentProfileBidirectional()
     useSyncStore.getState().setSuccess()
     return { ok: true }

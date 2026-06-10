@@ -1,9 +1,8 @@
-import { useState, useEffect, useRef } from 'react'
+import { lazy, useState, useEffect, useRef } from 'react'
 import type { Task } from '../types'
 import { getTimeDisplay, getTodayDate, formatDateShort } from '../dates'
 import { PRIORITY_BG } from '../types'
 import { useTaskStore } from '../stores/useTaskStore'
-import { useCoupleStore } from '../stores/useCoupleStore'
 import { useProfileStore } from '../stores/useProfileStore'
 import { useT } from '../i18n'
 import { useHaptic } from '../hooks/useHaptic'
@@ -11,8 +10,9 @@ import { useToast } from '../hooks/useToast'
 import { usePerformance } from '../hooks/usePerformance'
 import { Check, MoreVertical, Pencil, Trash2, Repeat, FileText, AlertCircle, CalendarX, ListChecks, Play, Pause, Share2, X, Bell, BellOff, Users, MessageSquare } from 'lucide-react'
 import SwipeableCard from './SwipeableCard'
-import ShareTaskModal from './ShareTaskModal'
-import TaskDetailsModal from './TaskDetailsModal'
+
+const LazyShareTaskModal = lazy(() => import('./ShareTaskModal'))
+const LazyTaskDetailsModal = lazy(() => import('./TaskDetailsModal'))
 
 interface TaskItemProps {
   task: Task
@@ -29,9 +29,9 @@ export default function TaskItem({ task, onToggle, onEdit, onDelete, onStopRecur
   const { trigger } = useHaptic()
   const { success, info } = useToast()
   const updateTask = useTaskStore((s) => s.updateTask)
-  const connection = useCoupleStore(s => s.connection)
   const currentProfile = useProfileStore(s => s.currentProfile)
-  const getPartnerName = useCoupleStore(s => s.getPartnerName)
+  const [canShare, setCanShare] = useState(false)
+  const [partnerName, setPartnerName] = useState('')
   const now = new Date()
   const [h, m] = task.time.split(':').map(Number)
   const taskTime = new Date()
@@ -48,8 +48,17 @@ export default function TaskItem({ task, onToggle, onEdit, onDelete, onStopRecur
   const startTimeRef = useRef(task.timeTracking?.startTime || 0)
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   
-  const canShare = connection && connection.status === 'active'
-  const partnerName = currentProfile ? getPartnerName(currentProfile.id) : ''
+  // Lazily check couple connection for share feature
+  useEffect(() => {
+    if (!currentProfile) return
+    import('../stores/useCoupleStore').then(({ useCoupleStore }) => {
+      const conn = useCoupleStore.getState().connection
+      if (conn?.status === 'active') {
+        setCanShare(true)
+        setPartnerName(useCoupleStore.getState().getPartnerName(currentProfile.id))
+      }
+    }).catch(() => {})
+  }, [currentProfile?.id])
 
   const handleSnooze = (minutes: number) => {
     const snoozeUntil = Date.now() + minutes * 60 * 1000
@@ -431,15 +440,15 @@ export default function TaskItem({ task, onToggle, onEdit, onDelete, onStopRecur
         </div>
       </div>
       
-      {/* Share Task Modal */}
+      {/* Share Task Modal (lazily loaded) */}
       {showShareModal && (
-        <ShareTaskModal
+        <LazyShareTaskModal
           task={task}
           onClose={() => setShowShareModal(false)}
         />
       )}
       {showDetailsModal && (
-        <TaskDetailsModal
+        <LazyTaskDetailsModal
           task={task}
           onClose={() => setShowDetailsModal(false)}
         />

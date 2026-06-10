@@ -6,3 +6,6 @@ dist/
 *.bak
 tsconfig.tsbuildinfo
 .DS_Store
+test-results/
+dev-server.err
+dev-server.log

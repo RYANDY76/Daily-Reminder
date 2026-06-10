@@ -1,8 +1,7 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useAppStore } from '../stores/useAppStore'
 import { useNavigate } from 'react-router-dom'
 import { PAGE_TO_ROUTE } from '../router'
-import { useCoupleStore } from '../stores/useCoupleStore'
 import { useProfileStore } from '../stores/useProfileStore'
 import { useT } from '../i18n'
 import {
@@ -44,30 +43,42 @@ export default function BottomNav() {
   const currentPage = useAppStore((s) => s.currentPage)
   const navigate = useNavigate()
   const currentProfile = useProfileStore(s => s.currentProfile)
-  const connection = useCoupleStore(s => s.connection)
-  const loveNotes = useCoupleStore(s => s.loveNotes)
-  const loadLoveNotes = useCoupleStore(s => s.loadLoveNotes)
+  const [unreadCount, setUnreadCount] = useState(0)
   const [showMore, setShowMore] = useState(false)
+  const coupleLoadedRef = useRef(false)
+  const pollRef = useRef<ReturnType<typeof setInterval>>()
 
-  // Auto-reload love notes every 30 seconds when connected
+  // Lazily load couple store for love notes badge
   useEffect(() => {
-    if (connection && connection.status === 'active' && currentProfile) {
-      loadLoveNotes(currentProfile.id)
-      
-      const interval = setInterval(() => {
-        loadLoveNotes(currentProfile.id)
-      }, 30000) // 30 seconds
-      
-      return () => clearInterval(interval)
+    const profile = currentProfile
+    if (!profile || coupleLoadedRef.current) return
+    coupleLoadedRef.current = true
+    const profileId = profile.id
+
+    async function initCouple() {
+      try {
+        const { useCoupleStore } = await import('../stores/useCoupleStore')
+        const state = useCoupleStore.getState()
+
+        if (state.connection?.status === 'active') {
+          await state.loadLoveNotes(profileId)
+          const notes = useCoupleStore.getState().loveNotes
+          setUnreadCount(notes.filter(n => !n.read && n.toProfileId === profileId).length)
+
+          pollRef.current = setInterval(async () => {
+            await state.loadLoveNotes(profileId)
+            const updated = useCoupleStore.getState().loveNotes
+            setUnreadCount(updated.filter(n => !n.read && n.toProfileId === profileId).length)
+          }, 30000)
+        }
+      } catch { /* couple feature unavailable */ }
     }
-  }, [connection?.status, currentProfile?.id])
+
+    initCouple()
+    return () => { if (pollRef.current) clearInterval(pollRef.current) }
+  }, [currentProfile?.id])
 
   const isMoreActive = allMoreIds.includes(currentPage)
-  
-  // Calculate unread love notes
-  const unreadCount = loveNotes.filter(
-    n => !n.read && n.toProfileId === currentProfile?.id
-  ).length
 
   const handleTabClick = (id: Page) => {
     navigate(PAGE_TO_ROUTE[id])

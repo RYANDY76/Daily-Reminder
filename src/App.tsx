@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef, useCallback } from 'react'
+import { lazy, Suspense, useEffect, useState, useRef, useCallback } from 'react'
 import { useLocation } from 'react-router-dom'
 import { useProfileStore } from './stores/useProfileStore'
 import { useAppStore } from './stores/useAppStore'
@@ -20,10 +20,10 @@ import KeyboardShortcutsHelp from './components/KeyboardShortcutsHelp'
 import InstallPrompt from './components/InstallPrompt'
 import OnboardingTour from './components/OnboardingTour'
 import AppRoutes, { ROUTE_TO_PAGE } from './router'
-import Landing from './components/Landing'
 import { fetchGoogleCalendarEvents } from './services/googleCalendarService'
 import type { Page } from './types'
 
+const LazyLanding = lazy(() => import('./components/Landing'))
 const PUBLIC_PATHS = new Set(['/about'])
 
 export default function App() {
@@ -181,7 +181,7 @@ export default function App() {
 
   if (showWelcome || !currentProfile) {
     if (PUBLIC_PATHS.has(location.pathname)) {
-      return <Landing />
+      return <Suspense fallback={null}><LazyLanding /></Suspense>
     }
     return (
       <Welcome

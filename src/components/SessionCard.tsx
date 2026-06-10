@@ -5,6 +5,8 @@ import type { SessionType, Task } from '../types'
 import TaskItem from './TaskItem'
 import TaskForm from './TaskForm'
 import { useTaskStore } from '../stores/useTaskStore'
+import { useProfileStore } from '../stores/useProfileStore'
+import { getAllTasksForProfile } from '../database'
 import { Plus, ChevronDown, CheckCircle2 } from 'lucide-react'
 
 interface SessionIcon {
@@ -51,8 +53,7 @@ export default function SessionCard({ session, tasks, icon, batchMode = false, s
   const handleStopRecurring = async (task: Task) => {
     if (window.confirm(t('session.stopRecurringConfirm', { title: task.title }))) {
       if (task.recurringId) {
-        const { getAllTasksForProfile } = await import('../database')
-        const profile = (await import('../stores/useProfileStore')).useProfileStore.getState().currentProfile
+        const profile = useProfileStore.getState().currentProfile
         if (profile) {
           const allTasks = await getAllTasksForProfile(profile.id)
           const masterTask = allTasks.find(t => t.id === task.recurringId || (t.isRecurring && t.recurringId === task.recurringId))
