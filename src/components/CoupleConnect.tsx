@@ -6,7 +6,6 @@ import { useConfirm } from '../hooks/useConfirm'
 import { useT } from '../i18n'
 import { isCoupleSyncEnabled } from '../services/coupleSync'
 import { useAuthStore } from '../stores/useAuthStore'
-import AuthModal from './AuthModal'
 import { getCoupleStatsCounts } from '../database-couple'
 import { Heart, Copy, Check, Users, Link as LinkIcon, UserPlus, X, Cloud, CloudOff } from 'lucide-react'
 
@@ -24,7 +23,6 @@ export default function CoupleConnect() {
   const [copied, setCopied] = useState(false)
   const [loading, setLoading] = useState(false)
   const [sharedTaskCount, setSharedTaskCount] = useState(0)
-  const [showAuthModal, setShowAuthModal] = useState(false)
   const session = useAuthStore(s => s.session)
   const cloudSync = isCoupleSyncEnabled()
 
@@ -200,44 +198,19 @@ export default function CoupleConnect() {
           </div>
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">{t('couple.connectTitle')}</h3>
           <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">{t('couple.connectDesc')}</p>
-          {!cloudSync && (
-            <p className="text-xs text-amber-600 dark:text-amber-400 mb-4">{t('couple.cloudSyncOff')}</p>
-          )}
-          {cloudSync && !session && (
-            <div className="mb-4 rounded-lg border border-pink-100 dark:border-pink-900/30 bg-pink-50 dark:bg-pink-900/10 p-3 text-left">
-              <div className="flex items-center gap-2 text-sm font-medium text-pink-700 dark:text-pink-300">
-                <Cloud className="w-4 h-4" />
-                <span>{t('couple.cloudLoginRequired')}</span>
-              </div>
-              <p className="text-xs text-pink-700/80 dark:text-pink-200/80 mt-1">
-                {t('couple.cloudLoginRequiredDesc')}
-              </p>
-            </div>
+          {cloudSync && (
+            <p className={`text-xs mb-4 ${session ? 'text-green-600 dark:text-green-400' : 'text-amber-600 dark:text-amber-400'}`}>
+              {session ? t('couple.cloudSyncOn') : t('couple.cloudSyncOff')}
+            </p>
           )}
           <button
-            onClick={() => {
-              if (cloudSync && !session) {
-                setShowAuthModal(true)
-              } else {
-                setShowModal(true)
-              }
-            }}
+            onClick={() => setShowModal(true)}
             className="px-6 py-2.5 bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600 text-white rounded-xl font-medium transition-all shadow-sm"
           >
-            {cloudSync && !session ? t('couple.loginToConnect') : t('couple.getStarted')}
+            {t('couple.getStarted')}
           </button>
         </div>
       </div>
-
-      {showAuthModal && (
-        <AuthModal 
-          onClose={() => setShowAuthModal(false)}
-          onSuccess={() => {
-            setShowAuthModal(false)
-            setShowModal(true)
-          }} 
-        />
-      )}
 
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm">
