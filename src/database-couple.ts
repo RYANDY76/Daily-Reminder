@@ -1,10 +1,12 @@
 /**
  * Couple-specific Database Functions
- * Local IndexedDB with optional Supabase cloud sync
+ * Consolidated into DailyReminderDB Dexie instance with automatic migration from old native IndexedDB
  */
 
 import type { CoupleConnection, SharedTask, CoupleGoal, LoveNote, ActivityFeedItem, TaskComment } from './types-couple'
-import { openDB, type IDBPDatabase } from 'idb'
+import { openDB } from 'idb'
+import { db } from './database'
+import { recordAttempt, isRateLimited } from './utils/rateLimiter'
 import {
   isCoupleSyncEnabled,
   syncCreateConnection,
@@ -21,53 +23,51 @@ import {
   syncUpdateConnectionGamification
 } from './services/coupleSync'
 
-const DB_NAME = 'daily_reminder_couple'
-const DB_VERSION = 2
+let migrationPromise: Promise<void> | null = null
 
-let db: IDBPDatabase | null = null
+/**
+ * Migrates old daily_reminder_couple database records to version 7 DailyReminderDB stores.
+ */
+export async function migrateOldCoupleDatabase(): Promise<void> {
+  if (migrationPromise) return migrationPromise
 
-async function getDB() {
-  if (db) return db
+  migrationPromise = (async () => {
+    const oldDBName = 'daily_reminder_couple'
+    try {
+      if (typeof indexedDB.databases !== 'function') return
+      const dbs = await indexedDB.databases()
+      const exists = dbs.some(d => d.name === oldDBName)
+      if (!exists) return
 
-  db = await openDB(DB_NAME, DB_VERSION, {
-    upgrade(db) {
-      if (!db.objectStoreNames.contains('connections')) {
-        const connStore = db.createObjectStore('connections', { keyPath: 'id' })
-        connStore.createIndex('profile1Id', 'profile1Id')
-        connStore.createIndex('profile2Id', 'profile2Id')
-        connStore.createIndex('inviteCode', 'inviteCode')
-      }
-      if (!db.objectStoreNames.contains('sharedTasks')) {
-        const taskStore = db.createObjectStore('sharedTasks', { keyPath: 'id' })
-        taskStore.createIndex('coupleId', 'coupleId')
-        taskStore.createIndex('date', 'date')
-        taskStore.createIndex('sharedWith', 'sharedWith')
-      }
-      if (!db.objectStoreNames.contains('coupleGoals')) {
-        const goalStore = db.createObjectStore('coupleGoals', { keyPath: 'id' })
-        goalStore.createIndex('coupleId', 'coupleId')
-        goalStore.createIndex('completed', 'completed')
-      }
-      if (!db.objectStoreNames.contains('loveNotes')) {
-        const noteStore = db.createObjectStore('loveNotes', { keyPath: 'id' })
-        noteStore.createIndex('coupleId', 'coupleId')
-        noteStore.createIndex('toProfileId', 'toProfileId')
-        noteStore.createIndex('taskId', 'taskId')
-      }
-      if (!db.objectStoreNames.contains('activityFeed')) {
-        const feedStore = db.createObjectStore('activityFeed', { keyPath: 'id' })
-        feedStore.createIndex('coupleId', 'coupleId')
-        feedStore.createIndex('timestamp', 'timestamp')
-      }
-      if (!db.objectStoreNames.contains('taskComments')) {
-        const commentStore = db.createObjectStore('taskComments', { keyPath: 'id' })
-        commentStore.createIndex('coupleId', 'coupleId')
-        commentStore.createIndex('taskId', 'taskId')
-      }
+      const oldDb = await openDB(oldDBName, 2)
+
+      const connections = await oldDb.getAll('connections')
+      const sharedTasks = await oldDb.getAll('sharedTasks')
+      const coupleGoals = await oldDb.getAll('coupleGoals')
+      const loveNotes = await oldDb.getAll('loveNotes')
+      const activityFeed = await oldDb.getAll('activityFeed')
+      const taskComments = await oldDb.getAll('taskComments')
+
+      await db.transaction('rw', [
+        db.connections, db.sharedTasks, db.coupleGoals,
+        db.loveNotes, db.activityFeed, db.taskComments
+      ], async () => {
+        for (const c of connections) await db.connections.put(c)
+        for (const t of sharedTasks) await db.sharedTasks.put(t)
+        for (const g of coupleGoals) await db.coupleGoals.put(g)
+        for (const n of loveNotes) await db.loveNotes.put(n)
+        for (const a of activityFeed) await db.activityFeed.put(a)
+        for (const c of taskComments) await db.taskComments.put(c)
+      })
+
+      oldDb.close()
+      await indexedDB.deleteDatabase(oldDBName)
+    } catch (_err) {
+      if (import.meta.env.DEV) console.error('[Migration] Couple database migration failed:', _err)
     }
-  })
+  })()
 
-  return db
+  return migrationPromise
 }
 
 export interface CoupleBackupData {
@@ -80,58 +80,57 @@ export interface CoupleBackupData {
 }
 
 export async function exportCoupleData(): Promise<CoupleBackupData> {
-  const database = await getDB()
+  await migrateOldCoupleDatabase()
   return {
-    connections: await database.getAll('connections'),
-    sharedTasks: await database.getAll('sharedTasks'),
-    coupleGoals: await database.getAll('coupleGoals'),
-    loveNotes: await database.getAll('loveNotes'),
-    activityFeed: await database.getAll('activityFeed'),
-    taskComments: await database.getAll('taskComments')
+    connections: await db.connections.toArray(),
+    sharedTasks: await db.sharedTasks.toArray(),
+    coupleGoals: await db.coupleGoals.toArray(),
+    loveNotes: await db.loveNotes.toArray(),
+    activityFeed: await db.activityFeed.toArray(),
+    taskComments: await db.taskComments.toArray()
   }
 }
 
 export async function importCoupleData(data: CoupleBackupData, mode: 'merge' | 'replace'): Promise<void> {
-  const database = await getDB()
+  await migrateOldCoupleDatabase()
   if (mode === 'replace') {
-    await database.clear('connections')
-    await database.clear('sharedTasks')
-    await database.clear('coupleGoals')
-    await database.clear('loveNotes')
-    await database.clear('activityFeed')
-    await database.clear('taskComments')
+    await db.connections.clear()
+    await db.sharedTasks.clear()
+    await db.coupleGoals.clear()
+    await db.loveNotes.clear()
+    await db.activityFeed.clear()
+    await db.taskComments.clear()
   }
-  for (const c of data.connections || []) await database.put('connections', c)
-  for (const t of data.sharedTasks || []) await database.put('sharedTasks', t)
-  for (const g of data.coupleGoals || []) await database.put('coupleGoals', g)
-  for (const n of data.loveNotes || []) await database.put('loveNotes', n)
-  for (const a of data.activityFeed || []) await database.put('activityFeed', a)
-  for (const c of data.taskComments || []) await database.put('taskComments', c)
+  for (const c of data.connections || []) await db.connections.put(c)
+  for (const t of data.sharedTasks || []) await db.sharedTasks.put(t)
+  for (const g of data.coupleGoals || []) await db.coupleGoals.put(g)
+  for (const n of data.loveNotes || []) await db.loveNotes.put(n)
+  for (const a of data.activityFeed || []) await db.activityFeed.put(a)
+  for (const c of data.taskComments || []) await db.taskComments.put(c)
 }
 
 export async function getCoupleStatsCounts(coupleId: string): Promise<{ sharedTasks: number; goals: number }> {
-  const database = await getDB()
-  const tasks = await database.getAllFromIndex('sharedTasks', 'coupleId', coupleId)
-  const goals = await database.getAllFromIndex('coupleGoals', 'coupleId', coupleId)
+  await migrateOldCoupleDatabase()
+  const tasks = await db.sharedTasks.where('coupleId').equals(coupleId).toArray()
+  const goals = await db.coupleGoals.where('coupleId').equals(coupleId).toArray()
   return { sharedTasks: tasks.length, goals: goals.length }
 }
 
 async function mergeRemoteData(coupleId: string): Promise<void> {
   if (!isCoupleSyncEnabled()) return
   const remote = await pullCoupleData(coupleId)
-  const database = await getDB()
-  for (const goal of remote.goals) await database.put('coupleGoals', goal)
-  for (const note of remote.loveNotes) await database.put('loveNotes', note)
-  for (const item of remote.activity) await database.put('activityFeed', item)
-  for (const task of remote.sharedTasks) await database.put('sharedTasks', task)
-  for (const comment of remote.taskComments) await database.put('taskComments', comment)
+  for (const goal of remote.goals) await db.coupleGoals.put(goal)
+  for (const note of remote.loveNotes) await db.loveNotes.put(note)
+  for (const item of remote.activity) await db.activityFeed.put(item)
+  for (const task of remote.sharedTasks) await db.sharedTasks.put(task)
+  for (const comment of remote.taskComments) await db.taskComments.put(comment)
 }
 
 export async function createCoupleConnection(
   profile1Id: string,
   profile1Name: string
 ): Promise<CoupleConnection> {
-  const database = await getDB()
+  await migrateOldCoupleDatabase()
   const inviteCode = generateInviteCode()
 
   const connection: CoupleConnection = {
@@ -147,7 +146,7 @@ export async function createCoupleConnection(
     level: 1
   }
 
-  await database.add('connections', connection)
+  await db.connections.add(connection)
   await syncCreateConnection(connection)
   return connection
 }
@@ -157,23 +156,30 @@ export async function joinCoupleConnection(
   profile2Id: string,
   profile2Name: string
 ): Promise<CoupleConnection | null> {
-  const database = await getDB()
+  await migrateOldCoupleDatabase()
+
+  const rateKey = `join:${inviteCode}`
+  if (isRateLimited(rateKey)) return null
+
   let connection: CoupleConnection | null = null
 
   if (isCoupleSyncEnabled()) {
     connection = await syncJoinConnection(inviteCode, profile2Id, profile2Name)
-    if (connection) await database.put('connections', connection)
+    if (connection) await db.connections.put(connection)
   }
 
   if (!connection) {
-    const connections = await database.getAllFromIndex('connections', 'inviteCode', inviteCode)
-    if (connections.length === 0) return null
+    const connections = await db.connections.where('inviteCode').equals(inviteCode).toArray()
+    if (connections.length === 0) {
+      recordAttempt(rateKey)
+      return null
+    }
     const localConn = { ...connections[0] }
     localConn.profile2Id = profile2Id
     localConn.profile2Name = profile2Name
     localConn.status = 'active'
     delete localConn.inviteCode
-    await database.put('connections', localConn)
+    await db.connections.put(localConn)
     connection = localConn
   }
 
@@ -181,39 +187,45 @@ export async function joinCoupleConnection(
 }
 
 export async function getCoupleConnection(profileId: string): Promise<CoupleConnection | null> {
+  await migrateOldCoupleDatabase()
   if (isCoupleSyncEnabled()) {
     const remote = await syncGetConnectionByProfile(profileId)
     if (remote) {
-      const database = await getDB()
-      await database.put('connections', remote)
+      await db.connections.put(remote)
       await mergeRemoteData(remote.id)
       return remote
     }
   }
 
-  const database = await getDB()
-  const asProfile1 = await database.getAllFromIndex('connections', 'profile1Id', profileId)
+  const asProfile1 = await db.connections.where('profile1Id').equals(profileId).toArray()
   const active1 = asProfile1.find(c => c.status === 'active' || c.status === 'pending')
   if (active1) return active1
 
-  const asProfile2 = await database.getAllFromIndex('connections', 'profile2Id', profileId)
+  const asProfile2 = await db.connections.where('profile2Id').equals(profileId).toArray()
   if (asProfile2.length > 0 && asProfile2[0].status === 'active') return asProfile2[0]
 
   return null
 }
 
 export async function disconnectCouple(connectionId: string): Promise<void> {
-  const database = await getDB()
-  const stores = ['sharedTasks', 'coupleGoals', 'loveNotes', 'activityFeed', 'taskComments'] as const
+  await migrateOldCoupleDatabase()
+  
+  const tasks = await db.sharedTasks.where('coupleId').equals(connectionId).toArray()
+  for (const t of tasks) await db.sharedTasks.delete(t.id)
 
-  for (const store of stores) {
-    const items = await database.getAllFromIndex(store, 'coupleId', connectionId)
-    for (const item of items) {
-      await database.delete(store, item.id)
-    }
-  }
+  const goals = await db.coupleGoals.where('coupleId').equals(connectionId).toArray()
+  for (const g of goals) await db.coupleGoals.delete(g.id)
 
-  await database.delete('connections', connectionId)
+  const notes = await db.loveNotes.where('coupleId').equals(connectionId).toArray()
+  for (const n of notes) await db.loveNotes.delete(n.id)
+
+  const feed = await db.activityFeed.where('coupleId').equals(connectionId).toArray()
+  for (const a of feed) await db.activityFeed.delete(a.id)
+
+  const comments = await db.taskComments.where('coupleId').equals(connectionId).toArray()
+  for (const c of comments) await db.taskComments.delete(c.id)
+
+  await db.connections.delete(connectionId)
   await syncDeleteConnection(connectionId)
 }
 
@@ -225,15 +237,12 @@ function generateInviteCode(): string {
 }
 
 export async function addPointsToConnection(connectionId: string, pointsToAdd: number): Promise<CoupleConnection | null> {
-  const database = await getDB()
-  const connection = await database.get('connections', connectionId)
+  await migrateOldCoupleDatabase()
+  const connection = await db.connections.get(connectionId)
   if (!connection) return null
 
   const oldPoints = connection.points || 0
-  const oldLevel = connection.level || 1
-  
   const newPoints = oldPoints + pointsToAdd
-  // Calculate level: let's say every 100 points is a level
   const newLevel = Math.floor(newPoints / 100) + 1
 
   const updatedConnection = {
@@ -242,7 +251,7 @@ export async function addPointsToConnection(connectionId: string, pointsToAdd: n
     level: newLevel
   }
 
-  await database.put('connections', updatedConnection)
+  await db.connections.put(updatedConnection)
   await syncUpdateConnectionGamification(connectionId, newPoints, newLevel)
 
   return updatedConnection
@@ -254,7 +263,7 @@ export async function shareTask(
   sharedWith: string,
   sharedBy: string
 ): Promise<SharedTask> {
-  const database = await getDB()
+  await migrateOldCoupleDatabase()
 
   const sharedTask: SharedTask = {
     ...task,
@@ -264,7 +273,7 @@ export async function shareTask(
     sharedAt: Date.now()
   }
 
-  await database.add('sharedTasks', sharedTask)
+  await db.sharedTasks.add(sharedTask)
   await syncSharedTask(sharedTask, coupleId)
 
   await addActivityFeedItem({
@@ -282,21 +291,21 @@ export async function shareTask(
 }
 
 export async function getSharedTasks(coupleId: string, date: string): Promise<SharedTask[]> {
-  const database = await getDB()
-  const allShared = await database.getAllFromIndex('sharedTasks', 'coupleId', coupleId)
+  await migrateOldCoupleDatabase()
+  const allShared = await db.sharedTasks.where('coupleId').equals(coupleId).toArray()
   return allShared.filter(t => t.date === date)
 }
 
 export async function saveCoupleGoal(goal: CoupleGoal): Promise<void> {
-  const database = await getDB()
-  await database.put('coupleGoals', goal)
+  await migrateOldCoupleDatabase()
+  await db.coupleGoals.put(goal)
   await syncGoal(goal)
 }
 
 export async function getCoupleGoals(coupleId: string): Promise<CoupleGoal[]> {
+  await migrateOldCoupleDatabase()
   await mergeRemoteData(coupleId)
-  const database = await getDB()
-  const goals = await database.getAllFromIndex('coupleGoals', 'coupleId', coupleId)
+  const goals = await db.coupleGoals.where('coupleId').equals(coupleId).toArray()
   return goals.sort((a, b) => {
     if (a.completed !== b.completed) return a.completed ? 1 : -1
     return b.createdAt - a.createdAt
@@ -304,14 +313,14 @@ export async function getCoupleGoals(coupleId: string): Promise<CoupleGoal[]> {
 }
 
 export async function deleteCoupleGoal(goalId: string): Promise<void> {
-  const database = await getDB()
-  await database.delete('coupleGoals', goalId)
+  await migrateOldCoupleDatabase()
+  await db.coupleGoals.delete(goalId)
   await syncDeleteGoal(goalId)
 }
 
 export async function saveLoveNote(note: LoveNote): Promise<void> {
-  const database = await getDB()
-  await database.put('loveNotes', note)
+  await migrateOldCoupleDatabase()
+  await db.loveNotes.put(note)
   await syncLoveNote(note)
 
   await addActivityFeedItem({
@@ -328,54 +337,54 @@ export async function saveLoveNote(note: LoveNote): Promise<void> {
 }
 
 export async function getLoveNotes(coupleId: string, profileId: string): Promise<LoveNote[]> {
+  await migrateOldCoupleDatabase()
   await mergeRemoteData(coupleId)
-  const database = await getDB()
-  const notes = await database.getAllFromIndex('loveNotes', 'coupleId', coupleId)
+  const notes = await db.loveNotes.where('coupleId').equals(coupleId).toArray()
   const visibleNotes = notes.filter(n => n.toProfileId === profileId || n.fromProfileId === profileId)
   return visibleNotes.sort((a, b) => b.createdAt - a.createdAt)
 }
 
 export async function markLoveNoteAsRead(noteId: string): Promise<void> {
-  const database = await getDB()
-  const note = await database.get('loveNotes', noteId)
+  await migrateOldCoupleDatabase()
+  const note = await db.loveNotes.get(noteId)
   if (note) {
     note.read = true
-    await database.put('loveNotes', note)
+    await db.loveNotes.put(note)
     await syncLoveNote(note)
   }
 }
 
 export async function addActivityFeedItem(item: ActivityFeedItem): Promise<void> {
-  const database = await getDB()
-  await database.add('activityFeed', item)
+  await migrateOldCoupleDatabase()
+  await db.activityFeed.add(item)
   await syncActivity(item)
 
-  const all = await database.getAllFromIndex('activityFeed', 'coupleId', item.coupleId)
+  const all = await db.activityFeed.where('coupleId').equals(item.coupleId).toArray()
   if (all.length > 100) {
     const sorted = all.sort((a, b) => b.timestamp - a.timestamp)
     for (const old of sorted.slice(100)) {
-      await database.delete('activityFeed', old.id)
+      await db.activityFeed.delete(old.id)
     }
   }
 }
 
 export async function getActivityFeed(coupleId: string, limit: number = 50): Promise<ActivityFeedItem[]> {
+  await migrateOldCoupleDatabase()
   await mergeRemoteData(coupleId)
-  const database = await getDB()
-  const items = await database.getAllFromIndex('activityFeed', 'coupleId', coupleId)
+  const items = await db.activityFeed.where('coupleId').equals(coupleId).toArray()
   return items.sort((a, b) => b.timestamp - a.timestamp).slice(0, limit)
 }
 
 export async function saveTaskComment(comment: TaskComment): Promise<void> {
-  const database = await getDB()
-  await database.put('taskComments', comment)
+  await migrateOldCoupleDatabase()
+  await db.taskComments.put(comment)
   await syncTaskComment(comment)
 }
 
 export async function getTaskComments(coupleId: string, taskId: string): Promise<TaskComment[]> {
+  await migrateOldCoupleDatabase()
   await mergeRemoteData(coupleId)
-  const database = await getDB()
-  const comments = await database.getAllFromIndex('taskComments', 'taskId', taskId)
+  const comments = await db.taskComments.where('taskId').equals(taskId).toArray()
   return comments
     .filter(comment => comment.coupleId === coupleId)
     .sort((a, b) => a.createdAt - b.createdAt)

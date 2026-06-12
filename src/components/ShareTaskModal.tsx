@@ -40,7 +40,7 @@ export default function ShareTaskModal({ task, onClose }: ShareTaskModalProps) {
       success(t('couple.taskShared', { name: partnerName }))
       onClose()
     } catch (error) {
-      console.error('Failed to share task:', error)
+      if (import.meta.env.DEV) console.error('Failed to share task:', error)
     } finally {
       setSharing(false)
     }
@@ -53,7 +53,7 @@ export default function ShareTaskModal({ task, onClose }: ShareTaskModalProps) {
       success(t('couple.unshareTask'))
       onClose()
     } catch (error) {
-      console.error('Failed to unshare task:', error)
+      if (import.meta.env.DEV) console.error('Failed to unshare task:', error)
     } finally {
       setSharing(false)
     }

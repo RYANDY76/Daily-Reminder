@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef, useEffect } from 'react'
+import { useState, useCallback, useRef } from 'react'
 
 const CLIENT_ID_KEY = 'daily_reminder_google_client_id'
 

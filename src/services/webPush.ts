@@ -19,7 +19,14 @@ export function isWebPushSupported(): boolean {
 }
 
 export function isWebPushSubscribed(): boolean {
-  return !!localStorage.getItem(SUBSCRIPTION_KEY)
+  try {
+    const raw = localStorage.getItem(SUBSCRIPTION_KEY)
+    if (!raw) return false
+    const parsed = JSON.parse(raw)
+    return !!(parsed.endpoint && parsed.keys?.p256dh && parsed.keys?.auth)
+  } catch {
+    return false
+  }
 }
 
 export async function subscribeToWebPush(): Promise<{ ok: boolean; error?: string }> {
@@ -43,7 +50,11 @@ export async function subscribeToWebPush(): Promise<{ ok: boolean; error?: strin
     })
   }
 
-  localStorage.setItem(SUBSCRIPTION_KEY, JSON.stringify(sub.toJSON()))
+  const json = sub.toJSON()
+  if (!json.endpoint || !json.keys?.p256dh || !json.keys?.auth) {
+    throw new Error('Invalid push subscription: missing required fields')
+  }
+  localStorage.setItem(SUBSCRIPTION_KEY, JSON.stringify(json))
   await savePushSubscriptionToCloud(sub)
   return { ok: true }
 }
@@ -51,7 +62,13 @@ export async function subscribeToWebPush(): Promise<{ ok: boolean; error?: strin
 export async function unsubscribeFromWebPush(): Promise<void> {
   const reg = await navigator.serviceWorker.ready
   const sub = await reg.pushManager.getSubscription()
-  if (sub) await sub.unsubscribe()
+  if (sub) {
+    try {
+      await sub.unsubscribe()
+    } catch (err) {
+      if (import.meta.env.DEV) console.error('[WebPush] Unsubscribe failed:', err)
+    }
+  }
   localStorage.removeItem(SUBSCRIPTION_KEY)
 
   const sb = getSupabase()
@@ -69,12 +86,27 @@ async function savePushSubscriptionToCloud(sub: PushSubscription): Promise<void>
   if (!sb || !user || !profile) return
 
   const json = sub.toJSON()
-  await sb.from('push_subscriptions').upsert({
-    id: `${user.id}_${profile.id}`,
-    auth_user_id: user.id,
-    profile_id: profile.id,
-    endpoint: json.endpoint,
-    subscription: json,
-    updated_at: Date.now()
-  }, { onConflict: 'id' })
+  let attempts = 0
+  const maxAttempts = 3
+  while (attempts < maxAttempts) {
+    try {
+      const { error } = await sb.from('push_subscriptions').upsert({
+        id: `${user.id}_${profile.id}`,
+        auth_user_id: user.id,
+        profile_id: profile.id,
+        endpoint: json.endpoint,
+        subscription: json,
+        updated_at: new Date().toISOString()
+      }, { onConflict: 'id' })
+      if (!error) return
+      throw error
+    } catch (err) {
+      attempts++
+      if (attempts >= maxAttempts) {
+        if (import.meta.env.DEV) console.error('[WebPush] Failed to save subscription to cloud after retries:', err)
+        return
+      }
+      await new Promise(r => setTimeout(r, 1000 * attempts))
+    }
+  }
 }

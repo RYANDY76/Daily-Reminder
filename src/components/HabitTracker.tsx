@@ -1,15 +1,24 @@
 import { useState, useEffect } from 'react'
-import { Plus, Flame, X, Check, Target, Edit2, Trophy } from 'lucide-react'
+import { Plus, Flame, X, Check, Edit2, Trophy, Target, Book, Footprints, Droplets, Heart, Dumbbell, Pen, Music2, Leaf, Sun, Moon, Utensils, Sparkles, Bike, type LucideIcon } from 'lucide-react'
 import type { Habit } from '../types'
 import { getTodayDate } from '../dates'
 import { useProfileStore } from '../stores/useProfileStore'
 import { useT } from '../i18n'
+import { useConfirm } from '../hooks/useConfirm'
 import { saveHabit, getHabitsForProfile, deleteHabit } from '../database'
 import { scheduleAutoCloudSync } from '../services/autoCloudSync'
 
-const HABIT_ICONS = ['🎯', '📚', '🏃', '💧', '🧘', '💪', '✍️', '🎵', '🌱', '☀️', '💤', '🍎', '🧹', '🏊', '🚴']
+const HABIT_ICON_MAP: Record<string, LucideIcon> = {
+  Target, Book, Footprints, Droplets, Heart, Dumbbell, Pen, Music2, Leaf, Sun, Moon, Utensils, Sparkles, Bike,
+}
+const HABIT_ICON_NAMES = Object.keys(HABIT_ICON_MAP)
 const HABIT_COLORS = ['#1D9E75', '#3B82F6', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899', '#06B6D4', '#F97316']
 
+function HabitIcon({ name, className }: { name: string; className?: string }) {
+  const Icon = HABIT_ICON_MAP[name as keyof typeof HABIT_ICON_MAP]
+  if (!Icon) return null
+  return <Icon className={className || 'w-5 h-5'} />
+}
 
 interface HabitFormData {
   name: string
@@ -22,7 +31,7 @@ interface HabitFormData {
 
 const defaultForm: HabitFormData = {
   name: '',
-  icon: '🎯',
+  icon: 'Target',
   color: HABIT_COLORS[0],
   frequency: 'daily',
   targetDays: [0, 1, 2, 3, 4, 5, 6],
@@ -37,6 +46,7 @@ export default function HabitTracker() {
   const [form, setForm] = useState<HabitFormData>(defaultForm)
   const today = getTodayDate()
   const t = useT()
+  const { confirm, ConfirmDialog } = useConfirm()
 
   useEffect(() => {
     if (profile) getHabitsForProfile(profile.id).then(setHabits)
@@ -131,7 +141,8 @@ export default function HabitTracker() {
   }
 
   const removeHabit = async (id: string) => {
-    if (!window.confirm(t('habits.deleteConfirm'))) return
+    const ok = await confirm({ title: t('common.confirm'), message: t('habits.deleteConfirm'), variant: 'danger', confirmText: t('common.delete'), cancelText: t('common.cancel') })
+    if (!ok) return
     await deleteHabit(id)
     await loadHabits()
     scheduleAutoCloudSync()
@@ -158,9 +169,10 @@ export default function HabitTracker() {
   }
 
   return (
-    <div className="space-y-4">
-      {/* Header */}
-      <div className="flex items-center justify-between">
+    <>
+      <ConfirmDialog />
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
         <div>
           <h2 className="text-lg font-bold text-gray-900 dark:text-white">{t('habits.title')}</h2>
           <p className="text-xs text-gray-500 dark:text-gray-400">{t('habits.subtitle')}</p>
@@ -201,13 +213,13 @@ export default function HabitTracker() {
 
           {/* Icon picker */}
           <div className="flex flex-wrap gap-1.5">
-            {HABIT_ICONS.map(icon => (
+            {HABIT_ICON_NAMES.map(name => (
               <button
-                key={icon}
-                onClick={() => setForm(f => ({ ...f, icon }))}
-                className={`w-8 h-8 rounded-lg flex items-center justify-center text-lg transition-colors ${form.icon === icon ? 'bg-primary-100 dark:bg-primary-900/30 ring-2 ring-primary-500' : 'hover:bg-gray-100 dark:hover:bg-dark-surface'}`}
+                key={name}
+                onClick={() => setForm(f => ({ ...f, icon: name }))}
+                className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${form.icon === name ? 'bg-primary-100 dark:bg-primary-900/30 ring-2 ring-primary-500' : 'hover:bg-gray-100 dark:hover:bg-dark-surface'}`}
               >
-                {icon}
+                <HabitIcon name={name} className="w-4 h-4" />
               </button>
             ))}
           </div>
@@ -310,7 +322,7 @@ export default function HabitTracker() {
       {/* Habit List */}
       {habits.length === 0 ? (
         <div className="text-center py-12 text-gray-400">
-          <p className="text-4xl mb-3">🎯</p>
+          <Target className="w-10 h-10 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
           <p className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">{t('habits.emptyTitle')}</p>
           <p className="text-xs text-gray-400">{t('habits.startPrompt')}</p>
         </div>
@@ -337,7 +349,7 @@ export default function HabitTracker() {
                     style={isCompletedToday ? { backgroundColor: habit.color } : {}}
                     title={isScheduledToday ? '' : t('habits.notScheduled')}
                   >
-                    {isCompletedToday ? <Check className="w-5 h-5" /> : habit.icon}
+                    {isCompletedToday ? <Check className="w-5 h-5" /> : <HabitIcon name={habit.icon} />}
                   </button>
 
                   {/* Info */}
@@ -415,5 +427,6 @@ export default function HabitTracker() {
         </div>
       )}
     </div>
+    </>
   )
 }

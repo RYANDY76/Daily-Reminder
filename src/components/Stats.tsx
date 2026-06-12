@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react'
 import { useT } from '../i18n'
 import { useProfileStore } from '../stores/useProfileStore'
-import { getLast7DaysHistory, getLastNDaysHistory, getHistoryRange, getPomodoroSessionsRange } from '../database'
+import { getLastNDaysHistory, getPomodoroSessionsRange } from '../database'
 import { formatDateShort } from '../dates'
 import type { DailyHistory, PomodoroSession } from '../types'
-import { BarChart3, TrendingUp, Calendar, Flame, Target, Clock, ChevronDown } from 'lucide-react'
+import { BarChart3, TrendingUp, Calendar, Flame, Target, Clock, Trophy } from 'lucide-react'
 
 type ViewRange = '7' | '30'
 
@@ -36,6 +36,7 @@ export default function Stats() {
   const [loading, setLoading] = useState(true)
   const [chartView, setChartView] = useState<'bar' | 'line'>('bar')
   const [range, setRange] = useState<ViewRange>('7')
+  const [activeTooltip, setActiveTooltip] = useState<number | null>(null)
 
   useEffect(() => {
     if (!currentProfile) return
@@ -82,7 +83,6 @@ export default function Stats() {
   }
 
   let streak = 0
-  const today = getTodayDate()
   const sortedHistory = [...history].sort((a, b) => b.date.localeCompare(a.date))
   for (const h of sortedHistory) {
     const rate = h.tasksTotal > 0 ? h.tasksDone / h.tasksTotal : 0
@@ -123,15 +123,15 @@ export default function Stats() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-xl font-bold text-gray-900 dark:text-white">{t('stats.title')}</h2>
-        <div className="flex gap-1 bg-gray-100 dark:bg-dark-card p-1 rounded-xl">
+        <h2 className="page-heading">{t('stats.title')}</h2>
+        <div className="flex gap-1 bg-gray-100 dark:bg-dark-card p-1 rounded-2xl">
           {(['7', '30'] as ViewRange[]).map(r => (
             <button
               key={r}
               onClick={() => setRange(r)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+              className={`px-3 py-1.5 rounded-xl text-xs font-medium transition-colors ${
                 range === r
-                  ? 'bg-white dark:bg-dark-surface text-gray-900 dark:text-white shadow-sm'
+                  ? 'bg-white dark:bg-dark-surface text-gray-900 dark:text-white shadow-soft'
                   : 'text-gray-500 dark:text-gray-400'
               }`}
             >
@@ -141,13 +141,12 @@ export default function Stats() {
         </div>
       </div>
 
-      {/* Productivity Score */}
       <div className="card p-4">
         <div className="flex items-center justify-between mb-3">
-          <p className="text-sm font-medium text-gray-700 dark:text-gray-300">{t('stats.productivity')}</p>
-          <p className="text-2xl font-bold text-primary-500">{avgCompletion}%</p>
+          <p className="stat-label text-sm">{t('stats.productivity')}</p>
+          <p className="stat-value text-primary-500">{avgCompletion}%</p>
         </div>
-        <div className="w-full h-3 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+        <div className="w-full h-2.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
           <div
             className="h-full rounded-full transition-all duration-500 bg-gradient-to-r from-primary-500 to-primary-400"
             style={{ width: `${avgCompletion}%` }}
@@ -158,27 +157,26 @@ export default function Stats() {
         </p>
       </div>
 
-      {/* Summary Grid */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <div className="card p-4">
           <Target className="w-4 h-4 text-primary-500 mb-2" />
-          <p className="text-2xl font-bold text-primary-500">{totalDoneAll}</p>
-          <p className="text-xs text-gray-500 dark:text-gray-400">{t('stats.done')}</p>
+          <p className="stat-value text-primary-500">{totalDoneAll}</p>
+          <p className="stat-label">{t('stats.done')}</p>
         </div>
         <div className="card p-4">
           <Flame className="w-4 h-4 text-orange-500 mb-2" />
-          <p className="text-2xl font-bold text-orange-500">{streak}</p>
-          <p className="text-xs text-gray-500 dark:text-gray-400">{t('stats.streak')}</p>
+          <p className="stat-value text-orange-500">{streak}</p>
+          <p className="stat-label">{t('stats.streak')}</p>
         </div>
         <div className="card p-4">
           <Clock className="w-4 h-4 text-blue-500 mb-2" />
-          <p className="text-2xl font-bold text-blue-500">{totalFocusMinutes}</p>
-          <p className="text-xs text-gray-500 dark:text-gray-400">{t('stats.focusMinutes')}</p>
+          <p className="stat-value text-blue-500">{totalFocusMinutes}</p>
+          <p className="stat-label">{t('stats.focusMinutes')}</p>
         </div>
         <div className="card p-4">
           <BarChart3 className="w-4 h-4 text-purple-500 mb-2" />
-          <p className="text-2xl font-bold text-purple-500">{totalPomos}</p>
-          <p className="text-xs text-gray-500 dark:text-gray-400">{t('stats.pomosCompleted')}</p>
+          <p className="stat-value text-purple-500">{totalPomos}</p>
+          <p className="stat-label">{t('stats.pomosCompleted')}</p>
         </div>
       </div>
 
@@ -244,7 +242,7 @@ export default function Stats() {
               className={`flex items-end gap-1 h-48 px-1 ${range === '30' ? 'gap-0.5' : 'gap-2'}`}
             >
               {chartData.map((d, i) => (
-                <div key={i} className="flex-1 flex flex-col items-center gap-1 relative group">
+                <div key={i} className="flex-1 flex flex-col items-center gap-1 relative" onClick={() => setActiveTooltip(activeTooltip === i ? null : i)} onTouchStart={(e) => { e.preventDefault(); setActiveTooltip(activeTooltip === i ? null : i) }}>
                   <div className="flex gap-0.5 items-end w-full justify-center" style={{ height: '160px' }}>
                     <div
                       className="flex-1 rounded-t-sm bg-primary-500 transition-all duration-300"
@@ -258,7 +256,7 @@ export default function Stats() {
                   {range === '7' && (
                     <span className="text-[10px] text-gray-400 mt-1">{d.date}</span>
                   )}
-                  <div className="absolute -top-8 hidden group-hover:block bg-gray-900 text-white text-[10px] px-2 py-1 rounded-lg whitespace-nowrap z-10">
+                  <div className={`absolute -top-8 ${activeTooltip === i ? 'block' : 'hidden'} bg-gray-900 text-white text-[10px] px-2 py-1 rounded-lg whitespace-nowrap z-10`}>
                     {d.date}: {t('stats.itemDone', { done: d.done, total: d.total })}
                   </div>
                 </div>
@@ -314,7 +312,7 @@ export default function Stats() {
       {bestDay && (
         <div className="card p-4 flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-yellow-100 dark:bg-yellow-900/30 flex items-center justify-center">
-            <span className="text-xl">🏆</span>
+            <Trophy className="w-5 h-5 text-yellow-500" />
           </div>
           <div>
             <p className="text-sm font-medium text-gray-900 dark:text-white">{t('stats.bestDay')}</p>

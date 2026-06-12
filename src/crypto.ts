@@ -26,8 +26,18 @@ export async function verifyPin(pin: string, hash: string, salt: string): Promis
 
 async function getKeyFromStorage(): Promise<CryptoKey | null> {
   try {
-    const stored = localStorage.getItem('daily_reminder_crypto_key_v2')
-    if (!stored) return null
+    let stored = sessionStorage.getItem('daily_reminder_crypto_key_v2')
+    if (!stored) {
+      // Migration: check localStorage as fallback (read-only)
+      const legacy = localStorage.getItem('daily_reminder_crypto_key_v2')
+      if (legacy) {
+        sessionStorage.setItem('daily_reminder_crypto_key_v2', legacy)
+        localStorage.removeItem('daily_reminder_crypto_key_v2')
+        stored = legacy
+      } else {
+        return null
+      }
+    }
     const parts = stored.split(':')
     if (parts.length !== 2) return null
     const raw = Uint8Array.from(atob(parts[1]), c => c.charCodeAt(0))
@@ -44,9 +54,9 @@ async function generateAndStoreKey(): Promise<CryptoKey> {
     ['encrypt', 'decrypt']
   )
   const exported = await crypto.subtle.exportKey('raw', key)
-  const keyId = crypto.randomUUID().slice(0, 8)
+  const keyId = crypto.randomUUID()
   const encoded = btoa(String.fromCharCode(...new Uint8Array(exported)))
-  localStorage.setItem('daily_reminder_crypto_key_v2', `${keyId}:${encoded}`)
+  sessionStorage.setItem('daily_reminder_crypto_key_v2', `${keyId}:${encoded}`)
   return key
 }
 
@@ -83,7 +93,9 @@ export async function decryptToken(encrypted: string): Promise<string> {
     const cipher = combined.slice(12)
     const plain = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, key, cipher)
     return new TextDecoder().decode(plain)
-  } catch {
+  } catch (err) {
+    const error = err instanceof Error ? err : new Error(String(err))
+    if (import.meta.env.DEV) console.error('Decryption failed:', error.message)
     return ''
   }
 }

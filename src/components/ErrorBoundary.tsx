@@ -13,6 +13,7 @@ interface State {
   error: Error | null
   errorInfo: string | null
   retryCount: number
+  maxRetries: number
 }
 
 export default class ErrorBoundary extends Component<Props, State> {
@@ -22,7 +23,8 @@ export default class ErrorBoundary extends Component<Props, State> {
       hasError: false,
       error: null,
       errorInfo: null,
-      retryCount: 0
+      retryCount: 0,
+      maxRetries: 3
     }
   }
 
@@ -31,22 +33,24 @@ export default class ErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, errorInfo: any) {
+    const componentStack = errorInfo?.componentStack || null
     console.error('ErrorBoundary caught:', error, errorInfo)
     
-    // Log to our error handler
+    // Log to our error handler with component stack
     AppErrorHandler.logError(
       'COMPONENT_ERROR',
       error.message,
       'critical',
-      { error, errorInfo }
+      { error, componentStack }
     )
     
     this.setState({
-      errorInfo: errorInfo?.componentStack || null
+      errorInfo: componentStack
     })
   }
 
   handleRetry = () => {
+    if (this.state.retryCount >= this.state.maxRetries) return
     this.setState(prevState => ({
       hasError: false,
       error: null,
@@ -56,6 +60,8 @@ export default class ErrorBoundary extends Component<Props, State> {
   }
 
   handleReload = () => {
+    localStorage.clear()
+    sessionStorage.clear()
     window.location.reload()
   }
 
@@ -96,22 +102,24 @@ export default class ErrorBoundary extends Component<Props, State> {
             <div className="flex gap-2 pt-2">
               <button
                 onClick={this.handleRetry}
-                className="flex-1 px-4 py-2.5 bg-primary-500 hover:bg-primary-600 text-white rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
+                disabled={this.state.retryCount >= this.state.maxRetries}
+                className="flex-1 px-4 py-2.5 bg-primary-500 hover:bg-primary-600 disabled:bg-gray-400 disabled:cursor-not-allowed text-white rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
               >
                 <RefreshCw className="w-4 h-4" />
-                {t('error.retry')}
-                {this.state.retryCount > 0 && ` (${this.state.retryCount})`}
+                {this.state.retryCount >= this.state.maxRetries
+                  ? 'Max retries reached'
+                  : `Retry (${this.state.retryCount}/${this.state.maxRetries})`}
               </button>
               <button
                 onClick={this.handleReload}
                 className="px-4 py-2.5 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg font-medium transition-colors"
               >
-                Reload Page
+                Clear &amp; Reload
               </button>
             </div>
 
             <p className="text-xs text-center text-gray-400 dark:text-gray-500">
-              If the problem persists, try clearing your browser cache
+              Reload will clear local caches and refresh the page
             </p>
           </div>
         </div>

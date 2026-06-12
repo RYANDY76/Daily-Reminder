@@ -1,14 +1,24 @@
-import { useState, useEffect } from 'react'
-import { Plus, Target, Check, Trash2, Edit2, ChevronRight, X, Calendar, Flag } from 'lucide-react'
+import { useState, useEffect, type CSSProperties } from 'react'
+import { Plus, Target, Check, Trash2, Edit2, X, Calendar, Book, Dumbbell, Rocket, Lightbulb, Trophy, Plane, Star, GraduationCap, DollarSign, Palette, Leaf, type LucideIcon } from 'lucide-react'
 import type { Goal } from '../types'
 import { useProfileStore } from '../stores/useProfileStore'
 import { useT } from '../i18n'
+import { useConfirm } from '../hooks/useConfirm'
 import { saveGoal, getGoalsForProfile, deleteGoal as deleteGoalDb } from '../database'
 import { scheduleAutoCloudSync } from '../services/autoCloudSync'
 import { formatDateShort, getTodayDate } from '../dates'
 
-const GOAL_ICONS = ['🎯', '📚', '💪', '🚀', '💡', '🏆', '✈️', '🌟', '🎓', '💰', '🎨', '🌱']
+const GOAL_ICON_MAP: Record<string, LucideIcon> = {
+  Target, Book, Dumbbell, Rocket, Lightbulb, Trophy, Plane, Star, GraduationCap, DollarSign, Palette, Leaf,
+}
+const GOAL_ICON_NAMES = Object.keys(GOAL_ICON_MAP)
 const GOAL_COLORS = ['#1D9E75', '#3B82F6', '#8B5CF6', '#EF4444', '#F59E0B', '#EC4899', '#06B6D4', '#F97316']
+
+function GoalIcon({ name, className, style }: { name: string; className?: string; style?: CSSProperties }) {
+  const Icon = GOAL_ICON_MAP[name as keyof typeof GOAL_ICON_MAP]
+  if (!Icon) return null
+  return <Icon className={className || 'w-5 h-5'} style={style} />
+}
 
 interface GoalFormData {
   title: string
@@ -23,7 +33,7 @@ const emptyForm: GoalFormData = {
   description: '',
   targetDate: '',
   color: GOAL_COLORS[0],
-  icon: '🎯'
+  icon: 'Target'
 }
 
 export default function Goals() {
@@ -32,8 +42,8 @@ export default function Goals() {
   const [showForm, setShowForm] = useState(false)
   const [editingGoal, setEditingGoal] = useState<Goal | null>(null)
   const [form, setForm] = useState<GoalFormData>(emptyForm)
-  const [expandedGoal, setExpandedGoal] = useState<string | null>(null)
   const t = useT()
+  const { confirm, ConfirmDialog } = useConfirm()
   const today = getTodayDate()
 
   useEffect(() => {
@@ -89,8 +99,6 @@ export default function Goals() {
         targetDate: form.targetDate,
         color: form.color,
         icon: form.icon,
-        taskIds: [],
-        completedTaskIds: [],
         done: false,
         createdAt: Date.now(),
         updatedAt: Date.now()
@@ -109,7 +117,8 @@ export default function Goals() {
   }
 
   const removeGoal = async (id: string) => {
-    if (!window.confirm(t('goals.deleteConfirm'))) return
+    const ok = await confirm({ title: t('common.confirm'), message: t('goals.deleteConfirm'), variant: 'danger', confirmText: t('common.delete'), cancelText: t('common.cancel') })
+    if (!ok) return
     await deleteGoalDb(id)
     await loadGoals()
     scheduleAutoCloudSync()
@@ -155,7 +164,7 @@ export default function Goals() {
               style={{ backgroundColor: goal.color + '20' }}
               title={goal.done ? t('goals.markUndone') : t('goals.markDone')}
             >
-              {goal.done ? <Check className="w-5 h-5" style={{ color: goal.color }} /> : goal.icon}
+              {goal.done ? <Check className="w-5 h-5" style={{ color: goal.color }} /> : <GoalIcon name={goal.icon} className="w-5 h-5" style={{ color: goal.color }} />}
             </button>
 
             <div className="flex-1 min-w-0">
@@ -206,21 +215,22 @@ export default function Goals() {
   }
 
   return (
-    <div className="space-y-5">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-lg font-bold text-gray-900 dark:text-white">{t('goals.title')}</h2>
-          <p className="text-xs text-gray-500 dark:text-gray-400">{t('goals.subtitle')}</p>
+    <>
+      <ConfirmDialog />
+      <div className="space-y-5">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-lg font-bold text-gray-900 dark:text-white">{t('goals.title')}</h2>
+            <p className="text-xs text-gray-500 dark:text-gray-400">{t('goals.subtitle')}</p>
+          </div>
+          <button
+            onClick={openAdd}
+            className="p-2 rounded-xl bg-primary-500 text-white min-h-tap"
+            aria-label={t('goals.add')}
+          >
+            <Plus className="w-5 h-5" />
+          </button>
         </div>
-        <button
-          onClick={openAdd}
-          className="p-2 rounded-xl bg-primary-500 text-white min-h-tap"
-          aria-label={t('goals.add')}
-        >
-          <Plus className="w-5 h-5" />
-        </button>
-      </div>
 
       {/* Summary */}
       {goals.length > 0 && (
@@ -250,15 +260,15 @@ export default function Goals() {
 
           {/* Icon picker */}
           <div className="flex flex-wrap gap-1.5">
-            {GOAL_ICONS.map(icon => (
+            {GOAL_ICON_NAMES.map(name => (
               <button
-                key={icon}
-                onClick={() => setForm(f => ({ ...f, icon }))}
+                key={name}
+                onClick={() => setForm(f => ({ ...f, icon: name }))}
                 className={`w-8 h-8 rounded-lg flex items-center justify-center text-lg transition-colors ${
-                  form.icon === icon ? 'bg-primary-100 dark:bg-primary-900/30 ring-2 ring-primary-500' : 'hover:bg-gray-100 dark:hover:bg-dark-surface'
+                  form.icon === name ? 'bg-primary-100 dark:bg-primary-900/30 ring-2 ring-primary-500' : 'hover:bg-gray-100 dark:hover:bg-dark-surface'
                 }`}
               >
-                {icon}
+                <GoalIcon name={name} className="w-4 h-4" />
               </button>
             ))}
           </div>
@@ -360,5 +370,6 @@ export default function Goals() {
         </div>
       )}
     </div>
+    </>
   )
 }

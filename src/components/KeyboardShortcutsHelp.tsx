@@ -3,7 +3,7 @@
  * Shows all available keyboard shortcuts
  */
 
-import { X } from 'lucide-react'
+import { X, Lightbulb } from 'lucide-react'
 import { useT } from '../i18n'
 
 interface KeyboardShortcutsHelpProps {
@@ -100,7 +100,7 @@ export default function KeyboardShortcutsHelp({ isOpen, onClose }: KeyboardShort
           {/* Footer tip */}
           <div className="mt-6 p-4 bg-primary-50 dark:bg-primary-900/20 rounded-xl">
             <p className="text-sm text-primary-700 dark:text-primary-300">
-              💡 <strong>{t('shortcuts.tip')}:</strong> {t('shortcuts.tipText')}
+              <Lightbulb className="w-4 h-4 inline-block mr-1.5 -mt-0.5 text-primary-600 dark:text-primary-400" /> <strong>{t('shortcuts.tip')}:</strong> {t('shortcuts.tipText')}
             </p>
           </div>
         </div>

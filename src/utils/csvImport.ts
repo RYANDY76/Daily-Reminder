@@ -84,8 +84,6 @@ export async function importTasksFromCsv(csvText: string, profileId: string): Pr
         sortOrder: i,
         createdAt: Date.now(),
         updatedAt: Date.now(),
-        googleEventId: null,
-        syncedToGoogle: false,
         snoozedUntil: null
       }
       await saveTask(task)

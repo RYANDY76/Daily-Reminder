@@ -32,8 +32,6 @@ export interface Goal {
   targetDate: string
   color: string
   icon: string
-  taskIds: string[]
-  completedTaskIds: string[]
   done: boolean
   createdAt: number
   updatedAt: number
@@ -86,8 +84,6 @@ export interface Task {
   sortOrder: number
   createdAt: number
   updatedAt: number
-  googleEventId: string | null
-  syncedToGoogle: boolean
   snoozedUntil: number | null  // timestamp when snooze ends
   // Shared task fields
   isShared?: boolean
@@ -110,10 +106,12 @@ export interface Profile {
   googleId: string | null
   googleEmail: string | null
   googlePhotoUrl: string | null
-  googleCalendarConnected: boolean
-  googleCalendarId: string | null
   googleAccessToken: string | null
   googleRefreshToken: string | null
+  supabaseUserId: string | null
+  biometricEnabled: boolean
+  biometricCredentialId: string | null
+  consentGiven: boolean
   createdAt: number
   lastSyncAt: number | null
 }
@@ -150,6 +148,12 @@ export interface WeeklyStats {
   bestDay: string | null
   totalDone: number
   streak: number
+}
+
+export interface PublicHoliday {
+  date: string
+  name: string
+  isNational?: boolean
 }
 
 export type Page = 'dashboard' | 'stats' | 'profile' | 'settings' | 'calendar' | 'pomodoro' | 'habits' | 'goals' | 'couple' | 'about'
@@ -198,12 +202,6 @@ export const TASK_COLORS = [
   '#14B8A6'
 ]
 
-export const AVATARS = [
-  '🐶', '🐱', '🐼', '🐨', '🦊',
-  '🐸', '🦁', '🐯', '🐰', '🐙',
-  '🦋', '🐢', '🐳', '🦄', '🐲'
-]
-
 export const DAY_NAMES = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab']
 
 export interface ToastMessage {
@@ -211,4 +209,6 @@ export interface ToastMessage {
   message: string
   type: 'success' | 'error' | 'info' | 'warning'
   duration?: number
+  action?: string
+  onAction?: () => void
 }

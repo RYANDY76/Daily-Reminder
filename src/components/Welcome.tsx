@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useProfileStore } from '../stores/useProfileStore'
-import { CheckCircle2, Sparkles, ArrowRight, UserPlus, LogIn, Target, Timer, BarChart3 } from 'lucide-react'
+import { CheckCircle2, Sparkles, ArrowRight, UserPlus, LogIn, Target, Timer, BarChart3, ShieldCheck } from 'lucide-react'
 import GoogleSignInButton from './GoogleSignInButton'
 import type { GoogleUserInfo } from '../hooks/useGoogleAuth'
 import { useT } from '../i18n'
@@ -25,11 +25,17 @@ export default function Welcome({ onComplete }: WelcomeProps) {
   const [pin, setPin] = useState('')
   const [error, setError] = useState('')
   const [googleError, setGoogleError] = useState('')
+  const [consentGiven, setConsentGiven] = useState(false)
 
   const handleCreate = async () => {
     if (!name.trim()) { setError(t('welcome.nameRequired')); return }
+    setStep(2)
+  }
+
+  const handleFinalCreate = async () => {
+    if (!consentGiven) { setError(t('welcome.consentRequired')); return }
     setError('')
-    await createProfile(name.trim(), pin.length === 4 ? pin : null)
+    await createProfile(name.trim(), pin.length === 4 ? pin : null, true)
     onComplete()
   }
 
@@ -123,18 +129,105 @@ export default function Welcome({ onComplete }: WelcomeProps) {
     )
   }
 
+  if (step === 1) {
+    return (
+      <div className="min-h-screen flex flex-col bg-white dark:bg-dark-bg">
+        <div className="h-1 bg-gray-100 dark:bg-dark-card">
+          <div className="h-full bg-primary-500 transition-all duration-500" style={{ width: '33%' }} />
+        </div>
+
+        <div className="flex-1 flex items-center justify-center p-6">
+          <div className="max-w-md w-full">
+            <button
+              onClick={() => setStep(0)}
+              className="flex items-center gap-1.5 text-sm text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 mb-6 transition-colors"
+            >
+              <ArrowRight className="w-3.5 h-3.5 rotate-180" />
+              {t('welcome.back')}
+            </button>
+
+            <div className="text-center mb-8">
+              <div className="inline-flex items-center justify-center w-16 h-16 rounded-3xl bg-gradient-to-br from-primary-400 to-primary-600 mb-5 shadow-lg animate-bounce-in">
+                <Sparkles className="w-8 h-8 text-white" />
+              </div>
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+                {t('welcome.createAccount')}
+              </h2>
+              <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">
+                {t('welcome.createAccountDesc')}
+              </p>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">
+                  {t('profile.nameLabel')}
+                </label>
+                <input
+                  type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleCreate()}
+                  placeholder={t('profile.namePlaceholder')}
+                  className="w-full px-4 py-3.5 rounded-xl border-2 border-gray-200 dark:border-dark-border bg-white dark:bg-dark-card text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none transition-all duration-200 text-sm"
+                  autoFocus
+                  maxLength={50}
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">
+                  {t('profile.pinLabel')}
+                  <span className="ml-2 text-xs font-normal text-gray-400">{t('profile.pinOptional')}</span>
+                </label>
+                <input
+                  type="password"
+                  value={pin}
+                  onChange={(e) => setPin(e.target.value.replace(/\D/g, '').slice(0, 4))}
+                  placeholder="• • • •"
+                  className="w-full px-4 py-3.5 rounded-xl border-2 border-gray-200 dark:border-dark-border bg-white dark:bg-dark-card text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none transition-all duration-200 text-center text-2xl tracking-[0.5em]"
+                  maxLength={4}
+                  inputMode="numeric"
+                />
+                <p className="text-xs text-gray-400 mt-1.5 text-center">
+                  {t('profile.pinHint')}
+                </p>
+              </div>
+
+              {error && (
+                <div className="flex items-center gap-2 p-3 bg-red-50 dark:bg-red-900/20 rounded-xl border border-red-200 dark:border-red-800/30">
+                  <span className="text-red-500 text-sm">{error}</span>
+                </div>
+              )}
+
+              <button
+                onClick={handleCreate}
+                disabled={!name.trim()}
+                className="w-full py-3.5 rounded-xl bg-primary-500 hover:bg-primary-600 disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98] text-white font-semibold transition-all duration-200 min-h-tap shadow-sm flex items-center justify-center gap-2"
+              >
+                {name.trim()
+                  ? t('welcome.hello', { name: name.trim().split(' ')[0] })
+                  : t('welcome.create')
+                }
+                {name.trim() && <ArrowRight className="w-4 h-4" />}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen flex flex-col bg-white dark:bg-dark-bg">
-      {/* Progress indicator */}
       <div className="h-1 bg-gray-100 dark:bg-dark-card">
         <div className="h-full bg-primary-500 transition-all duration-500" style={{ width: '66%' }} />
       </div>
 
       <div className="flex-1 flex items-center justify-center p-6">
         <div className="max-w-md w-full">
-          {/* Back link */}
           <button
-            onClick={() => setStep(0)}
+            onClick={() => setStep(1)}
             className="flex items-center gap-1.5 text-sm text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 mb-6 transition-colors"
           >
             <ArrowRight className="w-3.5 h-3.5 rotate-180" />
@@ -142,52 +235,29 @@ export default function Welcome({ onComplete }: WelcomeProps) {
           </button>
 
           <div className="text-center mb-8">
-            <div className="inline-flex items-center justify-center w-16 h-16 rounded-3xl bg-gradient-to-br from-primary-400 to-primary-600 mb-5 shadow-lg animate-bounce-in">
-              <Sparkles className="w-8 h-8 text-white" />
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-3xl bg-primary-100 dark:bg-primary-900/20 mb-5 shadow-lg animate-bounce-in">
+              <ShieldCheck className="w-8 h-8 text-primary-600 dark:text-primary-400" />
             </div>
             <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-              {t('welcome.createAccount')}
+              {t('welcome.consentTitle')}
             </h2>
             <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">
-              {t('welcome.createAccountDesc')}
+              {t('welcome.consentDesc')}
             </p>
           </div>
 
           <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">
-                {t('profile.nameLabel')}
-              </label>
+            <label className="flex items-start gap-3 p-4 rounded-xl border-2 border-gray-200 dark:border-dark-border cursor-pointer hover:border-primary-300 dark:hover:border-primary-700 transition-colors">
               <input
-                type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleCreate()}
-                placeholder={t('profile.namePlaceholder')}
-                className="w-full px-4 py-3.5 rounded-xl border-2 border-gray-200 dark:border-dark-border bg-white dark:bg-dark-card text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none transition-all duration-200 text-sm"
-                autoFocus
-                maxLength={50}
+                type="checkbox"
+                checked={consentGiven}
+                onChange={(e) => setConsentGiven(e.target.checked)}
+                className="mt-1 w-4 h-4 rounded border-gray-300 text-primary-500 focus:ring-primary-500"
               />
-            </div>
-
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">
-                {t('profile.pinLabel')}
-                <span className="ml-2 text-xs font-normal text-gray-400">{t('profile.pinOptional')}</span>
-              </label>
-              <input
-                type="password"
-                value={pin}
-                onChange={(e) => setPin(e.target.value.replace(/\D/g, '').slice(0, 4))}
-                placeholder="• • • •"
-                className="w-full px-4 py-3.5 rounded-xl border-2 border-gray-200 dark:border-dark-border bg-white dark:bg-dark-card text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none transition-all duration-200 text-center text-2xl tracking-[0.5em]"
-                maxLength={4}
-                inputMode="numeric"
-              />
-              <p className="text-xs text-gray-400 mt-1.5 text-center">
-                {t('profile.pinHint')}
-              </p>
-            </div>
+              <span className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
+                {t('welcome.consentLabel')}
+              </span>
+            </label>
 
             {error && (
               <div className="flex items-center gap-2 p-3 bg-red-50 dark:bg-red-900/20 rounded-xl border border-red-200 dark:border-red-800/30">
@@ -196,15 +266,12 @@ export default function Welcome({ onComplete }: WelcomeProps) {
             )}
 
             <button
-              onClick={handleCreate}
-              disabled={!name.trim()}
+              onClick={handleFinalCreate}
+              disabled={!consentGiven}
               className="w-full py-3.5 rounded-xl bg-primary-500 hover:bg-primary-600 disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98] text-white font-semibold transition-all duration-200 min-h-tap shadow-sm flex items-center justify-center gap-2"
             >
-              {name.trim()
-                ? `${t('welcome.hello', { name: name.trim().split(' ')[0] })} 👋`
-                : t('welcome.create')
-              }
-              {name.trim() && <ArrowRight className="w-4 h-4" />}
+              {t('welcome.create')}
+              <ArrowRight className="w-4 h-4" />
             </button>
           </div>
         </div>

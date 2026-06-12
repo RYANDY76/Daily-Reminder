@@ -15,7 +15,7 @@ export async function sendTestPush(): Promise<{ ok: boolean; error?: string }> {
     body: {
       profileId: profile.id,
       title: 'Daily Reminder',
-      body: 'Push notifikasi berhasil! 🎉',
+      body: 'Push notifikasi berhasil!',
       url: '/',
       tag: `test-${Date.now()}`
     }

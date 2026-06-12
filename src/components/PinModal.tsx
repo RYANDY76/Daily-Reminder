@@ -1,8 +1,10 @@
 import { useState, useRef, useEffect } from 'react'
 import { verifyPin } from '../crypto'
 import { useProfileStore } from '../stores/useProfileStore'
-import { Lock, Clock } from 'lucide-react'
+import { useBiometricAuth } from '../hooks/useBiometricAuth'
+import { Lock, Clock, Fingerprint } from 'lucide-react'
 import { useT } from '../i18n'
+import { useFocusTrap } from '../hooks/useFocusTrap'
 import PinRecoveryModal from './PinRecoveryModal'
 
 const LOCKOUT_THRESHOLD_1 = 3
@@ -14,13 +16,21 @@ export default function PinModal() {
   const t = useT()
   const currentProfile = useProfileStore((s) => s.currentProfile)
   const unlockProfile = useProfileStore((s) => s.unlockProfile)
+  const { authenticate, isAvailable, loading: bioLoading, error: bioError, clearError: clearBioError } = useBiometricAuth()
   const [pin, setPin] = useState('')
   const [error, setError] = useState('')
   const [showRecovery, setShowRecovery] = useState(false)
   const [attempts, setAttempts] = useState(0)
   const [lockedUntil, setLockedUntil] = useState(0)
   const [timeLeft, setTimeLeft] = useState(0)
+  const [bioSupported, setBioSupported] = useState(false)
   const lockTimerRef = useRef<ReturnType<typeof setInterval>>()
+  const trapRef = useFocusTrap(true)
+  const bioTriedRef = useRef(false)
+
+  useEffect(() => {
+    isAvailable().then(setBioSupported)
+  }, [isAvailable])
 
   useEffect(() => {
     return () => { if (lockTimerRef.current) clearInterval(lockTimerRef.current) }
@@ -43,9 +53,26 @@ export default function PinModal() {
     return () => { if (lockTimerRef.current) clearInterval(lockTimerRef.current) }
   }, [lockedUntil])
 
+  // Auto-trigger biometric on mount if enabled
+  useEffect(() => {
+    if (!currentProfile?.biometricEnabled || !currentProfile?.biometricCredentialId || !bioSupported) return
+    if (bioTriedRef.current) return
+    bioTriedRef.current = true
+    handleBiometric()
+  }, [currentProfile?.biometricEnabled, currentProfile?.biometricCredentialId, bioSupported])
+
   if (!currentProfile?.pin) return null
 
   const isLocked = Date.now() < lockedUntil
+
+  const handleBiometric = async () => {
+    clearBioError()
+    const ok = await authenticate(currentProfile.biometricCredentialId ?? undefined)
+    if (ok) {
+      setAttempts(0)
+      unlockProfile()
+    }
+  }
 
   const handleSubmit = async (enteredPin?: string) => {
     if (isLocked) return
@@ -74,19 +101,19 @@ export default function PinModal() {
   }
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-6">
+    <div ref={trapRef} role="alertdialog" aria-modal="true" aria-labelledby="pin-heading" className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-6">
       <div className="bg-white dark:bg-dark-surface rounded-2xl p-8 max-w-sm w-full text-center shadow-xl border border-gray-100 dark:border-dark-border animate-fade-up">
         <div className="w-14 h-14 rounded-2xl bg-primary-50 dark:bg-primary-900/20 flex items-center justify-center mx-auto mb-4">
           <Lock className="w-6 h-6 text-primary-500" />
         </div>
-        <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-1">
+        <h2 id="pin-heading" className="text-lg font-bold text-gray-900 dark:text-white mb-1">
           {t('pin.welcomeBack', { name: currentProfile.name })}
         </h2>
         <p className="text-gray-500 dark:text-gray-400 mb-6 text-sm">
           {t('pin.enterPin')}
         </p>
 
-        <div className="flex justify-center gap-3 mb-6">
+        <div className="flex justify-center gap-3 mb-6" aria-hidden="true">
           {[0, 1, 2, 3].map((i) => (
             <div
               key={i}
@@ -111,48 +138,54 @@ export default function PinModal() {
           </div>
         ) : (
           <>
-            <div className="grid grid-cols-3 gap-3 max-w-[200px] mx-auto mb-4">
-              {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((num) => (
+            {currentProfile.biometricEnabled && bioSupported && (
+              <div className="mb-4">
                 <button
-                  key={num}
-                  onClick={() => {
-                    if (pin.length < 4) {
-                      const newPin = pin + num
-                      setPin(newPin)
-                      if (newPin.length === 4) {
-                        setTimeout(() => handleSubmit(newPin), 150)
-                      }
-                    }
-                  }}
-                  className="w-12 h-12 rounded-xl bg-gray-100 dark:bg-dark-card text-gray-900 dark:text-white text-lg font-bold hover:bg-gray-200 dark:hover:bg-gray-700 transition-all duration-150 min-h-tap min-w-tap"
+                  onClick={handleBiometric}
+                  disabled={bioLoading}
+                  className="w-full py-3 px-4 rounded-2xl border border-primary-200 dark:border-primary-800/30 bg-primary-50/50 dark:bg-primary-900/10 hover:bg-primary-100 dark:hover:bg-primary-900/20 transition-all duration-200 flex items-center justify-center gap-2 min-h-tap"
                 >
-                  {num}
+                  <Fingerprint className="w-5 h-5 text-primary-500" />
+                  <span className="text-sm font-medium text-primary-600 dark:text-primary-400">
+                    {bioLoading ? 'Memproses...' : t('pin.biometricUnlock')}
+                  </span>
                 </button>
-              ))}
-              <div />
-              <button
-                onClick={() => {
-                  if (pin.length < 4) {
-                    const newPin = pin + '0'
-                    setPin(newPin)
-                    if (newPin.length === 4) {
-                      setTimeout(() => handleSubmit(newPin), 150)
-                    }
+                {bioError && (
+                  <p role="alert" className="text-xs text-red-500 text-center mt-2">{bioError}</p>
+                )}
+                <div className="relative my-4">
+                  <div className="absolute inset-0 flex items-center">
+                    <div className="w-full border-t border-gray-200 dark:border-dark-border" />
+                  </div>
+                  <div className="relative flex justify-center">
+                    <span className="bg-white dark:bg-dark-surface px-2 text-xs text-gray-400">atau</span>
+                  </div>
+                </div>
+              </div>
+            )}
+            <div className="flex justify-center mb-6">
+              <input
+                type="password"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                maxLength={4}
+                autoFocus
+                autoComplete="one-time-code"
+                value={pin}
+                onChange={(e) => {
+                  const digits = e.target.value.replace(/\D/g, '').slice(0, 4)
+                  setPin(digits)
+                  if (digits.length === 4) {
+                    setTimeout(() => handleSubmit(digits), 150)
                   }
                 }}
-                className="w-12 h-12 rounded-xl bg-gray-100 dark:bg-dark-card text-gray-900 dark:text-white text-lg font-bold hover:bg-gray-200 dark:hover:bg-gray-700 transition-all duration-150 min-h-tap min-w-tap"
-              >
-                0
-              </button>
-              <button
-                onClick={() => setPin(pin.slice(0, -1))}
-                className="w-12 h-12 rounded-xl bg-gray-100 dark:bg-dark-card text-gray-900 dark:text-white text-lg font-bold hover:bg-gray-200 dark:hover:bg-gray-700 transition-all duration-150 min-h-tap min-w-tap flex items-center justify-center"
-                aria-label={t('pin.deleteDigit')}
-              >
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2M3 12l6.414 6.414a2 2 0 001.414.586H19a2 2 0 002-2V7a2 2 0 00-2-2h-8.172a2 2 0 00-1.414.586L3 12z" />
-                </svg>
-              </button>
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') handleSubmit()
+                }}
+                className="w-48 px-4 py-3 text-center text-2xl tracking-[0.5em] font-mono rounded-xl border-2 border-gray-200 dark:border-dark-border bg-white dark:bg-dark-card text-gray-900 dark:text-white outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all placeholder:text-gray-300 dark:placeholder:text-gray-600"
+                placeholder="• • • •"
+                aria-label={t('pin.enterPin')}
+              />
             </div>
 
             {error && (

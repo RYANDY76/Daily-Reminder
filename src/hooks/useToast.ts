@@ -33,12 +33,29 @@ export function useToast() {
     return show(message, 'info', duration)
   }, [show])
 
+  const undo = useCallback((message: string, onUndo: () => void, actionLabel = 'Undo') => {
+    const id = Math.random().toString(36).substring(7)
+    addToast({
+      id,
+      message,
+      type: 'info',
+      duration: 6000,
+      action: actionLabel,
+      onAction: () => {
+        onUndo()
+        removeToast(id)
+      }
+    })
+    return id
+  }, [addToast, removeToast])
+
   return {
     show,
     success,
     error,
     warning,
     info,
+    undo,
     remove: removeToast
   }
 }

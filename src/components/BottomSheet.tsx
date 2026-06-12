@@ -25,7 +25,6 @@ export default function BottomSheet({
 }: BottomSheetProps) {
   const [isDragging, setIsDragging] = useState(false)
   const [translateY, setTranslateY] = useState(0)
-  const [currentSnap, setCurrentSnap] = useState(initialSnap)
   const sheetRef = useRef<HTMLDivElement>(null)
   const startY = useRef(0)
   const startTranslate = useRef(0)
@@ -79,7 +78,7 @@ export default function BottomSheet({
 
   if (!isOpen) return null
 
-  const maxHeight = window.innerHeight * snapPoints[currentSnap]
+  const maxHeight = window.innerHeight * snapPoints[initialSnap]
 
   return (
     <div

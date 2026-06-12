@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { Play, Pause, RotateCcw, Coffee, Clock, Maximize, Minimize, ListTodo, History, Settings2, X } from 'lucide-react'
+import { Play, Pause, RotateCcw, Coffee, Clock, Maximize, Minimize, ListTodo, History, X, ClipboardList } from 'lucide-react'
 import { useT } from '../i18n'
 import { useProfileStore } from '../stores/useProfileStore'
 import { useTaskStore } from '../stores/useTaskStore'
@@ -206,9 +206,10 @@ export default function Pomodoro() {
             <Minimize className="w-6 h-6" />
           </button>
           {selectedTask && (
-            <p className="text-sm text-gray-400 mb-4 max-w-xs text-center truncate">
-              📋 {selectedTask.title}
-            </p>
+            <div className="flex items-center gap-1.5 text-sm text-gray-400 mb-4 max-w-xs truncate">
+              <ClipboardList className="w-4 h-4 flex-shrink-0" />
+              <span className="truncate">{selectedTask.title}</span>
+            </div>
           )}
           <p className="text-lg text-gray-400 mb-2">
             {mode === 'work' ? t('pomodoro.workMode') : t('pomodoro.breakMode')}

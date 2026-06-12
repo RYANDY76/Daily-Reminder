@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useProfileStore } from '../stores/useProfileStore'
 import { getAllTasksForProfile } from '../database'
-import { getTodayDate, formatDate, formatDateShort } from '../dates'
+import { getTodayDate, formatDateShort } from '../dates'
 import type { Task } from '../types'
 import { CheckCircle2, ArchiveIcon } from 'lucide-react'
 import { useT } from '../i18n'

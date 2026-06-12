@@ -18,21 +18,36 @@ export default {
           900: 'var(--color-primary-900)',
         },
         dark: {
-          bg: '#1A1A1A',
-          surface: '#242424',
-          card: '#2A2A2A',
-          border: '#333333'
+          bg: '#121212',
+          surface: '#1A1A1A',
+          card: '#242424',
+          border: '#2E2E2E'
         }
       },
       fontFamily: {
         sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif']
+      },
+      boxShadow: {
+        soft: '0 1px 3px 0 rgba(0,0,0,0.04), 0 1px 2px -1px rgba(0,0,0,0.06)',
+        card: '0 1px 4px 0 rgba(0,0,0,0.05), 0 2px 8px -1px rgba(0,0,0,0.04)',
+        elevated: '0 4px 16px -4px rgba(0,0,0,0.08), 0 1px 4px -1px rgba(0,0,0,0.04)',
+        modal: '0 20px 60px -8px rgba(0,0,0,0.15), 0 4px 16px -4px rgba(0,0,0,0.08)',
       },
       minHeight: {
         tap: '44px'
       },
       minWidth: {
         tap: '44px'
-      }
+      },
+      animation: {
+        'float': 'float 6s ease-in-out infinite',
+      },
+      keyframes: {
+        float: {
+          '0%, 100%': { transform: 'translateY(0) scale(1)' },
+          '50%': { transform: 'translateY(-20px) scale(1.05)' },
+        },
+      },
     }
   },
   plugins: []

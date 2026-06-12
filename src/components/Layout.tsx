@@ -9,7 +9,6 @@ interface LayoutProps {
 }
 
 export default function Layout({ children }: LayoutProps) {
-  const darkMode = useAppStore((s) => s.darkMode)
   const currentPage = useAppStore((s) => s.currentPage)
   const globalSearchOpen = useAppStore((s) => s.globalSearchOpen)
   const setGlobalSearchOpen = useAppStore((s) => s.setGlobalSearchOpen)
@@ -27,18 +26,18 @@ export default function Layout({ children }: LayoutProps) {
   }, [currentPage])
 
   return (
-    <div className={`min-h-screen bg-gray-50 dark:bg-dark-bg transition-colors duration-300 ${darkMode ? 'dark' : ''}`}>
+    <>
       <Header />
       <main className="pb-20 md:pb-0 md:pl-64">
         <div
           ref={contentRef}
-          className="max-w-4xl mx-auto px-4 py-4 md:py-6 page-enter"
+          className="max-w-4xl xl:max-w-6xl 2xl:max-w-7xl mx-auto px-4 py-4 md:py-8 page-enter"
         >
           {children}
         </div>
       </main>
       <BottomNav />
       <GlobalSearch isOpen={globalSearchOpen} onClose={() => setGlobalSearchOpen(false)} />
-    </div>
+    </>
   )
 }

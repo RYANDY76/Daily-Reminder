@@ -15,6 +15,7 @@ import {
   validateCoupleConnection,
   validateCoupleData
 } from '../utils/validation'
+import { AppErrorHandler } from '../utils/errorHandler'
 
 export function isCoupleSyncEnabled(): boolean {
   return isSupabaseConfigured()
@@ -26,7 +27,7 @@ async function getAuthUserId(): Promise<string | null> {
 
   const { data, error } = await sb.auth.getUser()
   if (error) {
-    console.warn('[coupleSync] auth', error.message)
+    AppErrorHandler.logError('COUPLE_SYNC_AUTH', error.message, 'low')
     return null
   }
   return data.user?.id ?? null
@@ -68,7 +69,7 @@ export async function syncCreateConnection(conn: CoupleConnection): Promise<void
   if (!sb) return
   const authUserId = await getAuthUserId()
   if (!authUserId) {
-    console.warn('[coupleSync] create: login required for cloud couple sync')
+    AppErrorHandler.logError('COUPLE_SYNC_CREATE', 'login required for cloud couple sync', 'low')
     return
   }
 
@@ -81,12 +82,12 @@ export async function syncCreateConnection(conn: CoupleConnection): Promise<void
     status: conn.status
   })
   if (validationError) {
-    console.warn('[coupleSync] create validation failed:', validationError)
+    AppErrorHandler.logError('COUPLE_SYNC_CREATE_VALIDATION', `create validation failed: ${validationError}`, 'medium')
     return
   }
 
   const { error } = await sb.from('couple_connections').insert(toRow(conn, authUserId))
-  if (error) console.warn('[coupleSync] create', error.message)
+  if (error) AppErrorHandler.logError('COUPLE_SYNC_CREATE', error.message, 'low')
 }
 
 export async function syncJoinConnection(
@@ -98,21 +99,21 @@ export async function syncJoinConnection(
   if (!sb) return null
   const authUserId = await getAuthUserId()
   if (!authUserId) {
-    console.warn('[coupleSync] join: login required for cloud couple sync')
+    AppErrorHandler.logError('COUPLE_SYNC_JOIN', 'login required for cloud couple sync', 'low')
     return null
   }
 
   // Validate inputs
   if (!isValidInviteCode(inviteCode)) {
-    console.warn('[coupleSync] join: invalid invite code')
+    AppErrorHandler.logError('COUPLE_SYNC_JOIN', 'invalid invite code', 'medium')
     return null
   }
   if (!isValidProfileId(profile2Id)) {
-    console.warn('[coupleSync] join: invalid profile2 ID')
+    AppErrorHandler.logError('COUPLE_SYNC_JOIN', 'invalid profile2 ID', 'medium')
     return null
   }
   if (!isValidString(profile2Name, 100)) {
-    console.warn('[coupleSync] join: invalid profile2 name')
+    AppErrorHandler.logError('COUPLE_SYNC_JOIN', 'invalid profile2 name', 'medium')
     return null
   }
 
@@ -146,7 +147,7 @@ export async function syncGetConnectionByProfile(profileId: string): Promise<Cou
 
   // Validate profileId
   if (!isValidProfileId(profileId)) {
-    console.warn('[coupleSync] getConnection: invalid profile ID')
+    AppErrorHandler.logError('COUPLE_SYNC_GET', 'invalid profile ID', 'low')
     return null
   }
 
@@ -174,7 +175,7 @@ export async function syncUpdateConnectionGamification(connectionId: string, poi
     .update({ points, level })
     .eq('id', connectionId)
 
-  if (error) console.warn('[coupleSync] gamification', error.message)
+  if (error) AppErrorHandler.logError('COUPLE_SYNC_GAMIFICATION', error.message, 'low')
 }
 
 export async function syncDeleteConnection(connectionId: string): Promise<void> {
@@ -182,7 +183,7 @@ export async function syncDeleteConnection(connectionId: string): Promise<void> 
   if (!sb) return
 
   if (!isValidString(connectionId, 100)) {
-    console.warn('[coupleSync] delete: invalid connection ID')
+    AppErrorHandler.logError('COUPLE_SYNC_DELETE', 'invalid connection ID', 'medium')
     return
   }
 
@@ -204,12 +205,12 @@ async function upsertEntity(table: string, id: string, coupleId: string, data: u
   // Validate before every write
   const validationError = validateCoupleData({ id, coupleId, data, updatedAt: Date.now() })
   if (validationError) {
-    console.warn(`[coupleSync] ${table} validation failed:`, validationError)
+    AppErrorHandler.logError(`COUPLE_SYNC_${table.toUpperCase()}`, `${table} validation failed: ${validationError}`, 'medium')
     return
   }
 
   const { error } = await sb.from(table).upsert({ id, couple_id: coupleId, data, updated_at: Date.now() })
-  if (error) console.warn(`[coupleSync] ${table}`, error.message)
+  if (error) AppErrorHandler.logError(`COUPLE_SYNC_${table.toUpperCase()}`, error.message, 'low')
 }
 
 export async function syncGoal(goal: CoupleGoal): Promise<void> {
@@ -221,7 +222,7 @@ export async function syncDeleteGoal(goalId: string): Promise<void> {
   if (!sb) return
 
   if (!isValidString(goalId, 100)) {
-    console.warn('[coupleSync] deleteGoal: invalid goal ID')
+    AppErrorHandler.logError('COUPLE_SYNC_DELETE_GOAL', 'invalid goal ID', 'medium')
     return
   }
 
@@ -256,7 +257,7 @@ export async function pullCoupleData(coupleId: string): Promise<{
 
   // Validate coupleId before querying
   if (!isValidCoupleId(coupleId)) {
-    console.warn('[coupleSync] pullCoupleData: invalid couple ID')
+    AppErrorHandler.logError('COUPLE_SYNC_PULL', 'invalid couple ID', 'medium')
     return { goals: [], loveNotes: [], activity: [], sharedTasks: [], taskComments: [] }
   }
 

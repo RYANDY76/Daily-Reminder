@@ -1,8 +1,9 @@
 import { lazy, Suspense } from 'react'
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
-import { useT } from './i18n'
 import Dashboard from './components/Dashboard'
+import ErrorBoundary from './components/ErrorBoundary'
+import { CalendarSkeleton, StatsSkeleton, GoalsSkeleton, HabitsSkeleton } from './components/Skeleton'
 
 const Calendar = lazy(() => import('./components/Calendar'))
 const Pomodoro = lazy(() => import('./components/Pomodoro'))
@@ -14,32 +15,61 @@ const Settings = lazy(() => import('./components/Settings'))
 const Goals = lazy(() => import('./components/Goals'))
 const Landing = lazy(() => import('./components/Landing'))
 
-function PageLoader() {
-  const t = useT()
+// Preload all lazy routes so they're ready before user navigates
+export function preloadRoutes() {
+  const routes = [
+    () => import('./components/Calendar'),
+    () => import('./components/Pomodoro'),
+    () => import('./components/HabitTracker'),
+    () => import('./components/CoupleDashboard'),
+    () => import('./components/Stats'),
+    () => import('./components/ProfileManager'),
+    () => import('./components/Settings'),
+    () => import('./components/Goals'),
+    () => import('./components/Landing'),
+  ]
+  for (const route of routes) route()
+}
+
+function PageLoader({ page }: { page: string }) {
+  const skeletons: Record<string, React.ReactNode> = {
+    calendar: <CalendarSkeleton />,
+    stats: <StatsSkeleton />,
+    goals: <GoalsSkeleton />,
+    habits: <HabitsSkeleton />
+  }
   return (
-    <div className="flex items-center justify-center py-20">
-      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-500" role="status">
-        <span className="sr-only">{t('common.loading')}</span>
-      </div>
+    <div className="max-w-4xl mx-auto px-4 py-4 md:py-6">
+      {skeletons[page] || (
+        <div className="flex items-center justify-center py-20">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-500" role="status">
+            <span className="sr-only">{'Loading...'}</span>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
 
-function LazyPage({ Component }: { Component: React.LazyExoticComponent<() => JSX.Element> }) {
+type LazyComponent = React.LazyExoticComponent<React.ComponentType<Record<string, never>>>
+
+function LazyPage({ Component, skeleton }: { Component: LazyComponent; skeleton: string }) {
   return (
-    <Suspense fallback={<PageLoader />}>
-      <Component />
-    </Suspense>
+    <ErrorBoundary>
+      <Suspense fallback={<PageLoader page={skeleton} />}>
+        <Component />
+      </Suspense>
+    </ErrorBoundary>
   )
 }
 
 function PageTransition({ children }: { children: React.ReactNode }) {
   return (
     <motion.div
-      initial={{ opacity: 0, x: 20 }}
-      animate={{ opacity: 1, x: 0 }}
-      exit={{ opacity: 0, x: -20 }}
-      transition={{ duration: 0.2 }}
+      initial={{ opacity: 0, y: 12, scale: 0.98 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      exit={{ opacity: 0, y: -8, scale: 0.98 }}
+      transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
       className="w-full h-full"
     >
       {children}
@@ -83,15 +113,15 @@ export default function AppRoutes() {
     <AnimatePresence mode="wait">
       <Routes location={location} key={location.pathname}>
         <Route path="/" element={<PageTransition><Dashboard /></PageTransition>} />
-        <Route path="/calendar" element={<PageTransition><LazyPage Component={Calendar as any} /></PageTransition>} />
-        <Route path="/pomodoro" element={<PageTransition><LazyPage Component={Pomodoro as any} /></PageTransition>} />
-        <Route path="/habits" element={<PageTransition><LazyPage Component={HabitTracker as any} /></PageTransition>} />
-        <Route path="/couple" element={<PageTransition><LazyPage Component={CoupleDashboard as any} /></PageTransition>} />
-        <Route path="/goals" element={<PageTransition><LazyPage Component={Goals as any} /></PageTransition>} />
-        <Route path="/stats" element={<PageTransition><LazyPage Component={Stats as any} /></PageTransition>} />
-        <Route path="/profile" element={<PageTransition><LazyPage Component={ProfileManager as any} /></PageTransition>} />
-        <Route path="/settings" element={<PageTransition><LazyPage Component={Settings as any} /></PageTransition>} />
-        <Route path="/about" element={<PageTransition><LazyPage Component={Landing as any} /></PageTransition>} />
+        <Route path="/calendar" element={<PageTransition><LazyPage Component={Calendar as LazyComponent} skeleton="calendar" /></PageTransition>} />
+        <Route path="/pomodoro" element={<PageTransition><LazyPage Component={Pomodoro as LazyComponent} skeleton="" /></PageTransition>} />
+        <Route path="/habits" element={<PageTransition><LazyPage Component={HabitTracker as LazyComponent} skeleton="habits" /></PageTransition>} />
+        <Route path="/couple" element={<PageTransition><LazyPage Component={CoupleDashboard as LazyComponent} skeleton="" /></PageTransition>} />
+        <Route path="/goals" element={<PageTransition><LazyPage Component={Goals as LazyComponent} skeleton="goals" /></PageTransition>} />
+        <Route path="/stats" element={<PageTransition><LazyPage Component={Stats as LazyComponent} skeleton="stats" /></PageTransition>} />
+        <Route path="/profile" element={<PageTransition><LazyPage Component={ProfileManager as LazyComponent} skeleton="" /></PageTransition>} />
+        <Route path="/settings" element={<PageTransition><LazyPage Component={Settings as LazyComponent} skeleton="" /></PageTransition>} />
+        <Route path="/about" element={<PageTransition><LazyPage Component={Landing as LazyComponent} skeleton="" /></PageTransition>} />
         {/* Fallback — redirect unknown routes to dashboard */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

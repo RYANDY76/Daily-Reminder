@@ -80,18 +80,14 @@ export default function ExportSettings() {
 
   return (
     <>
-      <div className="card overflow-hidden">
-        <div className="p-4 border-b border-gray-200 dark:border-dark-border">
-          <h3 className="font-semibold text-gray-900 dark:text-white">{t('settings.export')}</h3>
-        </div>
-        <div className="p-4">
-          <button
-            onClick={() => setExportModal(true)}
-            className="w-full py-2.5 rounded-xl bg-primary-500 hover:bg-primary-600 text-white text-sm font-medium transition-colors min-h-tap"
-          >
-            {t('settings.exportBtn')}
-          </button>
-        </div>
+      <div className="space-y-4">
+        <p className="text-xs text-gray-500 dark:text-gray-400">{t('settings.exportDesc') || 'Export tasks to PDF, CSV, or JSON format'}</p>
+        <button
+          onClick={() => setExportModal(true)}
+          className="w-full py-2.5 rounded-xl bg-primary-500 hover:bg-primary-600 text-white text-sm font-medium transition-colors min-h-tap"
+        >
+          {t('settings.exportBtn')}
+        </button>
       </div>
 
       {exportModal && (

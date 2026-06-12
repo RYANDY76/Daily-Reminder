@@ -194,7 +194,7 @@ function LegalPage({
 
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">{title}</h1>
         <p className="text-xs text-gray-400 mb-6">
-          {updatedLabel}: {new Date().toLocaleDateString(locale, { day: 'numeric', month: 'long', year: 'numeric' })}
+          {updatedLabel}: {new Date(2025, 0, 1).toLocaleDateString(locale, { day: 'numeric', month: 'long', year: 'numeric' })}
         </p>
 
         <div className="space-y-6 text-sm text-gray-600 dark:text-gray-300 leading-relaxed">

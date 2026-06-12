@@ -1,9 +1,8 @@
 import { create } from 'zustand'
 import type { Profile } from '../types'
-import { AVATARS } from '../types'
-import { getAllProfiles, saveProfile, deleteProfile as deleteProfileDb, getProfile, getProfileByGoogleId } from '../database'
+import { getAllProfiles, saveProfile, deleteProfile as deleteProfileDb, getProfile, getProfileByGoogleId, getProfileBySupabaseId } from '../database'
 import { hashPin } from '../crypto'
-import { useAppStore } from './useAppStore'
+import { getSupabase } from '../lib/supabase'
 
 interface GoogleUserInfo {
   id: string
@@ -19,8 +18,9 @@ interface ProfileState {
   showWelcome: boolean
   pinLocked: boolean
   loadProfiles: () => Promise<void>
-  createProfile: (name: string, pin: string | null) => Promise<Profile>
+  createProfile: (name: string, pin: string | null, consentGiven?: boolean) => Promise<Profile>
   createProfileFromGoogle: (googleInfo: GoogleUserInfo) => Promise<Profile>
+  createProfileFromSupabase: (supabaseUserId: string, email: string) => Promise<Profile>
   switchProfile: (profileId: string) => Promise<void>
   updateProfile: (updates: Partial<Profile>) => Promise<void>
   removeProfile: (profileId: string) => Promise<void>
@@ -53,22 +53,24 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
     }
   },
 
-  createProfile: async (name, pin) => {
+  createProfile: async (name, pin, consentGiven = false) => {
     const id = crypto.randomUUID()
     const profile: Profile = {
       id,
       name,
-      avatar: AVATARS[Math.floor(Math.random() * AVATARS.length)],
+      avatar: '',
       accentColor: '#1D9E75',
       pin: pin ? await hashPin(pin, id) : null,
       darkMode: 'system',
       googleId: null,
       googleEmail: null,
       googlePhotoUrl: null,
-      googleCalendarConnected: false,
-      googleCalendarId: null,
       googleAccessToken: null,
       googleRefreshToken: null,
+      supabaseUserId: null,
+      biometricEnabled: false,
+      biometricCredentialId: null,
+      consentGiven,
       createdAt: Date.now(),
       lastSyncAt: null
     }
@@ -101,10 +103,54 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
       googleId: googleInfo.id,
       googleEmail: googleInfo.email,
       googlePhotoUrl: photoUrl,
-      googleCalendarConnected: false,
-      googleCalendarId: null,
       googleAccessToken: null,
       googleRefreshToken: null,
+      supabaseUserId: null,
+      biometricEnabled: false,
+      biometricCredentialId: null,
+      consentGiven: true,
+      createdAt: Date.now(),
+      lastSyncAt: null
+    }
+    await saveProfile(profile)
+    const profiles = await getAllProfiles()
+    localStorage.setItem('daily_reminder_last_profile', profile.id)
+    applyProfileTheme(profile)
+    set({ profiles, currentProfile: profile, showWelcome: false, pinLocked: false })
+    return profile
+  },
+
+  createProfileFromSupabase: async (supabaseUserId, email) => {
+    const existing = await getProfileBySupabaseId(supabaseUserId)
+    if (existing) {
+      if (!existing.consentGiven) {
+        existing.consentGiven = true
+        await saveProfile(existing)
+      }
+      localStorage.setItem('daily_reminder_last_profile', existing.id)
+      applyProfileTheme(existing)
+      const profiles = await getAllProfiles()
+      set({ profiles, currentProfile: existing, showWelcome: false, pinLocked: existing.pin ? true : false })
+      return existing
+    }
+
+    const name = email.split('@')[0]
+    const profile: Profile = {
+      id: crypto.randomUUID(),
+      name,
+      avatar: '',
+      accentColor: '#1D9E75',
+      pin: null,
+      darkMode: 'system',
+      googleId: null,
+      googleEmail: null,
+      googlePhotoUrl: null,
+      googleAccessToken: null,
+      googleRefreshToken: null,
+      supabaseUserId,
+      biometricEnabled: false,
+      biometricCredentialId: null,
+      consentGiven: true,
       createdAt: Date.now(),
       lastSyncAt: null
     }
@@ -142,6 +188,18 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
 
   removeProfile: async (profileId) => {
     await deleteProfileDb(profileId)
+    // Cascade delete from Supabase cloud if configured
+    try {
+      const sb = getSupabase()
+      if (sb) {
+        const tables = ['app_tasks', 'app_daily_history', 'app_habits', 'app_mood_logs', 'app_pomodoro_sessions', 'app_goals', 'app_profiles']
+        for (const table of tables) {
+          try {
+            await sb.from(table).delete().eq('id', profileId).maybeSingle()
+          } catch { /* table may not exist */ }
+        }
+      }
+    } catch { /* cloud delete is best-effort */ }
     const profiles = await getAllProfiles()
     if (profiles.length === 0) {
       set({ profiles: [], currentProfile: null, showWelcome: true })
@@ -174,6 +232,10 @@ function applyProfileTheme(profile: Profile) {
   } else {
     document.documentElement.classList.remove('dark')
   }
+  // Sync store to match actual DOM state
+  import('./useAppStore').then(({ useAppStore }) => {
+    useAppStore.getState().setDarkMode(isDark)
+  })
   const meta = document.querySelector('meta[name="theme-color"]')
   if (meta) meta.setAttribute('content', profile.accentColor)
 }

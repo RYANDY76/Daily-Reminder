@@ -8,7 +8,14 @@ const DB_NAME = 'DailyReminderNotifications'
 const STORE = 'tasks'
 const CHECK_MS = 60000
 const HABIT_REMINDER_TIME = '09:00'
-const notifiedKeys = new Set()
+const notifiedKeys = new Map() // key -> timestamp
+
+function cleanupOldKeys() {
+  const now = Date.now()
+  for (const [key, ts] of notifiedKeys) {
+    if (now - ts > 24 * 60 * 60 * 1000) notifiedKeys.delete(key)
+  }
+}
 
 let checkTimer = null
 
@@ -27,14 +34,21 @@ function openDB() {
 }
 
 async function getAllCachedTasks() {
-  const db = await openDB()
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction(STORE, 'readonly')
-    const req = tx.objectStore(STORE).getAll()
-    req.onsuccess = () => resolve(req.result || [])
-    req.onerror = () => reject(req.error)
-    tx.oncomplete = () => db.close()
-  })
+  let db
+  try {
+    db = await openDB()
+    return await new Promise((resolve, reject) => {
+      const tx = db.transaction(STORE, 'readonly')
+      const req = tx.objectStore(STORE).getAll()
+      req.onsuccess = () => resolve(req.result || [])
+      req.onerror = () => reject(req.error)
+    })
+  } catch (err) {
+    console.error('[SW] Failed to read cached tasks:', err)
+    return []
+  } finally {
+    if (db) db.close()
+  }
 }
 
 function t(lang, key, vars) {
@@ -73,6 +87,7 @@ function todayStr() {
 }
 
 async function checkDueNotifications() {
+  cleanupOldKeys()
   if (Notification.permission !== 'granted') return
 
   const caches = await getAllCachedTasks()
@@ -94,7 +109,7 @@ async function checkDueNotifications() {
           icon: '/icons/icon-192x192.png',
           tag: habitKey
         })
-        notifiedKeys.add(habitKey)
+        notifiedKeys.set(habitKey, Date.now())
       }
     }
 
@@ -111,10 +126,10 @@ async function checkDueNotifications() {
           icon: '/icons/icon-192x192.png',
           tag: timeKey
         })
-        notifiedKeys.add(timeKey)
+        notifiedKeys.set(timeKey, Date.now())
       }
 
-      if (task.dueDate && task.dueDate >= today) {
+      if (task.dueDate && !task.done && task.dueDate <= today) {
         const dueDateTime = new Date(task.dueDate + 'T' + (task.time || '23:59') + ':00')
         const diffHours = (dueDateTime.getTime() - now.getTime()) / (1000 * 60 * 60)
 
@@ -126,7 +141,7 @@ async function checkDueNotifications() {
               icon: '/icons/icon-192x192.png',
               tag: warnKey
             })
-            notifiedKeys.add(warnKey)
+            notifiedKeys.set(warnKey, Date.now())
           }
         }
       }
@@ -135,9 +150,13 @@ async function checkDueNotifications() {
 }
 
 function startCheckLoop() {
-  if (checkTimer) clearInterval(checkTimer)
-  checkDueNotifications()
-  checkTimer = setInterval(checkDueNotifications, CHECK_MS)
+  try {
+    if (checkTimer) clearInterval(checkTimer)
+    checkDueNotifications()
+    checkTimer = setInterval(checkDueNotifications, CHECK_MS)
+  } catch (err) {
+    console.error('[SW] Failed to start check loop:', err)
+  }
 }
 
 self.addEventListener('install', () => self.skipWaiting())

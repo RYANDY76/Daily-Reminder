@@ -3,9 +3,18 @@ import { useProfileStore } from '../stores/useProfileStore'
 import { useCoupleStore } from '../stores/useCoupleStore'
 import { useToast } from '../hooks/useToast'
 import { useT } from '../i18n'
-import { Heart, Send, X, Smile } from 'lucide-react'
+import { Heart, Send, X, Smile, Star, Gift, Sparkles, Flower2, PartyPopper } from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
 
-const EMOJI_PICKER = ['❤️', '💕', '💖', '💗', '💘', '💝', '💞', '💓', '🥰', '😍', '😘', '🤗', '🌹', '💐', '🎁', '✨', '🌟', '⭐', '💫', '🎉']
+const LOVE_ICON_MAP: Record<string, LucideIcon> = {
+  Heart, Star, Gift, Sparkles, Flower2, PartyPopper,
+}
+const LOVE_ICON_NAMES = Object.keys(LOVE_ICON_MAP)
+
+function LoveIcon({ name, className }: { name?: string; className?: string }) {
+  const Icon = (name && LOVE_ICON_MAP[name as keyof typeof LOVE_ICON_MAP]) || Heart
+  return <Icon className={className || 'w-5 h-5'} />
+}
 
 export default function FloatingLoveNoteButton() {
   const t = useT()
@@ -19,7 +28,7 @@ export default function FloatingLoveNoteButton() {
   const [showModal, setShowModal] = useState(false)
   const [showEmojiPicker, setShowEmojiPicker] = useState(false)
   const [message, setMessage] = useState('')
-  const [selectedEmoji, setSelectedEmoji] = useState('💕')
+  const [selectedEmoji, setSelectedEmoji] = useState('Heart')
   const [sending, setSending] = useState(false)
 
   if (!connection || connection.status !== 'active') {
@@ -46,10 +55,10 @@ export default function FloatingLoveNoteButton() {
       const loadLoveNotes = useCoupleStore.getState().loadLoveNotes
       await loadLoveNotes(currentProfile.id)
       
-      success(`💌 ${t('couple.noteSent')}`)
+      success(t('couple.noteSent'))
       setShowModal(false)
       setMessage('')
-      setSelectedEmoji('💕')
+      setSelectedEmoji('Heart')
     } catch (error) {
       console.error('Failed to send love note:', error)
     } finally {
@@ -98,23 +107,23 @@ export default function FloatingLoveNoteButton() {
                   onClick={() => setShowEmojiPicker(!showEmojiPicker)}
                   className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-dark-border bg-white dark:bg-dark-bg text-2xl hover:bg-gray-50 dark:hover:bg-dark-bg transition-colors flex items-center justify-between"
                 >
-                  <span>{selectedEmoji}</span>
+                  <LoveIcon name={selectedEmoji} className="w-6 h-6 text-pink-500" />
                   <Smile className="w-4 h-4 text-gray-400" />
                 </button>
 
                 {showEmojiPicker && (
                   <div className="absolute z-10 mt-2 w-full p-2 bg-white dark:bg-dark-card rounded-lg shadow-lg border border-gray-200 dark:border-dark-border grid grid-cols-5 gap-1">
-                    {EMOJI_PICKER.map(emoji => (
+                    {LOVE_ICON_NAMES.map(name => (
                       <button
-                        key={emoji}
+                        key={name}
                         type="button"
                         onClick={() => {
-                          setSelectedEmoji(emoji)
+                          setSelectedEmoji(name)
                           setShowEmojiPicker(false)
                         }}
-                        className="text-2xl hover:scale-125 transition-transform p-1"
+                        className="hover:scale-125 transition-transform p-2"
                       >
-                        {emoji}
+                        <LoveIcon name={name} className="w-5 h-5 text-pink-500" />
                       </button>
                     ))}
                   </div>

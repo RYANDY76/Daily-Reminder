@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Palette, Check } from 'lucide-react'
-import { PRESET_THEMES, applyTheme, saveThemePreference, loadThemePreference, type Theme } from '../types/theme'
+import { PRESET_THEMES, applyTheme, saveThemePreference, loadThemePreference } from '../types/theme'
 import { useT } from '../i18n'
 
 export default function ThemeSelector() {

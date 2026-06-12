@@ -27,7 +27,7 @@ export default function Landing() {
           <p className="text-primary-100 text-base leading-relaxed">{t('landing.subtitle')}</p>
           <button
             onClick={() => navigate('/')}
-            className="mt-8 inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-white text-primary-600 font-semibold hover:bg-primary-50 transition-colors shadow-lg"
+            className="mt-8 inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-white text-primary-600 font-semibold hover:bg-primary-50 transition-colors shadow-lg min-h-tap"
           >
             {t('landing.getStarted')}
             <ArrowRight className="w-4 h-4" />
@@ -61,7 +61,7 @@ export default function Landing() {
 
         <button
           onClick={() => navigate('/')}
-          className="w-full py-3 rounded-xl bg-primary-500 hover:bg-primary-600 text-white font-medium transition-colors"
+          className="w-full py-3 rounded-xl bg-primary-500 hover:bg-primary-600 text-white font-medium transition-colors min-h-tap"
         >
           {t('landing.openApp')}
         </button>

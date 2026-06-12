@@ -5,6 +5,7 @@
 
 import { useEffect, useState } from 'react'
 import { CheckCircle2, AlertCircle, Info, X, XCircle } from 'lucide-react'
+import { useT } from '../i18n'
 
 export type ToastType = 'success' | 'error' | 'info' | 'warning'
 
@@ -13,6 +14,8 @@ interface ToastProps {
   type?: ToastType
   duration?: number
   onClose: () => void
+  action?: string
+  onAction?: () => void
 }
 
 const icons = {
@@ -29,21 +32,24 @@ const styles = {
   info: 'bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800'
 }
 
-export default function Toast({ message, type = 'info', duration = 3000, onClose }: ToastProps) {
+export default function Toast({ message, type = 'info', duration, onClose, action, onAction }: ToastProps) {
+  const t = useT()
   const [isExiting, setIsExiting] = useState(false)
   const Icon = icons[type]
+  const effectiveDuration = duration ?? (action ? 6000 : 3000)
 
   useEffect(() => {
     const timer = setTimeout(() => {
       setIsExiting(true)
       setTimeout(onClose, 300)
-    }, duration)
+    }, effectiveDuration)
 
     return () => clearTimeout(timer)
-  }, [duration, onClose])
+  }, [effectiveDuration, onClose])
 
   return (
     <div
+      role="alert"
       className={`fixed top-4 left-4 right-4 md:left-auto md:right-4 md:w-96 z-[9999] ${
         isExiting ? 'animate-toast-exit' : 'animate-toast-enter'
       }`}
@@ -51,13 +57,25 @@ export default function Toast({ message, type = 'info', duration = 3000, onClose
       <div className={`${styles[type]} border rounded-2xl shadow-2xl backdrop-blur-xl px-4 py-3 flex items-center gap-3`}>
         <Icon className="w-5 h-5 flex-shrink-0" />
         <p className="flex-1 text-sm font-medium leading-snug">{message}</p>
+        {action && onAction && (
+          <button
+            onClick={() => {
+              onAction()
+              setIsExiting(true)
+              setTimeout(onClose, 300)
+            }}
+            className="flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold bg-black/10 dark:bg-white/10 hover:bg-black/20 dark:hover:bg-white/20 transition-colors"
+          >
+            {action}
+          </button>
+        )}
         <button
           onClick={() => {
             setIsExiting(true)
             setTimeout(onClose, 300)
           }}
           className="flex-shrink-0 p-1 rounded-lg hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
-          aria-label="Close"
+          aria-label={t('common.close')}
         >
           <X className="w-4 h-4" />
         </button>
@@ -72,6 +90,8 @@ interface ToastMessage {
   message: string
   type: ToastType
   duration?: number
+  action?: string
+  onAction?: () => void
 }
 
 interface ToastContainerProps {
@@ -81,7 +101,7 @@ interface ToastContainerProps {
 
 export function ToastContainer({ toasts, onRemove }: ToastContainerProps) {
   return (
-    <div className="fixed top-0 left-0 right-0 z-[9999] pointer-events-none">
+    <div aria-live="polite" className="fixed top-0 left-0 right-0 z-[9999] pointer-events-none">
       <div className="space-y-2 pointer-events-auto pt-4">
         {toasts.map((toast) => (
           <Toast
@@ -90,6 +110,8 @@ export function ToastContainer({ toasts, onRemove }: ToastContainerProps) {
             type={toast.type}
             duration={toast.duration}
             onClose={() => onRemove(toast.id)}
+            action={toast.action}
+            onAction={toast.onAction}
           />
         ))}
       </div>

@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import type { Task, SessionType, RecurringConfig, DailyHistory, TaskPriority } from '../types'
+import type { Task, SessionType, RecurringConfig, TaskPriority } from '../types'
 import { getSessionFromTime, getTodayDate, isPast } from '../dates'
 import {
   saveTask,
@@ -12,9 +12,8 @@ import {
 import { useProfileStore } from './useProfileStore'
 import { useCoupleStore } from './useCoupleStore'
 import { useAppStore } from './useAppStore'
-import { AppErrorHandler, retryAsync, safeAsync } from '../utils/errorHandler'
+import { AppErrorHandler, retryAsync } from '../utils/errorHandler'
 import { scheduleAutoCloudSync } from '../services/autoCloudSync'
-import { syncTaskWithGoogle } from '../services/googleCalendarService'
 
 interface TaskState {
   tasks: Task[]
@@ -156,8 +155,6 @@ export const useTaskStore = create<TaskState>((set, get) => ({
       sortOrder: maxOrder + 1,
       createdAt: Date.now(),
       updatedAt: Date.now(),
-      googleEventId: null,
-      syncedToGoogle: false,
       snoozedUntil: null
     }
 
@@ -187,11 +184,7 @@ export const useTaskStore = create<TaskState>((set, get) => ({
     }
 
     if (task) {
-      let updated = { ...task, ...updates, updatedAt: Date.now() }
-      if (updated.syncedToGoogle || updated.googleEventId) {
-        const synced = await syncTaskWithGoogle(updated, 'update')
-        if (synced) updated = synced
-      }
+      const updated = { ...task, ...updates, updatedAt: Date.now() }
       await saveTask(updated)
       await get().loadTodayTasks()
       const newTasks = get().tasks.map(t => t.id === id ? updated : t)
@@ -217,7 +210,7 @@ export const useTaskStore = create<TaskState>((set, get) => ({
       if (result && result.newLevel > result.oldLevel) {
         useAppStore.getState().addToast({
           id: crypto.randomUUID(),
-          message: `🎉 Level Up! Anda & Pasangan mencapai Level ${result.newLevel}!`,
+          message: `Level Up! Anda & Pasangan mencapai Level ${result.newLevel}!`,
           type: 'success',
           duration: 5000
         })
@@ -233,11 +226,7 @@ export const useTaskStore = create<TaskState>((set, get) => ({
   },
 
   removeTask: async (id) => {
-    const task = get().tasks.find(t => t.id === id) || await getTaskById(id)
     try {
-      if (task?.googleEventId) {
-        await syncTaskWithGoogle(task, 'delete')
-      }
       await retryAsync(async () => await deleteTaskDb(id), 2, 500)
       await get().loadTodayTasks()
       const profile = useProfileStore.getState().currentProfile

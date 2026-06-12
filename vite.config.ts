@@ -7,12 +7,14 @@ export default defineConfig({
   plugins: [
     react(),
     VitePWA({
-      registerType: 'autoUpdate',
+      registerType: 'prompt',
+      devOptions: { enabled: false },
       includeAssets: ['favicon.svg', 'robots.txt', 'sitemap.xml'],
       manifest: {
         name: 'Daily Reminder',
         short_name: 'DailyRM',
         description: 'Aplikasi jadwal harian berbasis web',
+        lang: 'id',
         theme_color: '#1D9E75',
         background_color: '#FFFFFF',
         display: 'standalone',
@@ -34,6 +36,18 @@ export default defineConfig({
             options: {
               cacheName: 'google-fonts-cache',
               expiration: { maxEntries: 10, maxAgeSeconds: 60 * 60 * 24 * 365 }
+            }
+          },
+          {
+            urlPattern: /^https:\/\/.*\.supabase\.co\/rest\/v1\/.*/i,
+            handler: 'NetworkFirst',
+            options: {
+              cacheName: 'supabase-api-cache',
+              expiration: {
+                maxEntries: 50,
+                maxAgeSeconds: 60 * 5 // 5 minutes
+              },
+              networkTimeoutSeconds: 3
             }
           }
         ]
@@ -57,8 +71,7 @@ export default defineConfig({
         manualChunks: {
           vendor: ['react', 'react-dom', 'react-router-dom'],
           ui: ['framer-motion', 'lucide-react'],
-          data: ['dexie', 'zustand', '@supabase/supabase-js'],
-          pdf: ['jspdf', 'html2canvas']
+          data: ['dexie', 'zustand', '@supabase/supabase-js']
         }
       }
     }

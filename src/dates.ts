@@ -4,6 +4,12 @@ export function getTodayDate(): string {
   return new Date().toISOString().split('T')[0]
 }
 
+export function getTomorrowDate(): string {
+  const d = new Date()
+  d.setDate(d.getDate() + 1)
+  return d.toISOString().split('T')[0]
+}
+
 export function getSessionFromHour(hour: number): SessionType {
   if (hour < 12) return 'pagi'
   if (hour < 15) return 'siang'
@@ -68,7 +74,10 @@ export function generateDateRange(startDate: string, endDate: string): string[] 
   const current = new Date(startDate + 'T00:00:00')
   const end = new Date(endDate + 'T00:00:00')
   while (current <= end) {
-    dates.push(current.toISOString().split('T')[0])
+    const y = current.getFullYear()
+    const m = String(current.getMonth() + 1).padStart(2, '0')
+    const d = String(current.getDate()).padStart(2, '0')
+    dates.push(`${y}-${m}-${d}`)
     current.setDate(current.getDate() + 1)
   }
   return dates
@@ -88,16 +97,10 @@ export function isSameDay(date1: string, date2: string): boolean {
   return date1 === date2
 }
 
-export function getTimeGreeting(t?: (key: string) => string): string {
+export function getTimeGreeting(t: (key: string) => string): string {
   const h = new Date().getHours()
-  if (t) {
-    if (h < 12) return t('greeting.morning')
-    if (h < 15) return t('greeting.afternoon')
-    if (h < 18) return t('greeting.evening')
-    return t('greeting.night')
-  }
-  if (h < 12) return 'Selamat Pagi'
-  if (h < 15) return 'Selamat Siang'
-  if (h < 18) return 'Selamat Sore'
-  return 'Selamat Malam'
+  if (h < 12) return t('greeting.morning')
+  if (h < 15) return t('greeting.afternoon')
+  if (h < 18) return t('greeting.evening')
+  return t('greeting.night')
 }

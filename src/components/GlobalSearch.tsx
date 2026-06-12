@@ -1,12 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useProfileStore } from '../stores/useProfileStore'
-import { getAllTasksForProfile } from '../database'
+import { getAllTasksForProfile, db } from '../database'
 import { formatDateShort } from '../dates'
 import { useT } from '../i18n'
 import { PAGE_TO_ROUTE } from '../router'
-import type { Task, TaskPriority } from '../types'
-import { Search, X, CalendarDays, Filter } from 'lucide-react'
+import type { Task, TaskPriority, Habit, Goal } from '../types'
+import { Search, X, CalendarDays, Filter, ListTodo, Target } from 'lucide-react'
 
 interface GlobalSearchProps {
   isOpen: boolean
@@ -23,6 +23,8 @@ export default function GlobalSearch({ isOpen, onClose }: GlobalSearchProps) {
   const [query, setQuery] = useState('')
   const [tasks, setTasks] = useState<Task[]>([])
   const [loading, setLoading] = useState(false)
+  const [habits, setHabits] = useState<Habit[]>([])
+  const [goals, setGoals] = useState<Goal[]>([])
   const [showFilters, setShowFilters] = useState(false)
   const [priority, setPriority] = useState<TaskPriority | 'all'>('all')
   const [status, setStatus] = useState<StatusFilter>('all')
@@ -35,9 +37,15 @@ export default function GlobalSearch({ isOpen, onClose }: GlobalSearchProps) {
     setStatus('all')
     setTagFilter('')
     setLoading(true)
-    getAllTasksForProfile(profile.id)
-      .then(setTasks)
-      .finally(() => setLoading(false))
+    Promise.all([
+      getAllTasksForProfile(profile.id),
+      db.habits.where('profileId').equals(profile.id).toArray(),
+      db.goals.where('profileId').equals(profile.id).toArray()
+    ]).then(([ts, hs, gs]) => {
+      setTasks(ts)
+      setHabits(hs)
+      setGoals(gs)
+    }).finally(() => setLoading(false))
     setTimeout(() => inputRef.current?.focus(), 50)
   }, [isOpen, profile?.id])
 
@@ -52,7 +60,7 @@ export default function GlobalSearch({ isOpen, onClose }: GlobalSearchProps) {
 
   const allTags = useMemo(() => [...new Set(tasks.flatMap(t => t.tags || []))].sort(), [tasks])
 
-  const results = useMemo(() => {
+  const taskResults = useMemo(() => {
     const q = query.trim().toLowerCase()
     return tasks
       .filter((task) => {
@@ -66,6 +74,20 @@ export default function GlobalSearch({ isOpen, onClose }: GlobalSearchProps) {
       .sort((a, b) => b.date.localeCompare(a.date) || a.time.localeCompare(b.time))
       .slice(0, 40)
   }, [query, tasks, priority, status, tagFilter])
+
+  const habitResults = useMemo(() => {
+    const q = query.trim().toLowerCase()
+    if (!q) return []
+    return habits.filter(h => h.name.toLowerCase().includes(q)).slice(0, 10)
+  }, [query, habits])
+
+  const goalResults = useMemo(() => {
+    const q = query.trim().toLowerCase()
+    if (!q) return []
+    return goals.filter(g => g.title.toLowerCase().includes(q) || g.description?.toLowerCase().includes(q)).slice(0, 10)
+  }, [query, goals])
+
+  const hasQuery = query.trim().length > 0
 
   const openTask = (task: Task) => {
     onClose()
@@ -150,36 +172,81 @@ export default function GlobalSearch({ isOpen, onClose }: GlobalSearchProps) {
         <div className="max-h-[50vh] overflow-y-auto">
           {loading ? (
             <p className="p-6 text-sm text-gray-400 text-center">{t('common.loading')}</p>
-          ) : results.length === 0 ? (
+          ) : hasQuery && taskResults.length === 0 && habitResults.length === 0 && goalResults.length === 0 ? (
             <p className="p-6 text-sm text-gray-400 text-center">{t('search.noResults')}</p>
           ) : (
-            <ul className="divide-y divide-gray-100 dark:divide-dark-border">
-              {results.map((task) => (
-                <li key={task.id}>
-                  <button
-                    onClick={() => openTask(task)}
-                    className="w-full text-left px-4 py-3 hover:bg-gray-50 dark:hover:bg-dark-card transition-colors flex items-start gap-3"
-                  >
-                    <CalendarDays className="w-4 h-4 text-primary-500 mt-0.5 flex-shrink-0" />
-                    <div className="min-w-0 flex-1">
-                      <p className={`text-sm font-medium truncate ${task.done ? 'line-through text-gray-400' : 'text-gray-900 dark:text-white'}`}>
-                        {task.title}
-                      </p>
-                      <p className="text-xs text-gray-400 mt-0.5">
-                        {formatDateShort(task.date)} · {task.time} · {task.priority}
-                        {task.tags?.length ? ` · ${task.tags.join(', ')}` : ''}
-                      </p>
-                    </div>
-                  </button>
-                </li>
-              ))}
-            </ul>
+            <div className="divide-y divide-gray-100 dark:divide-dark-border">
+              {taskResults.length > 0 && (
+                <div>
+                  {hasQuery && <p className="px-4 pt-3 pb-1 text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Tugas</p>}
+                  <ul className={hasQuery ? '' : 'divide-y divide-gray-100 dark:divide-dark-border'}>
+                    {taskResults.map((task) => (
+                      <li key={task.id}>
+                        <button
+                          onClick={() => openTask(task)}
+                          className="w-full text-left px-4 py-3 hover:bg-gray-50 dark:hover:bg-dark-card transition-colors flex items-start gap-3"
+                        >
+                          <CalendarDays className="w-4 h-4 text-primary-500 mt-0.5 flex-shrink-0" />
+                          <div className="min-w-0 flex-1">
+                            <p className={`text-sm font-medium truncate ${task.done ? 'line-through text-gray-400' : 'text-gray-900 dark:text-white'}`}>
+                              {task.title}
+                            </p>
+                            <p className="text-xs text-gray-400 mt-0.5">
+                              {formatDateShort(task.date)} · {task.time} · {task.priority}
+                              {task.tags?.length ? ` · ${task.tags.join(', ')}` : ''}
+                            </p>
+                          </div>
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {habitResults.length > 0 && (
+                <div>
+                  <p className="px-4 pt-3 pb-1 text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Kebiasaan</p>
+                  {habitResults.map((h) => (
+                    <button
+                      key={h.id}
+                      onClick={() => { onClose(); navigate(PAGE_TO_ROUTE.habits) }}
+                      className="w-full text-left px-4 py-3 hover:bg-gray-50 dark:hover:bg-dark-card transition-colors flex items-start gap-3"
+                    >
+                      <ListTodo className="w-4 h-4 text-orange-500 mt-0.5 flex-shrink-0" />
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{h.name}</p>
+                        <p className="text-xs text-gray-400">{h.frequency} · streak {h.currentStreak}</p>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {goalResults.length > 0 && (
+                <div>
+                  <p className="px-4 pt-3 pb-1 text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Target</p>
+                  {goalResults.map((g) => (
+                    <button
+                      key={g.id}
+                      onClick={() => { onClose(); navigate(PAGE_TO_ROUTE.goals) }}
+                      className="w-full text-left px-4 py-3 hover:bg-gray-50 dark:hover:bg-dark-card transition-colors flex items-start gap-3"
+                    >
+                      <Target className="w-4 h-4 text-blue-500 mt-0.5 flex-shrink-0" />
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{g.title}</p>
+                        <p className="text-xs text-gray-400">{g.targetDate ? `Target: ${g.targetDate}` : ''}</p>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           )}
         </div>
 
         <div className="px-4 py-2 border-t border-gray-100 dark:border-dark-border text-[11px] text-gray-400 flex justify-between">
           <span>{t('search.hint')}</span>
-          <span>{results.length} {t('search.results')}</span>
+          <span>{taskResults.length + habitResults.length + goalResults.length} {t('search.results')}</span>
         </div>
       </div>
     </div>

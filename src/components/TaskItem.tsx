@@ -8,7 +8,7 @@ import { useT } from '../i18n'
 import { useHaptic } from '../hooks/useHaptic'
 import { useToast } from '../hooks/useToast'
 import { usePerformance } from '../hooks/usePerformance'
-import { Check, MoreVertical, Pencil, Trash2, Repeat, FileText, AlertCircle, CalendarX, ListChecks, Play, Pause, Share2, X, Bell, BellOff, Users, MessageSquare } from 'lucide-react'
+import { Check, MoreVertical, Pencil, Trash2, Repeat, FileText, AlertCircle, CalendarX, Play, Pause, Share2, Bell, BellOff, Users, MessageSquare } from 'lucide-react'
 import SwipeableCard from './SwipeableCard'
 
 const LazyShareTaskModal = lazy(() => import('./ShareTaskModal'))
@@ -307,7 +307,7 @@ export default function TaskItem({ task, onToggle, onEdit, onDelete, onStopRecur
         <div className="relative flex items-center">
           <button
             onClick={() => setShowMenu(!showMenu)}
-            className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-all duration-200 min-h-tap min-w-tap flex items-center justify-center opacity-0 group-hover:opacity-100 focus:opacity-100"
+            className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-all duration-200 min-h-tap min-w-tap flex items-center justify-center opacity-100 md:opacity-0 md:group-hover:opacity-100 focus-visible:opacity-100"
             aria-label={t('task.menu', { title: task.title })}
             aria-expanded={showMenu}
           >
@@ -414,12 +414,12 @@ export default function TaskItem({ task, onToggle, onEdit, onDelete, onStopRecur
                 <button
                   onClick={() => {
                     setShowMenu(false)
-                    const text = `📋 ${task.title}\n⏰ ${task.time}${task.notes ? `\n📝 ${task.notes}` : ''}`
+                    const text = `[${task.title}]\n${task.time}${task.notes ? `\n${task.notes}` : ''}`
                     if (navigator.share) {
                       navigator.share({ title: task.title, text })
                     } else {
                       navigator.clipboard.writeText(text)
-                      alert(t('common.copied'))
+                      success(t('common.copied'))
                     }
                   }}
                   className="w-full text-left px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-dark-surface transition-colors duration-150 min-h-tap flex items-center gap-2.5"

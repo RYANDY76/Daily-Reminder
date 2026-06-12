@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useState, useRef, useCallback } from 'react'
+import { useEffect, useState, useRef, useCallback } from 'react'
 import { useLocation } from 'react-router-dom'
 import { useProfileStore } from './stores/useProfileStore'
 import { useAppStore } from './stores/useAppStore'
@@ -7,8 +7,8 @@ import { useTaskStore } from './stores/useTaskStore'
 import { useRecurringStore } from './stores/useRecurringStore'
 import { useIdleTimeout } from './hooks/useIdleTimeout'
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts'
+import { useAnalytics } from './hooks/useAnalytics'
 import { loadAccentColor } from './utils/theme'
-import { loadThemePreference, getThemeById, applyTheme } from './types/theme'
 import { useT } from './i18n'
 import Layout from './components/Layout'
 import Welcome from './components/Welcome'
@@ -18,12 +18,14 @@ import { ToastContainer } from './components/Toast'
 import FAB from './components/FAB'
 import KeyboardShortcutsHelp from './components/KeyboardShortcutsHelp'
 import InstallPrompt from './components/InstallPrompt'
+import UpdatePrompt from './components/UpdatePrompt'
 import OnboardingTour from './components/OnboardingTour'
-import AppRoutes, { ROUTE_TO_PAGE } from './router'
-import { fetchGoogleCalendarEvents } from './services/googleCalendarService'
+import Landing from './components/Landing'
+import LoginPage from './components/LoginPage'
+import AppRoutes, { ROUTE_TO_PAGE, preloadRoutes } from './router'
+import { initWebVitals } from './lib/webVitals'
 import type { Page } from './types'
 
-const LazyLanding = lazy(() => import('./components/Landing'))
 const PUBLIC_PATHS = new Set(['/about'])
 
 export default function App() {
@@ -48,12 +50,12 @@ export default function App() {
 
   const [initialized, setInitialized] = useState(false)
   const [showShortcutsHelp, setShowShortcutsHelp] = useState(false)
-  // Track if initial data load has been done
+  const [authenticated, setAuthenticated] = useState(() => false)
   const dataLoadedRef = useRef(false)
-  // Track last visibility-change refresh timestamp
   const lastRefreshRef = useRef(0)
 
   useIdleTimeout()
+  useAnalytics()
 
   // Sync URL to Zustand state
   useEffect(() => {
@@ -62,6 +64,10 @@ export default function App() {
       setPage(pageFromUrl)
     }
   }, [location.pathname, currentPage, setPage])
+
+  useEffect(() => {
+    initWebVitals()
+  }, [])
 
   // Global keyboard shortcuts
   useKeyboardShortcuts({
@@ -84,40 +90,59 @@ export default function App() {
   // Bootstrap: init auth + profiles + immediate data load
   useEffect(() => {
     initAuth()
+    loadAccentColor()
     loadProfiles()
       .then(async () => {
         setInitialized(true)
-        // Pre-load tasks right after profiles are ready — avoids waiting for Dashboard mount
+        preloadRoutes()
+
+        // Apply system preference only if profile has no explicit setting
         const profile = useProfileStore.getState().currentProfile
+        if (!profile || profile.darkMode === 'system') {
+          const prefersDark = window.matchMedia?.('(prefers-color-scheme: dark)').matches ?? false
+          if (prefersDark) {
+            document.documentElement.classList.add('dark')
+            setDarkMode(true)
+          }
+        }
+
+        // Pre-load tasks right after profiles are ready
         if (profile && !dataLoadedRef.current) {
           dataLoadedRef.current = true
           await refreshCoreData()
         }
       })
       .catch(() => setInitialized(true))
-    loadAccentColor()
-
-    // Load saved theme
-    const savedThemeId = loadThemePreference()
-    const theme = getThemeById(savedThemeId)
-    if (theme) {
-      applyTheme(theme)
-    }
   }, [loadProfiles]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Apply system dark mode preference on mount
+  // Listen for system dark mode changes in real-time
   useEffect(() => {
-    const prefersDark = window.matchMedia?.('(prefers-color-scheme: dark)').matches ?? false
-    if (prefersDark) {
-      document.documentElement.classList.add('dark')
-      setDarkMode(true)
+    const mq = window.matchMedia?.('(prefers-color-scheme: dark)')
+    if (!mq) return
+
+    const handler = (e: MediaQueryListEvent) => {
+      const profile = useProfileStore.getState().currentProfile
+      // Only react to system changes if profile uses 'system' mode
+      if (!profile || profile.darkMode === 'system') {
+        if (e.matches) {
+          document.documentElement.classList.add('dark')
+          setDarkMode(true)
+        } else {
+          document.documentElement.classList.remove('dark')
+          setDarkMode(false)
+        }
+      }
     }
+
+    mq.addEventListener('change', handler)
+    return () => mq.removeEventListener('change', handler)
   }, [setDarkMode])
 
   // Re-load data when profile becomes available (after Welcome screen)
   useEffect(() => {
     if (currentProfile && !dataLoadedRef.current) {
       dataLoadedRef.current = true
+      preloadRoutes()
       refreshCoreData()
     }
   }, [currentProfile, refreshCoreData])
@@ -141,30 +166,19 @@ export default function App() {
       }
     }
 
+    const handlePageShow = (e: PageTransitionEvent) => {
+      if (e.persisted) handleVisibilityChange()
+    }
+
     document.addEventListener('visibilitychange', handleVisibilityChange)
     // Also handle the `pageshow` event for PWA/iOS Safari which fires on app resume
-    window.addEventListener('pageshow', (e) => {
-      if (e.persisted) handleVisibilityChange()
-    })
+    window.addEventListener('pageshow', handlePageShow as EventListener)
 
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange)
+      window.removeEventListener('pageshow', handlePageShow as EventListener)
     }
   }, [refreshCoreData])
-
-  // Periodic Google Calendar sync every 30 minutes when connected
-  useEffect(() => {
-    const profile = useProfileStore.getState().currentProfile
-    if (!profile?.googleCalendarConnected) return
-
-    fetchGoogleCalendarEvents(14).catch(() => {})
-    const interval = setInterval(() => {
-      const p = useProfileStore.getState().currentProfile
-      if (p?.googleCalendarConnected) fetchGoogleCalendarEvents(14).catch(() => {})
-    }, 30 * 60 * 1000)
-
-    return () => clearInterval(interval)
-  }, [currentProfile?.googleCalendarConnected])
 
   if (!initialized || loading) {
     return (
@@ -179,10 +193,26 @@ export default function App() {
     )
   }
 
-  if (showWelcome || !currentProfile) {
-    if (PUBLIC_PATHS.has(location.pathname)) {
-      return <Suspense fallback={null}><LazyLanding /></Suspense>
-    }
+  if (PUBLIC_PATHS.has(location.pathname)) {
+    return <Landing />
+  }
+
+  if (!authenticated) {
+    return (
+      <LoginPage
+        onComplete={() => {
+          setAuthenticated(true)
+          dataLoadedRef.current = false
+          loadProfiles()
+        }}
+        onGuest={() => {
+          setAuthenticated(true)
+        }}
+      />
+    )
+  }
+
+  if (showWelcome) {
     return (
       <Welcome
         onComplete={() => {
@@ -212,6 +242,7 @@ export default function App() {
         />
       )}
       <InstallPrompt />
+      <UpdatePrompt />
       <OnboardingTour />
     </>
   )

@@ -6,14 +6,15 @@ import { TASK_COLORS } from '../types'
 import { useTaskStore } from '../stores/useTaskStore'
 import { useAppStore } from '../stores/useAppStore'
 import { useProfileStore } from '../stores/useProfileStore'
+import { useToast } from '../hooks/useToast'
 import { saveTask } from '../database'
+import { suggestOptimalTime } from '../services/smartSchedule'
 import { parseNaturalLanguage } from '../utils/naturalLanguageParser'
 import { hasTimeIndicator, hasDateIndicator } from '../utils/naturalLanguage'
 import { getTemplates, saveTemplate, deleteTemplate, type TaskTemplate } from '../utils/templates'
-import { useGoogleCalendar } from '../hooks/useGoogleCalendar'
-import { syncTaskWithGoogle } from '../services/googleCalendarService'
 import { z } from 'zod'
 import { X, Sparkles, Bookmark, ChevronDown, Mic } from 'lucide-react'
+import { sanitizeInput } from '../utils/sanitize'
 
 const taskSchema = z.object({
   title: z.string().min(1, 'taskForm.validationTitle').max(100, 'taskForm.validationTitleMax'),
@@ -29,6 +30,7 @@ interface TaskFormProps {
 
 export default function TaskForm({ onClose, editTask, defaultSession, defaultDate }: TaskFormProps) {
   const t = useT()
+  const { success: toastSuccess } = useToast()
   const addTask = useTaskStore((s) => s.addTask)
   const updateTask = useTaskStore((s) => s.updateTask)
 
@@ -60,9 +62,7 @@ export default function TaskForm({ onClose, editTask, defaultSession, defaultDat
   const [isListening, setIsListening] = useState(false)
   const [voiceError, setVoiceError] = useState('')
   const profile = useProfileStore((s) => s.currentProfile)
-  const { isConnected } = useGoogleCalendar()
-  const [syncToGoogle, setSyncToGoogle] = useState(true)
-  const recognitionRef = useRef<any>(null)
+  const recognitionRef = useRef<SpeechRecognition | null>(null)
 
   const isEditingRecurring = editTask?.isRecurring && editTask?.recurring !== null
 
@@ -76,7 +76,7 @@ export default function TaskForm({ onClose, editTask, defaultSession, defaultDat
   const startVoiceInput = () => {
     setVoiceError('')
 
-    const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition
     if (!SR) {
       setVoiceError(t('voice.notSupported'))
       return
@@ -94,11 +94,11 @@ export default function TaskForm({ onClose, editTask, defaultSession, defaultDat
       recognition.maxAlternatives = 1
       recognition.continuous = false
 
-      recognition.onresult = (event: any) => {
+      recognition.onresult = (event: SpeechRecognitionEvent) => {
         const transcript = event.results[0][0].transcript
         const parsed = parseNaturalLanguage(transcript)
         if (parsed.title && parsed.title !== t('voice.defaultTitle')) {
-          setTitle(parsed.title)
+          setTitle(sanitizeInput(parsed.title))
         }
         if (parsed.time) setTime(parsed.time)
         if (parsed.date) setDueDate(parsed.date)
@@ -107,8 +107,8 @@ export default function TaskForm({ onClose, editTask, defaultSession, defaultDat
         recognitionRef.current = null
       }
 
-      recognition.onerror = (e: any) => {
-        console.error('Speech error:', e.error)
+      recognition.onerror = (e: SpeechRecognitionErrorEvent) => {
+        if (import.meta.env.DEV) console.error('Speech error:', e.error)
         setIsListening(false)
         recognitionRef.current = null
         if (e.error === 'not-allowed') {
@@ -130,9 +130,10 @@ export default function TaskForm({ onClose, editTask, defaultSession, defaultDat
       recognitionRef.current = recognition
       recognition.start()
       setIsListening(true)
-    } catch (err: any) {
-      console.error('Voice start error:', err)
-      setVoiceError(t('taskForm.voiceStartError', { error: err.message || 'Unknown error' }))
+    } catch (err: unknown) {
+      if (import.meta.env.DEV) console.error('Voice start error:', err)
+      const errMessage = err instanceof Error ? err.message : 'Unknown error'
+      setVoiceError(t('taskForm.voiceStartError', { error: errMessage }))
       setIsListening(false)
     }
   }
@@ -257,7 +258,7 @@ export default function TaskForm({ onClose, editTask, defaultSession, defaultDat
           })
         }
       } else {
-        const created = await addTask({
+        await addTask({
           title: title.trim(),
           time,
           notes,
@@ -269,12 +270,6 @@ export default function TaskForm({ onClose, editTask, defaultSession, defaultDat
           dueDate,
           recurring: recurringConfig
         })
-        if (syncToGoogle && isConnected && !editTask) {
-          const synced = await syncTaskWithGoogle(created, 'create')
-          if (synced?.googleEventId) {
-            await updateTask(created.id, { googleEventId: synced.googleEventId, syncedToGoogle: true })
-          }
-        }
       }
       onClose()
     } catch {
@@ -309,8 +304,8 @@ export default function TaskForm({ onClose, editTask, defaultSession, defaultDat
 
   if (isEditingRecurring && !recurringEditMode) {
     return (
-      <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-6">
-        <div className="bg-white dark:bg-dark-surface rounded-xl p-6 max-w-sm w-full shadow-xl">
+      <div className="modal-overlay">
+        <div className="modal-content p-6 max-w-sm">
           <h3 className="text-base font-bold text-gray-900 dark:text-white mb-2">{t('taskForm.editRecurring')}</h3>
           <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
             {t('taskForm.recurringPrompt', { title: editTask.title })}
@@ -349,9 +344,9 @@ export default function TaskForm({ onClose, editTask, defaultSession, defaultDat
   }
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-end md:items-center justify-center z-40 p-0 md:p-6">
+    <div className="modal-overlay items-end md:items-center">
       <div
-        className="bg-white dark:bg-dark-surface rounded-t-2xl md:rounded-xl p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-xl"
+        className="modal-content p-6 max-w-lg max-h-[90vh]"
         role="dialog"
         aria-label={editTask ? t('task.edit') : t('task.add')}
       >
@@ -382,7 +377,7 @@ export default function TaskForm({ onClose, editTask, defaultSession, defaultDat
                     type="text"
                     value={naturalInput}
                     onChange={(e) => {
-                      setNaturalInput(e.target.value)
+                      setNaturalInput(sanitizeInput(e.target.value))
                       if (hasTimeIndicator(e.target.value) || hasDateIndicator(e.target.value)) {
                         const parsed = parseNaturalLanguage(e.target.value)
                         if (parsed.time) setTime(parsed.time)
@@ -416,21 +411,22 @@ export default function TaskForm({ onClose, editTask, defaultSession, defaultDat
                       ? 'bg-red-500 border-red-500 text-white animate-pulse'
                       : 'border-gray-300 dark:border-dark-border text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-dark-card'
                   }`}
+                  aria-label={isListening ? t('voice.stop') : t('voice.start')}
                 >
                   <Mic className="w-5 h-5" />
                 </button>
               </div>
               {showNaturalPreview && (
-                <div className="mt-2 p-2 rounded-lg bg-primary-50 dark:bg-primary-900/20 text-xs text-primary-700 dark:text-primary-300">
+                <div aria-live="polite" className="mt-2 p-2 rounded-lg bg-primary-50 dark:bg-primary-900/20 text-xs text-primary-700 dark:text-primary-300">
                   <span className="font-medium">{t('taskForm.preview')}</span> {title} · {time} · {dueDate}
                 </div>
               )}
               <p className="text-xs text-gray-400 mt-1">{t('taskForm.quickHint')}</p>
               {isListening && (
-                <p className="text-xs text-red-500 mt-1 animate-pulse">{t('voice.listening')}</p>
+                <p aria-live="polite" className="text-xs text-red-500 mt-1 animate-pulse">{t('voice.listening')}</p>
               )}
               {voiceError && (
-                <p className="text-xs text-red-500 mt-1">{voiceError}</p>
+                <p role="alert" className="text-xs text-red-500 mt-1">{voiceError}</p>
               )}
             </div>
           )}
@@ -443,7 +439,7 @@ export default function TaskForm({ onClose, editTask, defaultSession, defaultDat
               id="task-title"
               type="text"
               value={title}
-              onChange={(e) => setTitle(e.target.value)}
+              onChange={(e) => setTitle(sanitizeInput(e.target.value))}
               placeholder={t('taskForm.titlePlaceholder')}
               className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-dark-border bg-white dark:bg-dark-card text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition-colors"
               autoFocus
@@ -456,19 +452,40 @@ export default function TaskForm({ onClose, editTask, defaultSession, defaultDat
               <label htmlFor="task-time" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 {t('task.time')}
               </label>
-              <input
-                id="task-time"
-                type="time"
-                value={time}
-                onChange={(e) => setTime(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-dark-border bg-white dark:bg-dark-card text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition-colors"
-              />
+              <div className="flex gap-2">
+                <input
+                  id="task-time"
+                  type="time"
+                  value={time}
+                  onChange={(e) => setTime(e.target.value)}
+                  className="flex-1 px-4 py-3 rounded-xl border border-gray-300 dark:border-dark-border bg-white dark:bg-dark-card text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition-colors"
+                />
+                {!editTask && (
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      const profile = useProfileStore.getState().currentProfile
+                      if (!profile) return
+                      const todayTasks = useTaskStore.getState().todayTasks
+                      const result = await suggestOptimalTime(priority, todayTasks, profile.id)
+                      setTime(result.suggestedTime)
+                      toastSuccess(t('smartPlan.suggested', { time: result.suggestedTime }))
+                    }}
+                    className="px-3 py-3 rounded-xl bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400 hover:bg-purple-100 dark:hover:bg-purple-900/30 transition-colors text-xs font-medium flex-shrink-0"
+                    title={t('smartPlan.suggestTime')}
+                    aria-label={t('smartPlan.suggestTime')}
+                  >
+                    <Sparkles className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              <label htmlFor="task-session" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 {t('task.session')}
               </label>
               <select
+                id="task-session"
                 value={getSessionFromTime(time)}
                 onChange={(e) => {
                   const session = e.target.value as SessionType
@@ -509,7 +526,7 @@ export default function TaskForm({ onClose, editTask, defaultSession, defaultDat
             <textarea
               id="task-notes"
               value={notes}
-              onChange={(e) => setNotes(e.target.value)}
+              onChange={(e) => setNotes(sanitizeInput(e.target.value))}
               placeholder={t('taskForm.notesPlaceholder')}
               rows={2}
               className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-dark-border bg-white dark:bg-dark-card text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition-colors resize-none"
@@ -529,26 +546,13 @@ export default function TaskForm({ onClose, editTask, defaultSession, defaultDat
 
           {showAdvanced && (
             <div className="space-y-4 pt-1">
-              {isConnected && !editTask && (
-                <label className="flex items-center gap-3 p-3 rounded-xl bg-blue-50 dark:bg-blue-900/20 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={syncToGoogle}
-                    onChange={(e) => setSyncToGoogle(e.target.checked)}
-                    className="w-4 h-4 rounded border-gray-300 text-primary-500 focus:ring-primary-500"
-                  />
-                  <div>
-                    <p className="text-sm font-medium text-gray-900 dark:text-white">{t('taskForm.syncGoogleCalendar')}</p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">{t('taskForm.syncGoogleCalendarDesc')}</p>
-                  </div>
-                </label>
-              )}
               {!editTask && templates.length > 0 && (
                 <div>
                   <button
                     type="button"
                     onClick={() => setShowTemplates(!showTemplates)}
                     className="flex items-center gap-2 text-sm text-primary-600 dark:text-primary-400 min-h-tap"
+                    aria-expanded={showTemplates}
                   >
                     <Bookmark className="w-4 h-4" />
                     <span>{t('taskForm.useTemplate')}</span>
@@ -556,21 +560,22 @@ export default function TaskForm({ onClose, editTask, defaultSession, defaultDat
                   </button>
                   {showTemplates && (
                     <div className="mt-2 space-y-1">
-                      {templates.map(t => (
-                        <div key={t.id} className="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-dark-card">
+                      {templates.map(tmpl => (
+                        <div key={tmpl.id} className="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-dark-card">
                           <button
                             type="button"
-                            onClick={() => handleUseTemplate(t)}
+                            onClick={() => handleUseTemplate(tmpl)}
                             className="flex-1 text-left text-sm text-gray-700 dark:text-gray-300"
                           >
-                            {t.name}
+                            {tmpl.name}
                           </button>
                           <button
                             type="button"
-                            onClick={() => { deleteTemplate(t.id); setTemplates(getTemplates(profile!.id)) }}
+                            onClick={() => { deleteTemplate(tmpl.id); setTemplates(getTemplates(profile!.id)) }}
                             className="text-gray-400 hover:text-red-500 min-h-tap p-1"
+                            aria-label={t('taskForm.deleteTemplate', { name: tmpl.name })}
                           >
-                            <X className="w-3 h-3" />
+                            <X className="w-3 h-3" aria-hidden="true" />
                           </button>
                         </div>
                       ))}
@@ -591,6 +596,7 @@ export default function TaskForm({ onClose, editTask, defaultSession, defaultDat
                     checked={st.done}
                     onChange={() => setSubtasks(subtasks.map(s => s.id === st.id ? { ...s, done: !s.done } : s))}
                     className="w-4 h-4 text-primary-600 rounded"
+                    aria-label={st.title}
                   />
                   <span className={`flex-1 text-sm ${st.done ? 'line-through text-gray-400' : 'text-gray-700 dark:text-gray-300'}`}>
                     {st.title}
@@ -599,8 +605,9 @@ export default function TaskForm({ onClose, editTask, defaultSession, defaultDat
                     type="button"
                     onClick={() => setSubtasks(subtasks.filter(s => s.id !== st.id))}
                     className="text-gray-400 hover:text-red-500 min-h-tap"
+                    aria-label={t('taskForm.deleteSubtask', { title: st.title })}
                   >
-                    <X className="w-4 h-4" />
+                    <X className="w-4 h-4" aria-hidden="true" />
                   </button>
                 </div>
               ))}
@@ -794,6 +801,7 @@ export default function TaskForm({ onClose, editTask, defaultSession, defaultDat
               onClick={handleSaveAsTemplate}
               className="py-3 px-4 rounded-xl border border-primary-300 dark:border-primary-700 text-primary-600 dark:text-primary-400 font-medium hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-colors min-h-tap"
               title={t('taskForm.saveAsTemplate')}
+              aria-label={t('taskForm.saveAsTemplate')}
             >
               <Bookmark className="w-5 h-5" />
             </button>

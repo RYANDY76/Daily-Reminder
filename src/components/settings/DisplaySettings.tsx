@@ -2,7 +2,6 @@ import { useAppStore } from '../../stores/useAppStore'
 import { useT } from '../../i18n'
 import type { Lang } from '../../types'
 import { applyAccentColor } from '../../utils/theme'
-import ThemeSelector from '../ThemeSelector'
 
 export default function DisplaySettings() {
   const toggleDarkMode = useAppStore((s) => s.toggleDarkMode)
@@ -15,69 +14,57 @@ export default function DisplaySettings() {
   }
 
   return (
-    <div className="card overflow-hidden">
-      <div className="p-4 border-b border-gray-200 dark:border-dark-border">
-        <h3 className="font-semibold text-gray-900 dark:text-white">{t('settings.display')}</h3>
-      </div>
-      <div className="p-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-sm font-medium text-gray-900 dark:text-white">{t('settings.darkMode')}</p>
-            <p className="text-xs text-gray-500 dark:text-gray-400">{t('settings.darkModeDesc')}</p>
-          </div>
-          <button
-            onClick={toggleDarkMode}
-            className={`relative w-12 h-7 rounded-full transition-colors duration-300 ease-in-out ${
-              darkMode ? 'bg-primary-500' : 'bg-gray-300'
+    <div className="space-y-5">
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-sm font-medium text-gray-900 dark:text-white">{t('settings.darkMode')}</p>
+          <p className="text-xs text-gray-500 dark:text-gray-400">{t('settings.darkModeDesc')}</p>
+        </div>
+        <button
+          onClick={toggleDarkMode}
+          className={`relative w-12 h-7 rounded-full transition-colors duration-300 ease-in-out flex-shrink-0 ${
+            darkMode ? 'bg-primary-500' : 'bg-gray-300'
+          }`}
+          aria-label={t('settings.toggleDark')}
+        >
+          <div
+            className={`absolute top-0.5 w-6 h-6 bg-white rounded-full shadow-md transition-all duration-300 ease-in-out ${
+              darkMode ? 'translate-x-5' : 'translate-x-0.5'
             }`}
-            aria-label={t('settings.toggleDark')}
+          />
+        </button>
+      </div>
+
+      <div className="flex items-center justify-between pt-4 border-t border-gray-100 dark:border-dark-border">
+        <div>
+          <p className="text-sm font-medium text-gray-900 dark:text-white">{t('settings.language')}</p>
+          <p className="text-xs text-gray-500 dark:text-gray-400">{t('settings.languageDesc')}</p>
+        </div>
+        <div className="flex gap-2">
+          <button
+            onClick={() => handleLangChange('id')}
+            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors min-h-tap ${
+              lang === 'id'
+                ? 'bg-primary-500 text-white'
+                : 'bg-gray-100 dark:bg-dark-card text-gray-600 dark:text-gray-400'
+            }`}
           >
-            <div
-              className={`absolute top-0.5 w-6 h-6 bg-white rounded-full shadow-md transition-all duration-300 ease-in-out ${
-                darkMode ? 'translate-x-5' : 'translate-x-0.5'
-              }`}
-            />
+            ID
+          </button>
+          <button
+            onClick={() => handleLangChange('en')}
+            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors min-h-tap ${
+              lang === 'en'
+                ? 'bg-primary-500 text-white'
+                : 'bg-gray-100 dark:bg-dark-card text-gray-600 dark:text-gray-400'
+            }`}
+          >
+            EN
           </button>
         </div>
-
-        {/* Theme Selector */}
-        <div className="mt-6">
-          <ThemeSelector />
-        </div>
       </div>
 
-      <div className="p-4 border-t border-gray-200 dark:border-dark-border">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-sm font-medium text-gray-900 dark:text-white">{t('settings.language')}</p>
-            <p className="text-xs text-gray-500 dark:text-gray-400">{t('settings.languageDesc')}</p>
-          </div>
-          <div className="flex gap-2">
-            <button
-              onClick={() => handleLangChange('id')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors min-h-tap ${
-                lang === 'id'
-                  ? 'bg-primary-500 text-white'
-                  : 'bg-gray-100 dark:bg-dark-card text-gray-600 dark:text-gray-400'
-              }`}
-            >
-              ID
-            </button>
-            <button
-              onClick={() => handleLangChange('en')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors min-h-tap ${
-                lang === 'en'
-                  ? 'bg-primary-500 text-white'
-                  : 'bg-gray-100 dark:bg-dark-card text-gray-600 dark:text-gray-400'
-              }`}
-            >
-              EN
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <div className="p-4 border-t border-gray-200 dark:border-dark-border">
+      <div className="pt-4 border-t border-gray-100 dark:border-dark-border">
         <div className="flex items-center justify-between mb-3">
           <div>
             <p className="text-sm font-medium text-gray-900 dark:text-white">{t('settings.accentColor')}</p>

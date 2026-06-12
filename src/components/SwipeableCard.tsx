@@ -22,7 +22,6 @@ export default function SwipeableCard({
   rightAction,
   threshold = 80
 }: SwipeableCardProps) {
-  const [isSwiping, setIsSwiping] = useState(false)
   const [swipeX, setSwipeX] = useState(0)
   const [isDragging, setIsDragging] = useState(false)
   const startX = useRef(0)
@@ -39,6 +38,31 @@ export default function SwipeableCard({
       }
     }
   }, [swipeX, threshold, onSwipeLeft, onSwipeRight])
+
+  const handleMouseStart = (e: React.MouseEvent) => {
+    if (Math.abs(swipeX) > 0) return
+    setIsDragging(true)
+    startX.current = e.clientX
+  }
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isDragging) return
+    const currentX = e.clientX
+    const diff = currentX - startX.current
+    if (Math.abs(diff) > 0) {
+      e.preventDefault()
+      setSwipeX(Math.max(-100, Math.min(100, diff)))
+    }
+  }
+
+  const handleMouseEnd = () => {
+    setIsDragging(false)
+    if (Math.abs(swipeX) > threshold) {
+      setSwipeX(swipeX > 0 ? 100 : -100)
+    } else {
+      setSwipeX(0)
+    }
+  }
 
   const handleTouchStart = (e: React.TouchEvent) => {
     if (Math.abs(swipeX) > 0) return // Already swiped
@@ -78,6 +102,10 @@ export default function SwipeableCard({
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
+      onMouseDown={handleMouseStart}
+      onMouseMove={handleMouseMove}
+      onMouseUp={handleMouseEnd}
+      onMouseLeave={handleMouseEnd}
     >
       {/* Left Action */}
       {leftAction && (

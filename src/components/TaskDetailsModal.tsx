@@ -5,6 +5,8 @@ import { useProfileStore } from '../stores/useProfileStore'
 import { useCoupleStore } from '../stores/useCoupleStore'
 import { useTaskStore } from '../stores/useTaskStore'
 import { useT } from '../i18n'
+import { usePrompt } from '../hooks/usePrompt'
+import { useFocusTrap } from '../hooks/useFocusTrap'
 import type { TaskComment } from '../types-couple'
 import { getTaskComments, saveTaskComment } from '../database-couple'
 
@@ -18,6 +20,8 @@ export default function TaskDetailsModal({ task, onClose }: TaskDetailsModalProp
   const currentProfile = useProfileStore(s => s.currentProfile)
   const connection = useCoupleStore(s => s.connection)
   const updateTask = useTaskStore(s => s.updateTask)
+  const { prompt, PromptDialog } = usePrompt()
+  const trapRef = useFocusTrap(true)
   const [commentText, setCommentText] = useState('')
   const [comments, setComments] = useState<TaskComment[]>([])
 
@@ -63,19 +67,19 @@ export default function TaskDetailsModal({ task, onClose }: TaskDetailsModalProp
     setCommentText('')
   }
 
-  // Handle Photo Attachment
-  const handlePhotoUpload = () => {
-    const url = prompt(t('taskDetails.photoUrlPlaceholder'))
+  const handlePhotoUpload = async () => {
+    const url = await prompt({ title: t('taskDetails.photoProof'), message: t('taskDetails.photoUrlPlaceholder'), placeholder: 'https://...', confirmText: t('common.save'), cancelText: t('common.cancel') })
     if (url && url.startsWith('http')) {
       updateTask(task.id, { attachmentUrl: url })
     }
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-      <div className="bg-white dark:bg-dark-card rounded-2xl shadow-2xl max-w-md w-full animate-bounce-in flex flex-col h-[80vh]">
-        {/* Header */}
-        <div className="p-4 border-b border-gray-100 dark:border-dark-border flex justify-between items-center bg-gray-50 dark:bg-dark-surface rounded-t-2xl">
+    <>
+      <PromptDialog />
+      <div ref={trapRef} className="modal-overlay">
+      <div className="bg-white dark:bg-dark-surface rounded-2xl shadow-modal max-w-md w-full animate-fade-up flex flex-col h-[80vh]">
+        <div className="p-4 border-b border-gray-100 dark:border-dark-border flex justify-between items-center rounded-t-2xl">
           <h2 className="font-bold text-gray-900 dark:text-white flex items-center gap-2">
             <MessageSquare className="w-5 h-5 text-purple-500" />
             {t('taskDetails.title')}
@@ -98,9 +102,10 @@ export default function TaskDetailsModal({ task, onClose }: TaskDetailsModalProp
             {task.attachmentUrl ? (
               <div className="relative group rounded-lg overflow-hidden border border-gray-200 dark:border-dark-border">
                 <img src={safeAttachmentUrl ?? undefined} alt={t('taskDetails.altProof')} className="w-full h-48 object-cover" />
-                <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 md:group-hover:opacity-100 transition-opacity flex items-center justify-center">
                   <button onClick={handlePhotoUpload} className="px-4 py-2 bg-white rounded-lg text-sm font-medium text-gray-900">{t('taskDetails.changePhoto')}</button>
                 </div>
+                <button onClick={handlePhotoUpload} className="md:hidden w-full py-2.5 mt-2 rounded-lg border border-gray-300 dark:border-dark-border text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-dark-card transition-colors min-h-tap">{t('taskDetails.changePhoto')}</button>
               </div>
             ) : (
               <button 
@@ -156,5 +161,6 @@ export default function TaskDetailsModal({ task, onClose }: TaskDetailsModalProp
         </div>
       </div>
     </div>
+    </>
   )
 }

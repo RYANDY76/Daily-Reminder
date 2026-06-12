@@ -3,8 +3,6 @@
  * Centralized error handling and reporting
  */
 
-import { useToast } from '../hooks/useToast'
-
 export type ErrorSeverity = 'low' | 'medium' | 'high' | 'critical'
 
 export interface AppError {
@@ -18,6 +16,20 @@ export interface AppError {
 export class AppErrorHandler {
   private static errors: AppError[] = []
   private static maxErrors = 50
+
+  private static remoteUrl: string | null = null
+
+  static configureRemote(url: string): void {
+    this.remoteUrl = url
+  }
+
+  private static reportToRemote(error: AppError): void {
+    if (!this.remoteUrl) return
+    const payload = { ...error, timestamp: new Date(error.timestamp).toISOString() }
+    if (navigator.sendBeacon) {
+      navigator.sendBeacon(this.remoteUrl, JSON.stringify(payload))
+    }
+  }
 
   static logError(
     code: string,
@@ -45,7 +57,25 @@ export class AppErrorHandler {
       console.error(`[${severity.toUpperCase()}] ${code}:`, message, details)
     }
 
+    // Persist errors to localStorage
+    this.persistErrors()
+
+    // Report to remote endpoint if configured (production only)
+    if (!import.meta.env.DEV) {
+      this.reportToRemote(error)
+    }
+
     return error
+  }
+
+  private static persistErrors(): void {
+    try {
+      const errors = this.errors.slice(-100).map(e => ({
+        ...e,
+        timestamp: new Date(e.timestamp).toISOString()
+      }))
+      localStorage.setItem('app_error_log', JSON.stringify(errors))
+    } catch { /* ignore storage errors */ }
   }
 
   static getErrors(): AppError[] {
@@ -78,8 +108,10 @@ export async function retryAsync<T>(
       lastError = error
       
       if (attempt < maxRetries - 1) {
-        // Wait before retry with exponential backoff
-        await new Promise(resolve => setTimeout(resolve, delay * Math.pow(2, attempt)))
+        // Wait before retry with exponential backoff + jitter
+        const backoff = delay * Math.pow(2, attempt)
+        const jitter = Math.random() * 0.3 * backoff // 0-30% jitter
+        await new Promise(resolve => setTimeout(resolve, backoff + jitter))
       }
     }
   }
@@ -88,30 +120,13 @@ export async function retryAsync<T>(
 }
 
 /**
- * Safe async wrapper with error handling
- */
-export async function safeAsync<T>(
-  fn: () => Promise<T>,
-  fallback: T,
-  errorCode: string = 'UNKNOWN_ERROR'
-): Promise<T> {
-  try {
-    return await fn()
-  } catch (error) {
-    AppErrorHandler.logError(
-      errorCode,
-      error instanceof Error ? error.message : 'Unknown error occurred',
-      'medium',
-      error
-    )
-    return fallback
-  }
-}
-
-/**
  * Check if error is network related
  */
 export function isNetworkError(error: unknown): boolean {
+  // TypeError is commonly thrown for network failures
+  if (error instanceof TypeError) {
+    return true
+  }
   if (error instanceof Error) {
     return (
       error.message.includes('fetch') ||
@@ -127,6 +142,10 @@ export function isNetworkError(error: unknown): boolean {
  * Check if error is quota exceeded (storage)
  */
 export function isQuotaError(error: unknown): boolean {
+  // DOMException with QuotaExceededError name is the canonical check
+  if (error instanceof DOMException && error.name === 'QuotaExceededError') {
+    return true
+  }
   if (error instanceof Error) {
     return (
       error.message.includes('quota') ||
@@ -150,7 +169,7 @@ export function getUserMessage(error: unknown, t: (key: string) => string): stri
   }
 
   if (error instanceof Error) {
-    return error.message
+    return t('error.generic')
   }
 
   return t('error.generic')

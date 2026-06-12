@@ -1,144 +1,158 @@
-import { useCallback, useEffect, useRef } from 'react'
-import { useAppStore } from '../stores/useAppStore'
-import { getTodayDate } from '../dates'
-import { t } from '../i18n'
-import type { Habit, Task } from '../types'
-import { cacheTasksForNotifications, requestNotificationPermissionViaSW, HABIT_REMINDER_TIME } from '../utils/notificationCache'
+import { useState, useCallback, useEffect, useRef } from 'react'
+import { useProfileStore } from '../stores/useProfileStore'
+import { getTasksForDate } from '../database'
+import { getTodayDate, getTomorrowDate } from '../dates'
 
-const CHECK_INTERVAL = 30_000
+const CHECK_INTERVAL = 60_000
+const STORAGE_KEY = 'daily_reminder_notif_prefs'
+
+export interface NotifPrefs {
+  enabled: boolean
+  taskReminders: boolean
+  dailySummary: boolean
+  summaryHour: number
+  summaryMinute: number
+}
+
+const defaultPrefs: NotifPrefs = {
+  enabled: false,
+  taskReminders: true,
+  dailySummary: true,
+  summaryHour: 7,
+  summaryMinute: 0
+}
+
+function loadPrefs(): NotifPrefs {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY)
+    if (!raw) return defaultPrefs
+    return { ...defaultPrefs, ...JSON.parse(raw) }
+  } catch {
+    return defaultPrefs
+  }
+}
+
+function savePrefs(prefs: NotifPrefs) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(prefs))
+}
 
 export function useNotifications() {
-  const intervalRef = useRef<number | null>(null)
-  const notifiedTasks = useRef<Set<string>>(new Set())
+  const [prefs, setPrefsState] = useState<NotifPrefs>(loadPrefs)
+  const [permission, setPermission] = useState<NotificationPermission>(Notification.permission)
+  const intervalRef = useRef<ReturnType<typeof setInterval>>()
+  const lastNotifiedRef = useRef<Set<string>>(new Set())
 
-  const checkAndNotify = useCallback(async (tasks: Task[], profileId?: string, habits: Habit[] = []) => {
-    const enabled = useAppStore.getState().notificationEnabled
-    const lang = useAppStore.getState().lang
-    const leadMinutes = useAppStore.getState().reminderLeadMinutes
+  const updatePrefs = useCallback((updates: Partial<NotifPrefs>) => {
+    setPrefsState(prev => {
+      const next = { ...prev, ...updates }
+      savePrefs(next)
+      return next
+    })
+  }, [])
 
-    if (profileId) {
-      await cacheTasksForNotifications(profileId, tasks, lang, habits)
+  const requestPermission = useCallback(async (): Promise<boolean> => {
+    if (!('Notification' in window)) return false
+    if (Notification.permission === 'granted') return true
+    if (Notification.permission === 'denied') return false
+    const result = await Notification.requestPermission()
+    setPermission(result)
+    return result === 'granted'
+  }, [])
+
+  const showNotif = useCallback((title: string, body: string, tag?: string) => {
+    if (!('Notification' in window) || Notification.permission !== 'granted') return
+    if (tag && lastNotifiedRef.current.has(tag)) return
+    if (tag) lastNotifiedRef.current.add(tag)
+    try {
+      navigator.serviceWorker.ready.then(reg => {
+        reg.showNotification(title, { body, tag, icon: '/icon-192.png' })
+      }).catch(() => {
+        new Notification(title, { body, tag })
+      })
+    } catch {
+      new Notification(title, { body, tag })
     }
+  }, [])
 
-    if (!enabled || !('Notification' in window) || Notification.permission !== 'granted') return
-
+  const checkAndNotify = useCallback(async (tasks: any[]) => {
+    if (!prefs.enabled || !('Notification' in window) || Notification.permission !== 'granted') return
     const now = new Date()
-    const today = getTodayDate()
     const currentMinutes = now.getHours() * 60 + now.getMinutes()
-    for (const habit of habits) {
-      if (habit.completedDates.includes(today)) continue
-      const reminderTime = habit.reminderTime || HABIT_REMINDER_TIME
-      const [hh, hm] = reminderTime.split(':').map(Number)
-      const habitReminderMinutes = hh * 60 + hm
-      const habitKey = `habit-${habit.id}-${today}`
-      if (currentMinutes >= habitReminderMinutes && currentMinutes <= habitReminderMinutes + 30 && !notifiedTasks.current.has(habitKey)) {
-        new Notification(t('notification.habitReminder'), {
-          body: t('notification.habitBody', { name: habit.name }),
-          icon: '/icons/icon-192x192.png',
-          tag: habitKey
-        })
-        notifiedTasks.current.add(habitKey)
-      }
-    }
 
     for (const task of tasks) {
       if (task.done) continue
-
-      const [h, m] = task.time.split(':').map(Number)
+      const [h, m] = (task.time || '00:00').split(':').map(Number)
       const taskMinutes = h * 60 + m
-      const timeKey = `time-${task.id}-${today}-${leadMinutes}`
-      const reminderStart = taskMinutes - leadMinutes
-
-      if (currentMinutes >= reminderStart && currentMinutes <= taskMinutes + 2 && !notifiedTasks.current.has(timeKey)) {
-        new Notification(t('notification.taskTime'), {
-          body: leadMinutes > 0
-            ? t('notification.taskBodyLead', { title: task.title, mins: leadMinutes })
-            : t('notification.taskBody', { title: task.title }),
-          icon: '/icons/icon-192x192.png',
-          tag: timeKey
-        })
-        notifiedTasks.current.add(timeKey)
+      const diff = taskMinutes - currentMinutes
+      if (diff >= 0 && diff <= 5) {
+        showNotif('Tugas akan segera dimulai', `"${task.title}" pukul ${task.time}`, `task-${task.id}-${getTodayDate()}`)
       }
+    }
+  }, [prefs.enabled, showNotif])
 
-      if (task.dueDate && task.dueDate >= today) {
-        const dueDateTime = new Date(`${task.dueDate}T${task.time || '23:59'}:00`)
-        const diffMs = dueDateTime.getTime() - now.getTime()
-        const diffHours = diffMs / (1000 * 60 * 60)
+  useEffect(() => {
+    if (!prefs.enabled || !prefs.taskReminders) return
 
-        if (diffHours > 0 && diffHours <= 1) {
-          const warnKey = `deadline-1h-${task.id}`
-          if (!notifiedTasks.current.has(warnKey)) {
-            new Notification(t('notification.deadlineClose'), {
-              body: t('notification.deadlineCloseBody', { title: task.title, time: String(Math.ceil(diffHours * 60)) }),
-              icon: '/icons/icon-192x192.png',
-              tag: warnKey
-            })
-            notifiedTasks.current.add(warnKey)
-          }
-        }
+    const check = async () => {
+      const profile = useProfileStore.getState().currentProfile
+      if (!profile) return
+      const today = getTodayDate()
+      const tasks = await getTasksForDate(profile.id, today)
+      const now = new Date()
+      const currentMinutes = now.getHours() * 60 + now.getMinutes()
 
-        if (task.dueDate === today && currentMinutes >= 18 * 60 && currentMinutes <= 20 * 60) {
-          const tonightKey = `deadline-tonight-${task.id}`
-          if (!notifiedTasks.current.has(tonightKey)) {
-            new Notification(t('notification.deadlineToday'), {
-              body: t('notification.deadlineTodayBody', { title: task.title }),
-              icon: '/icons/icon-192x192.png',
-              tag: tonightKey
-            })
-            notifiedTasks.current.add(tonightKey)
-          }
+      for (const task of tasks) {
+        if (task.done) continue
+        const [h, m] = task.time.split(':').map(Number)
+        const taskMinutes = h * 60 + m
+        const diff = taskMinutes - currentMinutes
+
+        if (diff >= 0 && diff <= 5) {
+          showNotif(
+            'Tugas akan segera dimulai',
+            `"${task.title}" pukul ${task.time}`,
+            `task-${task.id}-${today}`
+          )
         }
       }
     }
-  }, [])
 
-  const requestPermission = useCallback(async () => {
-    if (!('Notification' in window)) return false
-    if (Notification.permission === 'granted') {
-      useAppStore.getState().setNotificationEnabled(true)
-      await requestNotificationPermissionViaSW()
-      return true
-    }
-    if (Notification.permission === 'denied') return false
-
-    const permission = await Notification.requestPermission()
-    if (permission === 'granted') {
-      useAppStore.getState().setNotificationEnabled(true)
-      await requestNotificationPermissionViaSW()
-      return true
-    }
-    return false
-  }, [])
-
-  const toggleNotifications = useCallback(async () => {
-    const enabled = useAppStore.getState().notificationEnabled
-    if (enabled) {
-      useAppStore.getState().setNotificationEnabled(false)
-      return false
-    }
-    return await requestPermission()
-  }, [requestPermission])
+    check()
+    intervalRef.current = setInterval(check, CHECK_INTERVAL)
+    return () => { if (intervalRef.current) clearInterval(intervalRef.current) }
+  }, [prefs.enabled, prefs.taskReminders, showNotif])
 
   useEffect(() => {
-    if ('Notification' in window && Notification.permission === 'granted') {
-      useAppStore.getState().setNotificationEnabled(true)
-      requestNotificationPermissionViaSW()
+    if (!prefs.enabled || !prefs.dailySummary) return
+
+    const checkSummary = async () => {
+      const profile = useProfileStore.getState().currentProfile
+      if (!profile) return
+      const now = new Date()
+      const currentMinutes = now.getHours() * 60 + now.getMinutes()
+      const summaryMinutes = prefs.summaryHour * 60 + prefs.summaryMinute
+      const diff = currentMinutes - summaryMinutes
+
+      if (diff >= 0 && diff <= 2) {
+        const today = getTodayDate()
+        const tasks = await getTasksForDate(profile.id, today)
+        const pending = tasks.filter(t => !t.done)
+        const done = tasks.filter(t => t.done)
+        const tomorrow = getTomorrowDate()
+        const tomorrowTasks = await getTasksForDate(profile.id, tomorrow)
+
+        showNotif(
+          'Ringkasan Harian',
+          `${done.length} selesai · ${pending.length} tersisa · ${tomorrowTasks.length} untuk besok`,
+          `summary-${today}`
+        )
+      }
     }
-  }, [])
 
-  const notificationEnabled = useAppStore((s) => s.notificationEnabled)
+    checkSummary()
+    const summaryTimer = setInterval(checkSummary, 60000)
+    return () => clearInterval(summaryTimer)
+  }, [prefs.enabled, prefs.dailySummary, prefs.summaryHour, prefs.summaryMinute, showNotif])
 
-  useEffect(() => {
-    if (!notificationEnabled) return
-
-    intervalRef.current = window.setInterval(() => {
-      window.dispatchEvent(new CustomEvent('check-notifications'))
-    }, CHECK_INTERVAL)
-
-    return () => {
-      if (intervalRef.current) clearInterval(intervalRef.current)
-    }
-  }, [notificationEnabled])
-
-  return { checkAndNotify, requestPermission, toggleNotifications }
+  return { prefs, updatePrefs, permission, requestPermission, checkAndNotify }
 }

@@ -13,7 +13,7 @@ interface SyncTableConfig<T extends SyncEntity> {
   getRows: (profileId: string) => Promise<T[]>
 }
 
-const syncTables: SyncTableConfig<any>[] = [
+const syncTables: SyncTableConfig<SyncEntity>[] = [
   {
     cloudTable: 'app_profiles',
     localTable: db.profiles as Table<Profile, string>,
@@ -65,9 +65,9 @@ function getActiveSyncContext() {
   const sb = getSupabase()
   const user = useAuthStore.getState().user
   const profile = useProfileStore.getState().currentProfile
-  if (!sb) throw new Error('Supabase belum dikonfigurasi')
-  if (!user) throw new Error('Login cloud terlebih dahulu')
-  if (!profile) throw new Error('Profil belum dipilih')
+  if (!sb) throw new Error('Supabase not configured')
+  if (!user) throw new Error('Please login to cloud first')
+  if (!profile) throw new Error('No profile selected')
   return { sb, user, profile }
 }
 

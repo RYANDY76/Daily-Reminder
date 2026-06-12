@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { TrendingUp, TrendingDown, Trophy, Flame, Target, ChevronDown, ChevronUp } from 'lucide-react'
+import { TrendingUp, Trophy, Flame, Target, ChevronDown, ChevronUp } from 'lucide-react'
 import { useProfileStore } from '../stores/useProfileStore'
 import { getLast7DaysHistory, getHabitsForProfile, getPomodoroSessionsRange } from '../database'
 import { getLast7Days, formatDateShort } from '../dates'

@@ -7,6 +7,7 @@ import { useNotifications } from '../hooks/useNotifications'
 import { useKeyboardShortcuts } from '../hooks/useKeyboardShortcuts'
 import { useHaptic } from '../hooks/useHaptic'
 import { useToast } from '../hooks/useToast'
+import { useConfirm } from '../hooks/useConfirm'
 import { usePullToRefresh } from '../hooks/usePullToRefresh'
 import { usePerformance } from '../hooks/usePerformance'
 import { useOffline } from '../hooks/useOffline'
@@ -15,14 +16,16 @@ import { getHabitsForProfile } from '../database'
 import type { Habit } from '../types'
 import { SESSION_ORDER, type SessionType } from '../types'
 import { useT, t } from '../i18n'
+import { getSessionFromHour } from '../dates'
 import SessionCard from './SessionCard'
+import DailyPlan from './DailyPlan'
 import Archive from './Archive'
 import MoodWidget from './MoodWidget'
 import WeeklyReview from './WeeklyReview'
 import TaskForm from './TaskForm'
 import LoadingOverlay from './LoadingOverlay'
 import { DashboardSkeleton } from './Skeleton'
-import { Search, ArchiveIcon, WifiOff } from 'lucide-react'
+import { Search, ArchiveIcon, WifiOff, Sun, Sunrise, Sunset, Moon } from 'lucide-react'
 
 // Sub-components
 import DashboardHeader from './dashboard/DashboardHeader'
@@ -32,11 +35,13 @@ import ProgressBar from './dashboard/ProgressBar'
 import BatchModeBar from './dashboard/BatchModeBar'
 import OverdueWarning from './dashboard/OverdueWarning'
 
-const sessionIcons: Record<SessionType, { emoji: string; label: string }> = {
-  pagi:  { emoji: '🌅', label: t('session.pagi') },
-  siang: { emoji: '☀️', label: t('session.siang') },
-  sore:  { emoji: '🌇', label: t('session.sore') },
-  malam: { emoji: '🌙', label: t('session.malam') },
+import type { LucideIcon } from 'lucide-react'
+
+const sessionIcons: Record<SessionType, { Icon: LucideIcon; label: string }> = {
+  pagi:  { Icon: Sunrise, label: t('session.pagi') },
+  siang: { Icon: Sun,     label: t('session.siang') },
+  sore:  { Icon: Sunset,  label: t('session.sore') },
+  malam: { Icon: Moon,    label: t('session.malam') },
 }
 
 export default function Dashboard() {
@@ -52,6 +57,7 @@ export default function Dashboard() {
   const addTaskRequestId = useAppStore((s) => s.addTaskRequestId)
   const { trigger } = useHaptic()
   const { success, error: showError } = useToast()
+  const { confirm, ConfirmDialog } = useConfirm()
   const { checkAndNotify, requestPermission } = useNotifications()
   const { isOffline, queueToggleDone, queueDelete } = useOffline()
   const notifiedRef = useRef(false)
@@ -178,7 +184,8 @@ export default function Dashboard() {
   }
 
   const handleBatchDelete = async () => {
-    if (!window.confirm(t('batch.deleteConfirm', { count: selectedTasks.size }))) return
+    const ok = await confirm({ title: t('common.confirm'), message: t('batch.deleteConfirm', { count: selectedTasks.size }), variant: 'danger', confirmText: t('common.delete'), cancelText: t('common.cancel') })
+    if (!ok) return
     
     if (isOffline) {
       queueDelete([...selectedTasks])
@@ -260,14 +267,14 @@ export default function Dashboard() {
 
   useEffect(() => {
     if (todayTasks.length > 0 && !notifiedRef.current) {
-      checkAndNotify(todayTasks, currentProfile?.id, habits)
+      checkAndNotify(todayTasks)
       notifiedRef.current = true
     }
-  }, [todayTasks, habits, checkAndNotify, currentProfile?.id])
+  }, [todayTasks, checkAndNotify])
 
   useEffect(() => {
     const handler = () => {
-      if (todayTasks.length > 0) checkAndNotify(todayTasks, currentProfile?.id, habits)
+      if (todayTasks.length > 0) checkAndNotify(todayTasks)
     }
     window.addEventListener('check-notifications', handler)
     return () => window.removeEventListener('check-notifications', handler)
@@ -304,10 +311,11 @@ export default function Dashboard() {
     </div>
   ) : (
     <>
+      <ConfirmDialog />
       {batchLoading && <LoadingOverlay message={t('dashboard.batchProcessing')} transparent />}
       
       {isOffline && (
-        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-40 bg-yellow-500 text-white px-4 py-2 rounded-full shadow-lg flex items-center gap-2 text-sm font-medium animate-slide-in-down">
+        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-40 bg-yellow-500 text-white px-4 py-2 rounded-2xl shadow-elevated flex items-center gap-2 text-sm font-medium animate-slide-in-down">
           <WifiOff className="w-4 h-4" />
           <span>{t('dashboard.offlineBanner')}</span>
         </div>
@@ -360,16 +368,26 @@ export default function Dashboard() {
 
         <button
           onClick={() => setShowArchive(true)}
-          className="w-full flex items-center gap-2 text-sm font-medium text-gray-500 dark:text-gray-400 bg-white dark:bg-dark-card border border-gray-100 dark:border-dark-border rounded-xl px-4 py-3 hover:text-primary-500 hover:border-primary-200 dark:hover:border-primary-800 transition-all duration-150"
+          className="btn-ghost w-full flex items-center justify-center gap-2 text-sm"
         >
           <ArchiveIcon className="w-4 h-4" />
           {t('dashboard.archive')}
         </button>
 
+        <DailyPlan
+          tasks={filteredTasks}
+          onApplyTime={(taskId, time) => {
+            const task = todayTasks.find(t => t.id === taskId)
+            if (!task) return
+            const session = getSessionFromHour(parseInt(time.split(':')[0], 10))
+            useTaskStore.getState().updateTask(taskId, { time, session })
+              .then(() => loadTodayTasks())
+          }}
+        />
         <MoodWidget />
         <WeeklyReview />
 
-        <div className="space-y-3" ref={containerRef}>
+        <div className="space-y-3 xl:grid xl:grid-cols-2 xl:gap-3 xl:space-y-0" ref={containerRef}>
           {SESSION_ORDER.map((session) => {
             const sessionTasks = filteredTasks.filter((t) => t.session === session)
             if (searchQuery && sessionTasks.length === 0) return null
@@ -397,7 +415,7 @@ export default function Dashboard() {
             </p>
             <button
               onClick={() => setSearchQuery('')}
-              className="mt-3 text-sm text-primary-500 hover:text-primary-600 font-medium transition-colors"
+              className="btn-ghost mt-2 text-sm"
             >
               {t('dashboard.clearSearch')}
             </button>

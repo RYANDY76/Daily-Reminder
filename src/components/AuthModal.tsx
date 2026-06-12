@@ -82,8 +82,8 @@ export default function AuthModal({ onClose, onSuccess, defaultMode = 'login' }:
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fade-in">
-      <div className="bg-white dark:bg-dark-surface w-full max-w-sm rounded-2xl shadow-xl overflow-hidden animate-scale-in">
+    <div className="modal-overlay">
+      <div className="bg-white dark:bg-dark-surface w-full max-w-sm rounded-2xl shadow-modal overflow-hidden animate-fade-up">
         <div className="flex items-center justify-between p-4 border-b border-gray-100 dark:border-dark-border">
           <h2 className="text-lg font-bold text-gray-900 dark:text-white">
             {mode === 'login' ? t('auth.loginToCloud') : t('auth.createAccount')}

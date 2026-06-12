@@ -1,4 +1,3 @@
-import { jsPDF } from 'jspdf'
 import type { Task, SessionType, Profile, DailyHistory } from '../types'
 import { SESSION_ORDER } from '../types'
 import { formatDate, getTimeDisplay, getLast7Days } from '../dates'
@@ -19,6 +18,7 @@ export async function generatePDF(
   options: PDFOptions
 ): Promise<void> {
   const { scope, startDate, endDate, orientation, theme } = options
+  const { default: jsPDF } = await import('jspdf')
 
   const doc = new jsPDF({
     orientation: orientation === 'landscape' ? 'l' : 'p',
@@ -28,14 +28,12 @@ export async function generatePDF(
 
   const pageW = orientation === 'landscape' ? 297 : 210
   const margin = 15
-  const contentW = pageW - margin * 2
   let y = margin
 
   const isDark = theme === 'compact'
   const primaryColor = profile.accentColor || '#1D9E75'
   const textColor = isDark ? '#333333' : '#1A1A1A'
   const secondaryText = isDark ? '#666666' : '#6B6B6B'
-  const bgColor = isDark ? '#F5F5F5' : '#FFFFFF'
 
   doc.setFillColor(isDark ? '#F0F0F0' : '#FFFFFF')
   doc.rect(0, 0, pageW, 297, 'F')

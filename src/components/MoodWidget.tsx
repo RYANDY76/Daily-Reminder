@@ -7,11 +7,17 @@ import { getTodayDate } from '../dates'
 import { useT } from '../i18n'
 import { Zap, Smile } from 'lucide-react'
 
-const MOOD_EMOJIS: Record<MoodLevel, string> = {
-  1: '😔', 2: '😕', 3: '😐', 4: '🙂', 5: '😄'
+const MOOD_COLORS: Record<MoodLevel, string> = {
+  1: '#EF4444', 2: '#F97316', 3: '#F59E0B', 4: '#22C55E', 5: '#10B981'
 }
-const ENERGY_EMOJIS: Record<MoodLevel, string> = {
-  1: '🔋', 2: '🔋🔋', 3: '⚡', 4: '⚡⚡', 5: '🔥'
+const MOOD_LABELS: Record<MoodLevel, string> = { 1: '1', 2: '2', 3: '3', 4: '4', 5: '5' }
+
+const ENERGY_LEVELS: Record<MoodLevel, { bars: number; color: string }> = {
+  1: { bars: 1, color: '#EF4444' },
+  2: { bars: 2, color: '#F97316' },
+  3: { bars: 3, color: '#F59E0B' },
+  4: { bars: 4, color: '#22C55E' },
+  5: { bars: 5, color: '#10B981' },
 }
 
 export default function MoodWidget() {
@@ -81,11 +87,15 @@ export default function MoodWidget() {
         role="button"
         aria-label={t('mood.editToday')}
       >
-        <span className="text-2xl">{MOOD_EMOJIS[moodLog.mood]}</span>
+        <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold text-sm" style={{ backgroundColor: MOOD_COLORS[moodLog.mood] }}>
+          {MOOD_LABELS[moodLog.mood]}
+        </div>
         <div className="flex-1 min-w-0">
           <p className="text-xs font-medium text-gray-400 dark:text-gray-500">{t('mood.todayLabel')}</p>
           <p className="text-sm text-gray-900 dark:text-white font-medium">
-            {moodLabelMap[moodLog.mood]} · {ENERGY_EMOJIS[moodLog.energy]} {energyLabelMap[moodLog.energy]}
+            {moodLabelMap[moodLog.mood]} · {Array.from({ length: ENERGY_LEVELS[moodLog.energy].bars }, (_, i) => (
+              <span key={i} className={`inline-block w-2 h-3 rounded-sm mr-0.5`} style={{ backgroundColor: ENERGY_LEVELS[moodLog.energy].color }} />
+            ))} {energyLabelMap[moodLog.energy]}
             {moodLog.note && <span className="text-gray-400 ml-1 font-normal truncate">· {moodLog.note}</span>}
           </p>
         </div>
@@ -111,13 +121,14 @@ export default function MoodWidget() {
             <button
               key={level}
               onClick={() => setSelectedMood(level)}
-              className={`flex-1 py-2 rounded-xl text-xl transition-all ${
+              className={`flex-1 py-3 rounded-xl text-lg font-bold transition-all ${
                 selectedMood === level
-                  ? 'bg-primary-100 dark:bg-primary-900/30 ring-2 ring-primary-500 scale-105'
-                  : 'bg-gray-100 dark:bg-dark-surface hover:bg-gray-200 dark:hover:bg-gray-700'
+                  ? 'ring-2 ring-primary-500 scale-105 text-white'
+                  : 'bg-gray-100 dark:bg-dark-surface hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-500'
               }`}
+              style={selectedMood === level ? { backgroundColor: MOOD_COLORS[level] } : {}}
             >
-              {MOOD_EMOJIS[level]}
+              {MOOD_LABELS[level]}
             </button>
           ))}
         </div>
@@ -134,13 +145,24 @@ export default function MoodWidget() {
             <button
               key={level}
               onClick={() => setSelectedEnergy(level)}
-              className={`flex-1 py-2 rounded-xl transition-all flex flex-col items-center gap-0.5 ${
+              className={`flex-1 py-2 rounded-xl transition-all flex flex-col items-center gap-1 ${
                 selectedEnergy === level
                   ? 'bg-yellow-100 dark:bg-yellow-900/30 ring-2 ring-yellow-400'
                   : 'bg-gray-100 dark:bg-dark-surface hover:bg-gray-200 dark:hover:bg-gray-700'
               }`}
             >
-              <span className="text-base">{ENERGY_EMOJIS[level]}</span>
+              <div className="flex items-end gap-0.5 h-6">
+                {Array.from({ length: ENERGY_LEVELS[level].bars }, (_, i) => (
+                  <span
+                    key={i}
+                    className="w-1.5 rounded-sm"
+                    style={{
+                      backgroundColor: selectedEnergy === level ? ENERGY_LEVELS[level].color : '#9CA3AF',
+                      height: `${6 + i * 4}px`,
+                    }}
+                  />
+                ))}
+              </div>
               <span className={`text-[10px] font-medium leading-none ${
                 selectedEnergy === level ? 'text-yellow-700 dark:text-yellow-400' : 'text-gray-400'
               }`}>{energyLabelMap[level]}</span>

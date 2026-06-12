@@ -60,11 +60,7 @@ export default function BackupSettings() {
 
   return (
     <>
-      <div className="card overflow-hidden">
-        <div className="p-4 border-b border-gray-200 dark:border-dark-border">
-          <h3 className="font-semibold text-gray-900 dark:text-white">{t('settings.backup')}</h3>
-        </div>
-        <div className="p-4 space-y-3">
+      <div className="space-y-3">
           <p className="text-xs text-gray-500 dark:text-gray-400">
             {t('settings.backupDesc')}
           </p>
@@ -160,7 +156,6 @@ export default function BackupSettings() {
             )}
           </div>
         </div>
-      </div>
 
       {importModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-40 p-6">
@@ -183,12 +178,12 @@ export default function BackupSettings() {
                       try {
                         const data = await readFileAsJSON(file)
                         if (!validateBackup(data)) {
-                          alert(t('settings.invalidBackup'))
+                          addToast({ id: crypto.randomUUID(), message: t('settings.invalidBackup'), type: 'error', duration: 5000 })
                           return
                         }
                         setImportData(data)
                       } catch (err) {
-                        alert((err as Error).message)
+                        addToast({ id: crypto.randomUUID(), message: (err as Error).message, type: 'error', duration: 5000 })
                       }
                     }}
                   />
@@ -264,7 +259,7 @@ export default function BackupSettings() {
                         setImportResult(result)
                         setImportData(null)
                       } catch (err) {
-                        alert(t('common.error') + ': ' + (err as Error).message)
+                        addToast({ id: crypto.randomUUID(), message: t('common.error') + ': ' + (err as Error).message, type: 'error', duration: 5000 })
                       } finally {
                         setImporting(false)
                       }

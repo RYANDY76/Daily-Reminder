@@ -3,11 +3,18 @@ import { useProfileStore } from '../stores/useProfileStore'
 import { useCoupleStore } from '../stores/useCoupleStore'
 import { useToast } from '../hooks/useToast'
 import { useT } from '../i18n'
-import type { LoveNote } from '../types-couple'
-import { Heart, Send, Mail, MailOpen, X, Smile } from 'lucide-react'
+import { Heart, Send, Mail, MailOpen, X, Smile, Star, Gift, Sparkles, Flower2, PartyPopper } from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
 
-// Simple emoji picker
-const EMOJI_PICKER = ['❤️', '💕', '💖', '💗', '💘', '💝', '💞', '💓', '🥰', '😍', '😘', '🤗', '🌹', '💐', '🎁', '✨', '🌟', '⭐', '💫', '🎉']
+const LOVE_ICON_MAP: Record<string, LucideIcon> = {
+  Heart, Star, Gift, Sparkles, Flower2, PartyPopper,
+}
+const LOVE_ICON_NAMES = Object.keys(LOVE_ICON_MAP)
+
+function LoveIcon({ name, className }: { name?: string; className?: string }) {
+  const Icon = (name && LOVE_ICON_MAP[name as keyof typeof LOVE_ICON_MAP]) || Heart
+  return <Icon className={className || 'w-5 h-5'} />
+}
 
 export default function LoveNotes() {
   const t = useT()
@@ -24,7 +31,7 @@ export default function LoveNotes() {
   const [showSendModal, setShowSendModal] = useState(false)
   const [showEmojiPicker, setShowEmojiPicker] = useState(false)
   const [message, setMessage] = useState('')
-  const [selectedEmoji, setSelectedEmoji] = useState('💕')
+  const [selectedEmoji, setSelectedEmoji] = useState('Heart')
   const [sending, setSending] = useState(false)
 
   useEffect(() => {
@@ -63,12 +70,12 @@ export default function LoveNotes() {
 
       // Reload love notes to show the new one immediately
       await loadLoveNotes(currentProfile.id)
-      success(`💌 ${t('couple.noteSent')}`)
+      success(t('couple.noteSent'))
       setShowSendModal(false)
       setMessage('')
-      setSelectedEmoji('💕')
+      setSelectedEmoji('Heart')
     } catch (error) {
-      console.error('Failed to send love note:', error)
+      if (import.meta.env.DEV) console.error('Failed to send love note:', error)
     } finally {
       setSending(false)
     }
@@ -115,8 +122,9 @@ export default function LoveNotes() {
       {/* Unread Badge */}
       {unreadCount > 0 && (
         <div className="p-3 bg-pink-50 dark:bg-pink-900/20 border-l-4 border-pink-500 rounded-lg">
-          <p className="text-sm text-pink-700 dark:text-pink-300 font-medium">
-            💌 {t('couple.unreadNotes', { count: unreadCount })}
+          <p className="text-sm text-pink-700 dark:text-pink-300 font-medium flex items-center gap-1">
+            <Heart className="w-4 h-4 fill-pink-500" />
+            {t('couple.unreadNotes', { count: unreadCount })}
           </p>
         </div>
       )}
@@ -126,7 +134,6 @@ export default function LoveNotes() {
         <div className="space-y-3">
           {loveNotes.map(note => {
             const isReceived = note.toProfileId === currentProfile?.id
-            const isSent = note.fromProfileId === currentProfile?.id
             
             return (
               <div
@@ -139,8 +146,8 @@ export default function LoveNotes() {
               >
                 <div className="flex items-start gap-4">
                   {/* Emoji Icon */}
-                  <div className="w-12 h-12 flex-shrink-0 rounded-full bg-gradient-to-br from-pink-400 to-red-400 flex items-center justify-center text-2xl">
-                    {note.emoji || '💕'}
+                  <div className="w-12 h-12 flex-shrink-0 rounded-full bg-gradient-to-br from-pink-400 to-red-400 flex items-center justify-center">
+                    <LoveIcon name={note.emoji} className="w-6 h-6 text-white" />
                   </div>
 
                   {/* Content */}
@@ -229,8 +236,9 @@ export default function LoveNotes() {
             <div className="space-y-4">
               {/* To Field */}
               <div className="p-3 bg-pink-50 dark:bg-pink-900/10 rounded-lg">
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  {t('couple.to', { name: partnerName })} 💕
+                <p className="text-sm text-gray-600 dark:text-gray-400 flex items-center gap-1">
+                  {t('couple.to', { name: partnerName })}
+                  <Heart className="w-3.5 h-3.5 fill-pink-400 text-pink-400" />
                 </p>
               </div>
 
@@ -243,25 +251,25 @@ export default function LoveNotes() {
                   <button
                     type="button"
                     onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-                    className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-dark-border bg-white dark:bg-dark-bg text-4xl hover:bg-gray-50 dark:hover:bg-dark-bg transition-colors flex items-center justify-between"
+                    className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-dark-border bg-white dark:bg-dark-bg hover:bg-gray-50 dark:hover:bg-dark-bg transition-colors flex items-center justify-between"
                   >
-                    <span>{selectedEmoji}</span>
+                    <LoveIcon name={selectedEmoji} className="w-7 h-7 text-pink-500" />
                     <Smile className="w-5 h-5 text-gray-400" />
                   </button>
 
                   {showEmojiPicker && (
                     <div className="absolute z-10 mt-2 w-full p-3 bg-white dark:bg-dark-card rounded-lg shadow-lg border border-gray-200 dark:border-dark-border grid grid-cols-5 gap-2">
-                      {EMOJI_PICKER.map(emoji => (
+                      {LOVE_ICON_NAMES.map(name => (
                         <button
-                          key={emoji}
+                          key={name}
                           type="button"
                           onClick={() => {
-                            setSelectedEmoji(emoji)
+                            setSelectedEmoji(name)
                             setShowEmojiPicker(false)
                           }}
-                          className="text-3xl hover:scale-125 transition-transform"
+                          className="hover:scale-125 transition-transform p-2"
                         >
-                          {emoji}
+                          <LoveIcon name={name} className="w-6 h-6 text-pink-500" />
                         </button>
                       ))}
                     </div>

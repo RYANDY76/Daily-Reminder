@@ -18,6 +18,7 @@ export default function SyncStatusBadge() {
       const timer = setTimeout(() => useSyncStore.getState().reset(), 4000)
       return () => clearTimeout(timer)
     }
+    return undefined
   }, [status])
 
   if (!autoSync && !lastSyncedAt && status === 'idle') return null

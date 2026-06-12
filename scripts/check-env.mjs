@@ -6,7 +6,8 @@ const REQUIRED_VARS = [
 ]
 
 const OPTIONAL_VARS = [
-  'VITE_VAPID_PUBLIC_KEY'
+  'VITE_VAPID_PUBLIC_KEY',
+  'VITE_SENTRY_DSN'
 ]
 
 const missing = REQUIRED_VARS.filter(

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useProfileStore } from '../stores/useProfileStore'
 import { useCoupleStore } from '../stores/useCoupleStore'
 import { useToast } from '../hooks/useToast'
+import { useConfirm } from '../hooks/useConfirm'
 import { useT } from '../i18n'
 import { isCoupleSyncEnabled } from '../services/coupleSync'
 import { useAuthStore } from '../stores/useAuthStore'
@@ -15,6 +16,7 @@ export default function CoupleConnect() {
   const connection = useCoupleStore(s => s.connection)
   const goals = useCoupleStore(s => s.goals)
   const { success, error: showError } = useToast()
+  const { confirm, ConfirmDialog } = useConfirm()
   const [showModal, setShowModal] = useState(false)
   const [mode, setMode] = useState<'create' | 'join'>('create')
   const [inviteCode, setInviteCode] = useState('')
@@ -91,7 +93,8 @@ export default function CoupleConnect() {
   }
 
   const handleDisconnect = async () => {
-    if (!window.confirm(t('couple.disconnectConfirm'))) return
+    const ok = await confirm({ title: t('common.confirm'), message: t('couple.disconnectConfirm'), variant: 'danger', confirmText: t('couple.disconnect'), cancelText: t('common.cancel') })
+    if (!ok) return
     await useCoupleStore.getState().disconnect()
     success(t('couple.disconnected'))
   }
@@ -100,6 +103,8 @@ export default function CoupleConnect() {
     const partnerName = useCoupleStore.getState().getPartnerName(currentProfile?.id || '')
 
     return (
+      <>
+      <ConfirmDialog />
       <div className="card p-5">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
@@ -135,6 +140,7 @@ export default function CoupleConnect() {
           </div>
         </div>
       </div>
+    </>
     )
   }
 

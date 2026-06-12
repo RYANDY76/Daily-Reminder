@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Daily Reminder — Audit Komparatif v1 vs v2</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/core@1.0.0-beta20/dist/css/tabler.min.css" />
+  <style>
+    :root {
+      --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      --color-background-primary: #ffffff;
+      --color-background-secondary: #f6f6f4;
+      --color-border-tertiary: #e8e6e1;
+      --color-text-primary: #1b1b18;
+      --color-text-secondary: #6f6e68;
+      --color-background-success: #e9f7ef;
+      --color-text-success: #0f6e56;
+      --color-background-warning: #fff8e6;
+      --color-text-warning: #ba7517;
+      --color-background-danger: #fef0ee;
+      --color-text-danger: #993c1d;
+      --color-background-info: #e8f2ff;
+      --color-text-info: #1a66ff;
+      --border-radius-sm: 6px;
+      --border-radius-md: 10px;
+      --border-radius-lg: 14px;
+    }
+    body { font-family: var(--font-sans); background: #f8f8f6; color: var(--color-text-primary); padding: 24px; margin: 0; }
+    .container { max-width: 960px; margin: 0 auto; }
+    .page-header { margin-bottom: 24px; }
+    .page-header h1 { font-size: 22px; font-weight: 600; margin: 0 0 4px; }
+    .page-header p { font-size: 13px; color: var(--color-text-secondary); margin: 0; }
+
+    .wrap { padding: 1rem 0; font-family: var(--font-sans); }
+    .ver-header { display: flex; gap: 12px; margin-bottom: 1.5rem; }
+    .ver-box { flex: 1; border-radius: var(--border-radius-lg); padding: 1rem 1.25rem; border: 0.5px solid var(--color-border-tertiary); background: var(--color-background-primary); }
+    .ver-num { font-size: 40px; font-weight: 500; line-height: 1; margin-bottom: 4px; }
+    .ver-label { font-size: 12px; color: var(--color-text-secondary); }
+    .ver-verdict { font-size: 13px; margin-top: 6px; font-weight: 500; }
+    .delta { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; padding: 2px 8px; border-radius: 4px; font-weight: 500; }
+    .delta.up { background: var(--color-background-success); color: var(--color-text-success); }
+    .delta.down { background: var(--color-background-danger); color: var(--color-text-danger); }
+    .delta.same { background: var(--color-background-secondary); color: var(--color-text-secondary); }
+    .section-title { font-size: 15px; font-weight: 500; color: var(--color-text-primary); margin: 1.5rem 0 0.75rem; }
+    .compare-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .compare-table th { text-align: left; color: var(--color-text-secondary); font-weight: 500; padding: 6px 8px; border-bottom: 0.5px solid var(--color-border-tertiary); font-size: 12px; }
+    .compare-table td { padding: 8px; border-bottom: 0.5px solid var(--color-border-tertiary); vertical-align: middle; }
+    .compare-table tr:last-child td { border-bottom: none; }
+    .bar-sm { height: 5px; border-radius: 3px; background: var(--color-background-secondary); overflow: hidden; width: 80px; display: inline-block; vertical-align: middle; }
+    .bar-fill { height: 100%; border-radius: 3px; }
+    .score-v1 { color: var(--color-text-secondary); }
+    .score-v2 { font-weight: 500; }
+    .feat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; }
+    .feat-card { background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-md); padding: 0.75rem 1rem; }
+    .feat-icon { font-size: 16px; margin-bottom: 4px; }
+    .feat-title { font-size: 13px; font-weight: 500; color: var(--color-text-primary); margin-bottom: 2px; }
+    .feat-desc { font-size: 12px; color: var(--color-text-secondary); line-height: 1.4; }
+    .badge { display: inline-block; font-size: 11px; padding: 2px 8px; border-radius: 4px; font-weight: 500; }
+    .badge.fixed { background: var(--color-background-success); color: var(--color-text-success); }
+    .badge.partial { background: var(--color-background-warning); color: var(--color-text-warning); }
+    .badge.still { background: var(--color-background-danger); color: var(--color-text-danger); }
+    .badge.new-feat { background: var(--color-background-info); color: var(--color-text-info); }
+    .issue-row { display: flex; gap: 10px; align-items: flex-start; padding: 8px 0; border-bottom: 0.5px solid var(--color-border-tertiary); }
+    .issue-row:last-child { border-bottom: none; }
+    .issue-text { flex: 1; }
+    .issue-title { font-size: 13px; font-weight: 500; color: var(--color-text-primary); }
+    .issue-desc { font-size: 12px; color: var(--color-text-secondary); margin-top: 2px; line-height: 1.4; }
+    .cov-box { background: var(--color-background-secondary); border-radius: var(--border-radius-md); padding: 0.75rem 1rem; margin-bottom: 0.5rem; }
+    .cov-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; font-size: 12px; }
+    .cov-bar-bg { height: 6px; border-radius: 3px; background: var(--color-background-primary); overflow: hidden; flex: 1; margin: 0 10px; }
+    .overall-bar-v2 { display: flex; align-items: center; gap: 16px; background: var(--color-background-secondary); border-radius: var(--border-radius-lg); padding: 1rem 1.5rem; margin-bottom: 1.5rem; }
+    .print-only { display: none; }
+    @media print {
+      body { padding: 0; background: white; }
+      .no-print { display: none; }
+      .print-only { display: block; }
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+  <div class="page-header">
+    <h1>Daily Reminder — Audit Komparatif</h1>
+    <p>Perbandingan versi 1 (sebelum pengembangan) vs versi 2 (setelah 2 hari pengembangan)</p>
+  </div>
+
+  <div class="wrap">
+    <div class="overall-bar-v2">
+      <div>
+        <div style="font-size:11px;color:var(--color-text-secondary);margin-bottom:4px">Skor versi baru</div>
+        <div style="font-size:48px;font-weight:500;line-height:1;color:#0F6E56">74</div>
+        <div style="font-size:11px;color:var(--color-text-secondary);margin-top:2px">/ 100</div>
+      </div>
+      <div style="width:1px;height:60px;background:var(--color-border-tertiary)"></div>
+      <div>
+        <div style="font-size:11px;color:var(--color-text-secondary);margin-bottom:4px">Versi sebelumnya</div>
+        <div style="font-size:48px;font-weight:500;line-height:1;color:var(--color-text-secondary)">65</div>
+      </div>
+      <div style="width:1px;height:60px;background:var(--color-border-tertiary)"></div>
+      <div style="flex:1">
+        <div style="font-size:14px;font-weight:500;color:var(--color-text-primary);margin-bottom:4px">+9 poin — progres signifikan</div>
+        <div style="font-size:13px;color:var(--color-text-secondary);margin-bottom:8px">Hampir siap — 2 isu kritis masih perlu diselesaikan</div>
+        <div style="height:8px;border-radius:4px;background:var(--color-background-primary);overflow:hidden">
+          <div style="height:100%;width:74%;background:#0F6E56;border-radius:4px;transition:width .6s"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-title">Perbandingan per parameter</div>
+    <table class="compare-table">
+      <thead>
+        <tr>
+          <th style="width:200px">Parameter</th>
+          <th>V1</th>
+          <th>V2</th>
+          <th>Perubahan</th>
+          <th>Catatan</th>
+        </tr>
+      </thead>
+      <tbody id="compare-body"></tbody>
+    </table>
+
+    <div class="section-title">Status perbaikan dari audit v1</div>
+    <div id="issue-status"></div>
+
+    <div class="section-title">Fitur baru yang ditambahkan di v2</div>
+    <div class="feat-grid" id="feat-grid"></div>
+
+    <div class="section-title">Coverage test aktual (dari coverage report)</div>
+    <div class="cov-box">
+      <div style="font-size:13px;font-weight:500;margin-bottom:10px;color:var(--color-text-primary)">Overall project (semua src files)</div>
+      <div id="cov-bars"></div>
+    </div>
+    <div style="font-size:12px;color:var(--color-text-secondary);margin-bottom:1rem">
+      Catatan: coverage 2.4% statements karena vitest hanya mengukur file yang diimport dalam test — sebagian besar komponen UI belum ada testnya sama sekali.
+    </div>
+
+    <div class="section-title">Isu yang masih perlu diselesaikan</div>
+    <div id="remaining-issues"></div>
+  </div>
+</div>
+
+<script>
+const params = [
+  { name: "Keamanan & kriptografi", v1: 62, v2: 82, note: "Kunci AES pindah ke sessionStorage ✓. Salt PIN unik per profil ✓. Timing-safe compare ✓" },
+  { name: "Arsitektur kode", v1: 78, v2: 82, note: "ErrorHandler terpusat, sanitize.ts, useToast, useConfirm — separation of concerns makin baik" },
+  { name: "Fitur & kelengkapan", v1: 85, v2: 92, note: "Biometric auth, smart schedule, holiday calendar, DailyPlan, Sentry error monitoring ditambahkan" },
+  { name: "Testing & QA", v1: 45, v2: 55, note: "7 test file (naik dari 2), test store & service ada — tapi coverage masih 2.4% overall" },
+  { name: "Penanganan error", v1: 65, v2: 78, note: "AppErrorHandler terpusat, Sentry integration, retryAsync, user-visible error lebih baik" },
+  { name: "Konfigurasi & deployment", v1: 72, v2: 78, note: "check-env.mjs sebelum build, npm audit script, vitest coverage ditambahkan" },
+  { name: "Performa & bundle", v1: 55, v2: 55, note: "PDF bundle masih besar, DOMPurify ditambahkan, belum ada perubahan kode-splitting" },
+  { name: "Aksesibilitas & UX", v1: 60, v2: 68, note: "ConfirmModal dengan focus trap & ESC key, Avatar component, UX lebih konsisten" },
+  { name: "Privasi & data", v1: 58, v2: 60, note: "Google token masih di Profile, analytics local-only (baik), tapi belum ada audit GDPR" },
+  { name: "Dokumentasi", v1: 75, v2: 75, note: "Tidak ada perubahan signifikan di dokumentasi" }
+];
+
+const tbody = document.getElementById('compare-body');
+params.forEach(p => {
+  const delta = p.v2 - p.v1;
+  const color = p.v2 >= 75 ? '#0F6E56' : p.v2 >= 65 ? '#BA7517' : '#993C1D';
+  const deltaClass = delta > 0 ? 'up' : delta < 0 ? 'down' : 'same';
+  const deltaStr = delta > 0 ? `+${delta}` : delta.toString();
+  const tr = document.createElement('tr');
+  tr.innerHTML = `
+    <td style="font-weight:500;font-size:13px">${p.name}</td>
+    <td>
+      <span class="score-v1">${p.v1}</span>
+      <span class="bar-sm"><span class="bar-fill" style="width:${p.v1}%;background:#D3D1C7"></span></span>
+    </td>
+    <td>
+      <span class="score-v2" style="color:${color}">${p.v2}</span>
+      <span class="bar-sm"><span class="bar-fill" style="width:${p.v2}%;background:${color}"></span></span>
+    </td>
+    <td><span class="delta ${deltaClass}">${deltaStr}</span></td>
+    <td style="font-size:12px;color:var(--color-text-secondary)">${p.note}</td>
+  `;
+  tbody.appendChild(tr);
+});
+
+const issues = [
+  { title: "Kunci AES disimpan di localStorage", status: "fixed", desc: "DIPERBAIKI ✓ — Sekarang menggunakan sessionStorage. Ada migrasi otomatis dari localStorage lama." },
+  { title: "Coverage test sangat minim", status: "partial", desc: "SEBAGIAN — Dari 2 jadi 7 test files. useTaskStore, useAppStore, autoCloudSync, database sudah ada test. Tapi overall coverage masih sangat rendah (2.4%)." },
+  { title: "Google OAuth token di Profile database", status: "still", desc: "BELUM DIPERBAIKI — googleAccessToken & googleRefreshToken masih ada di entitas Profile di IndexedDB. Ini tetap menjadi risiko keamanan." },
+  { title: "Bundle PDF 561KB", status: "still", desc: "BELUM DIPERBAIKI — jsPDF masih dimuat langsung, tidak ada lazy loading untuk modul PDF." },
+  { title: "Error handling silent fail", status: "fixed", desc: "DIPERBAIKI ✓ — AppErrorHandler terpusat, Sentry integration, retryAsync, error logging konsisten via logError()." },
+  { title: "Tidak ada rate limiting", status: "still", desc: "BELUM DIPERBAIKI — Invite code Couple Mode masih tanpa brute-force protection di sisi client." },
+  { title: "Aksesibilitas ARIA tidak konsisten", status: "partial", desc: "SEBAGIAN — ConfirmModal dengan focus trap & keyboard handling diperbaiki. Belum ada audit menyeluruh." },
+  { title: "Legacy decrypt base64 masih aktif", status: "fixed", desc: "DIPERBAIKI ✓ — Legacy decrypt dihapus. decryptToken() sekarang hanya menerima v2: prefix." }
+];
+
+const issueContainer = document.getElementById('issue-status');
+issues.forEach(i => {
+  const div = document.createElement('div');
+  div.className = 'issue-row';
+  div.innerHTML = `
+    <span class="badge ${i.status}" style="margin-top:2px;white-space:nowrap">${i.status === 'fixed' ? 'Selesai' : i.status === 'partial' ? 'Sebagian' : 'Belum'}</span>
+    <div class="issue-text">
+      <div class="issue-title">${i.title}</div>
+      <div class="issue-desc">${i.desc}</div>
+    </div>
+  `;
+  issueContainer.appendChild(div);
+});
+
+const features = [
+  { icon: "🔐", title: "Biometric Auth", desc: "WebAuthn/FIDO2 untuk unlock profil tanpa PIN di perangkat yang mendukung" },
+  { icon: "📅", title: "Smart Schedule", desc: "Analisis pola produktivitas dari Pomodoro history untuk scheduling otomatis" },
+  { icon: "🏖️", title: "Holiday Calendar", desc: "Hari libur nasional Indonesia 2026 dengan fallback API & static data" },
+  { icon: "📋", title: "DailyPlan View", desc: "Tampilan rencana harian terpadu dengan estimasi waktu dan saran urutan tugas" },
+  { icon: "🐛", title: "Sentry Monitoring", desc: "@sentry/browser + @sentry/react untuk error tracking di production" },
+  { icon: "🛡️", title: "DOMPurify", desc: "Sanitasi input HTML untuk mencegah XSS di konten yang di-render" },
+  { icon: "🔄", title: "UpdatePrompt", desc: "Notifikasi update PWA otomatis ketika versi baru tersedia" },
+  { icon: "✅", title: "ConfirmModal Global", desc: "Modal konfirmasi dengan focus trap, ESC key, dan useConfirm hook" },
+  { icon: "👤", title: "Avatar Component", desc: "Komponen avatar terpusat dengan fallback inisial & photo URL" },
+  { icon: "📊", title: "Analytics Lokal", desc: "Tracking event lokal (opt-in, tidak keluar jaringan), stored di localStorage" }
+];
+
+const featGrid = document.getElementById('feat-grid');
+features.forEach(f => {
+  const div = document.createElement('div');
+  div.className = 'feat-card';
+  div.innerHTML = `
+    <div class="feat-icon">${f.icon}</div>
+    <div class="feat-title">${f.title}</div>
+    <div class="feat-desc">${f.desc}</div>
+  `;
+  featGrid.appendChild(div);
+});
+
+const covData = [
+  { label: "Statements", v2: 2.4, note: "Hanya 4 file yang benar-benar ditest" },
+  { label: "Branches", v2: 37.2, note: "Logika bercabang di file yang ditest" },
+  { label: "Functions", v2: 17.2, note: "Fungsi yang terpanggil saat test" },
+  { label: "crypto.ts", v2: 80, note: "Paling baik" },
+  { label: "offlineQueue.ts", v2: 87.8, note: "Sangat baik" },
+  { label: "database.ts", v2: 21.1, note: "Masih kurang" },
+  { label: "useTaskStore.ts", v2: 0, note: "Belum terakumulasi meski ada test" },
+  { label: "Semua komponen UI", v2: 0, note: "0% — tidak ada test komponen" }
+];
+
+const covBars = document.getElementById('cov-bars');
+covData.forEach(c => {
+  const color = c.v2 >= 70 ? '#0F6E56' : c.v2 >= 40 ? '#BA7517' : '#993C1D';
+  const div = document.createElement('div');
+  div.className = 'cov-row';
+  div.innerHTML = `
+    <span style="min-width:140px;color:var(--color-text-secondary)">${c.label}</span>
+    <div class="cov-bar-bg"><div style="height:100%;width:${c.v2}%;background:${color};border-radius:3px"></div></div>
+    <span style="min-width:40px;text-align:right;font-weight:500;color:${color}">${c.v2}%</span>
+    <span style="margin-left:8px;font-size:11px;color:var(--color-text-secondary)">${c.note}</span>
+  `;
+  covBars.appendChild(div);
+});
+
+const remaining = [
+  { sev: "Kritis", sev_class: "still", title: "Google OAuth tokens masih di IndexedDB Profile", desc: "googleAccessToken & googleRefreshToken tersimpan di entitas Profile lokal tanpa enkripsi khusus. Solusi: gunakan encryptToken() dari crypto.ts saat menyimpan, atau hapus dari Profile dan kelola terpisah via Supabase session." },
+  { sev: "Sedang", sev_class: "partial", title: "Coverage test masih sangat rendah (2.4%)", desc: "Vitest mengukur statement coverage dari file yang diimport test. Hampir semua komponen UI, stores, dan service belum ada test coverage. Target minimal: crypto.ts & database.ts >80%, cloudSync.ts & useTaskStore.ts >50%." },
+  { sev: "Sedang", sev_class: "still", title: "Bundle PDF 561KB tidak di-lazy-load", desc: "jsPDF dimuat setiap sesi. Tambahkan dynamic import: const { default: jsPDF } = await import('jspdf') di dalam fungsi ekspor, bukan di top-level." },
+  { sev: "Ringan", sev_class: "still", title: "Biometric challenge bersifat static", desc: "Konstanta CHALLENGE di useBiometricAuth.ts dibuat sekali saat module load. Challenge seharusnya fresh random setiap kali autentikasi untuk keamanan penuh." },
+  { sev: "Ringan", sev_class: "still", title: "Analytics event tidak ada GDPR consent flow", desc: "Analytics lokal dan opt-out tersedia, tapi tidak ada prompt persetujuan eksplisit saat pertama kali. Perlu ditampilkan saat onboarding." }
+];
+
+const remDiv = document.getElementById('remaining-issues');
+remaining.forEach(r => {
+  const div = document.createElement('div');
+  div.className = 'issue-row';
+  div.innerHTML = `
+    <span class="badge ${r.sev_class}" style="margin-top:2px;white-space:nowrap">${r.sev}</span>
+    <div class="issue-text">
+      <div class="issue-title">${r.title}</div>
+      <div class="issue-desc">${r.desc}</div>
+    </div>
+  `;
+  remDiv.appendChild(div);
+});
+</script>
+</body>
+</html>

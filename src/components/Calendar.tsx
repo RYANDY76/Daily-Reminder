@@ -5,16 +5,12 @@ import { getTasksForDateRange } from '../database'
 import { PRIORITY_COLORS } from '../types'
 import { formatDateShort } from '../dates'
 import type { Task } from '../types'
-import { ChevronLeft, ChevronRight, ListTodo, CalendarDays, RefreshCw } from 'lucide-react'
+import { ChevronLeft, ChevronRight, ListTodo } from 'lucide-react'
 import { useT } from '../i18n'
-import { useGoogleCalendar } from '../hooks/useGoogleCalendar'
-import {
-  getGoogleCalendarEvents,
-  eventsForDate,
-  eventTimeLabel,
-  type GoogleCalendarEvent
-} from '../utils/googleCalendarEvents'
 import TaskForm from './TaskForm'
+import { useHolidays } from '../hooks/useHolidays'
+import type { PublicHoliday } from '../types'
+
 
 type ViewMode = 'month' | 'week' | 'agenda'
 
@@ -31,35 +27,20 @@ function getWeekDates(baseDate: Date): string[] {
 
 export default function Calendar() {
   const profile = useProfileStore((s) => s.currentProfile)
-  const todayTasks = useTaskStore((s) => s.todayTasks)
   const loadTodayTasks = useTaskStore((s) => s.loadTodayTasks)
   const [viewMode, setViewMode] = useState<ViewMode>('month')
   const [currentMonth, setCurrentMonth] = useState(() => new Date().getMonth())
   const [currentYear, setCurrentYear] = useState(() => new Date().getFullYear())
   const [weekAnchor, setWeekAnchor] = useState(() => new Date())
   const [tasksByDate, setTasksByDate] = useState<Record<string, Task[]>>({})
-  const [googleEvents, setGoogleEvents] = useState<GoogleCalendarEvent[]>([])
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [showTaskForm, setShowTaskForm] = useState(false)
   const [editTask, setEditTask] = useState<Task | null>(null)
-  const { isConnected, syncEvents, isSyncing } = useGoogleCalendar()
   const t = useT()
+  const { holidays, holidaysForDate, loading: holidaysLoading } = useHolidays(currentYear, currentMonth)
 
   const todayStr = new Date().toISOString().split('T')[0]
-
-  const loadGoogleEvents = useCallback(() => {
-    if (profile?.id) {
-      setGoogleEvents(getGoogleCalendarEvents(profile.id))
-    }
-  }, [profile?.id])
-
-  useEffect(() => {
-    loadGoogleEvents()
-    const handler = () => loadGoogleEvents()
-    window.addEventListener('google-calendar-updated', handler)
-    return () => window.removeEventListener('google-calendar-updated', handler)
-  }, [loadGoogleEvents])
 
   useEffect(() => {
     const handler = (e: Event) => {
@@ -85,8 +66,8 @@ export default function Calendar() {
 
   const weekDates = useMemo(() => getWeekDates(weekAnchor), [weekAnchor])
 
-  const dateStr = (day: number) =>
-    `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
+  const monthStr = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}`
+  const dateStr = (day: number) => `${monthStr}-${String(day).padStart(2, '0')}`
 
   const loadRangeTasks = useCallback((start: string, end: string) => {
     if (!profile) return
@@ -122,17 +103,17 @@ export default function Calendar() {
     const dates = viewMode === 'month'
       ? Object.keys(tasksByDate).sort()
       : weekDates
-    const items: { date: string; task?: Task; event?: GoogleCalendarEvent }[] = []
+    const items: { date: string; task?: Task; holiday?: PublicHoliday }[] = []
     for (const d of dates) {
-      for (const ev of eventsForDate(googleEvents, d)) {
-        items.push({ date: d, event: ev })
+      for (const h of holidaysForDate(d)) {
+        items.push({ date: d, holiday: h })
       }
       for (const tk of (tasksByDate[d] || []).sort((a, b) => a.time.localeCompare(b.time))) {
         items.push({ date: d, task: tk })
       }
     }
     return items
-  }, [viewMode, tasksByDate, weekDates, googleEvents])
+  }, [viewMode, tasksByDate, weekDates, holidays])
 
   const closeTaskForm = async () => {
     setShowTaskForm(false)
@@ -140,11 +121,6 @@ export default function Calendar() {
     if (viewMode === 'month') loadMonthTasks()
     else loadWeekTasks()
     if (selectedDate === todayStr) await loadTodayTasks()
-  }
-
-  const handleGoogleSync = async () => {
-    await syncEvents()
-    loadGoogleEvents()
   }
 
   const prev = () => {
@@ -180,7 +156,6 @@ export default function Calendar() {
   }
 
   const selectedTasks = selectedDate ? tasksByDate[selectedDate] || [] : []
-  const selectedGoogleEvents = selectedDate ? eventsForDate(googleEvents, selectedDate) : []
   const selectedTasksSorted = [...selectedTasks].sort((a, b) => a.time.localeCompare(b.time))
 
   const dayLabels = [
@@ -190,26 +165,38 @@ export default function Calendar() {
 
   const renderDayCell = (dStr: string, dayNum: number | string, compact = false) => {
     const dayTasks = tasksByDate[dStr] || []
-    const gEvents = eventsForDate(googleEvents, dStr)
+    const dayHolidays = holidaysForDate(dStr)
     const isSelected = selectedDate === dStr
     const isTodayDate = dStr === todayStr
+    const isSunday = new Date(dStr + 'T12:00:00').getDay() === 0
+    const isHoliday = dayHolidays.length > 0
+    const textColor = isHoliday || isSunday
+      ? 'text-red-500 dark:text-red-400'
+      : isTodayDate ? 'text-primary-600 dark:text-primary-400'
+      : 'text-gray-900 dark:text-white'
     return (
       <button
         key={dStr}
         onClick={() => setSelectedDate(isSelected ? null : dStr)}
         className={`relative ${compact ? 'p-2 min-h-[72px]' : 'p-1.5 min-h-[48px]'} flex flex-col items-center transition-colors duration-150 min-h-tap rounded-lg ${
-          isSelected ? 'bg-primary-100 dark:bg-primary-900/30'
+          isSelected ? 'bg-primary-100 dark:bg-primary-900/30 ring-2 ring-primary-300 dark:ring-primary-700'
             : isTodayDate ? 'bg-primary-50 dark:bg-primary-900/10'
+            : isHoliday ? 'bg-red-50 dark:bg-red-900/10'
             : 'hover:bg-gray-50 dark:hover:bg-dark-card'
         }`}
       >
-        <span className={`text-sm font-medium ${isTodayDate ? 'text-primary-600 dark:text-primary-400' : 'text-gray-900 dark:text-white'}`}>
+        <span className={`text-sm font-medium ${textColor}`}>
           {dayNum}
         </span>
-        {(dayTasks.length > 0 || gEvents.length > 0) && (
+        {isHoliday && !compact && (
+          <span className="text-[8px] text-red-500 dark:text-red-400 leading-tight mt-0.5 text-center line-clamp-1 max-w-[50px]">
+            {dayHolidays[0].name}
+          </span>
+        )}
+        {(dayTasks.length > 0 || isHoliday) && (
           <div className="flex gap-0.5 mt-0.5 flex-wrap justify-center">
-            {gEvents.length > 0 && <div className="w-1.5 h-1.5 rounded-full bg-blue-500" />}
-            {dayTasks.slice(0, 3).map((tk, idx) => (
+            {isHoliday && <div className="w-1.5 h-1.5 rounded-full bg-red-500" />}
+            {dayTasks.slice(0, compact ? 1 : 3).map((tk, idx) => (
               <div key={idx} className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: tk.color || PRIORITY_COLORS[tk.priority] }} />
             ))}
           </div>
@@ -221,6 +208,7 @@ export default function Calendar() {
   const headerLabel = viewMode === 'month'
     ? `${t('calendar.month' + currentMonth)} ${currentYear}`
     : `${formatDateShort(weekDates[0])} – ${formatDateShort(weekDates[6])}`
+  const currentHolidayCount = holidays.filter(h => h.date.startsWith(monthStr)).length
 
   return (
     <div className="space-y-5">
@@ -247,16 +235,6 @@ export default function Calendar() {
               {t('calendar.viewAgenda')}
             </button>
           </div>
-          {isConnected && (
-            <button
-              onClick={handleGoogleSync}
-              disabled={isSyncing}
-              className="p-2 rounded-xl border border-gray-200 dark:border-dark-border hover:bg-gray-50 dark:hover:bg-dark-card transition-colors"
-              title={t('settings.syncNow')}
-            >
-              <RefreshCw className={`w-4 h-4 text-blue-500 ${isSyncing ? 'animate-spin' : ''}`} />
-            </button>
-          )}
         </div>
       </div>
 
@@ -267,6 +245,11 @@ export default function Calendar() {
           </button>
           <div className="flex items-center gap-3">
             <h3 className="text-base font-semibold text-gray-900 dark:text-white">{headerLabel}</h3>
+            {currentHolidayCount > 0 && (
+              <span className="text-[10px] font-medium text-red-500 bg-red-50 dark:bg-red-900/20 px-2 py-0.5 rounded-full">
+                {currentHolidayCount} libur
+              </span>
+            )}
             <button onClick={goToday} className="text-xs px-2.5 py-1 rounded-lg bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400 font-medium hover:bg-primary-100 transition-colors">
               {t('calendar.goToday')}
             </button>
@@ -276,7 +259,7 @@ export default function Calendar() {
           </button>
         </div>
 
-        {loading && <p className="text-xs text-gray-400 text-center mb-2">{t('common.loading')}</p>}
+        {(loading || holidaysLoading) && <p className="text-xs text-gray-400 text-center mb-2">{t('common.loading')}</p>}
 
         <div className="grid grid-cols-7 mb-1">
           {dayLabels.map((d) => (
@@ -289,15 +272,16 @@ export default function Calendar() {
             {agendaItems.length === 0 ? (
               <p className="text-sm text-gray-400 text-center py-8">{t('calendar.noTasks')}</p>
             ) : agendaItems.map((item, idx) => (
-              <div key={`${item.date}-${idx}`} className="flex items-center gap-3 p-3 rounded-lg bg-gray-50 dark:bg-dark-card">
-                <div className={`w-2 h-2 rounded-full flex-shrink-0 ${item.event ? 'bg-blue-500' : ''}`} style={item.task ? { backgroundColor: item.task.color || PRIORITY_COLORS[item.task.priority] } : undefined} />
+              <div key={`${item.date}-${idx}`} className={`flex items-center gap-3 p-3 rounded-lg ${item.holiday ? 'bg-red-50 dark:bg-red-900/10' : 'bg-gray-50 dark:bg-dark-card'}`}>
+                <div className={`w-2 h-2 rounded-full flex-shrink-0 ${item.holiday ? 'bg-red-500' : ''}`} style={item.task ? { backgroundColor: item.task.color || PRIORITY_COLORS[item.task.priority] } : undefined} />
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
-                    {item.task?.title || item.event?.summary}
+                  <p className={`text-sm font-medium truncate ${item.holiday ? 'text-red-600 dark:text-red-400' : 'text-gray-900 dark:text-white'}`}>
+                    {item.holiday?.name || item.task?.title}
                   </p>
                   <p className="text-xs text-gray-400">
-                    {formatDateShort(item.date)} · {item.task ? item.task.time : eventTimeLabel(item.event!)}
-                    {item.event ? ' · Google' : ''}
+                    {formatDateShort(item.date)}
+                    {item.holiday ? ' · Libur Nasional' : ''}
+                    {item.task ? ` · ${item.task.time}` : ''}
                   </p>
                 </div>
                 {item.task && (
@@ -319,45 +303,26 @@ export default function Calendar() {
           </div>
         )}
 
-        {isConnected && googleEvents.length > 0 && (
-          <p className="text-xs text-gray-400 mt-3 flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full bg-blue-500 inline-block" />
-            {t('calendar.googleEventsHint', { count: googleEvents.length })}
-          </p>
-        )}
       </div>
 
       {selectedDate && (
         <div className="card p-4">
           <div className="flex items-center justify-between gap-3 mb-3">
-            <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
-              {formatDateShort(selectedDate)}
-              {selectedDate === todayStr && <span className="ml-2 text-xs text-primary-500">{t('calendar.today')}</span>}
-            </h3>
+            <div>
+              <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
+                {formatDateShort(selectedDate)}
+                {selectedDate === todayStr && <span className="ml-2 text-xs text-primary-500">{t('calendar.today')}</span>}
+              </h3>
+              {holidaysForDate(selectedDate).map(h => (
+                <p key={h.date} className="text-xs font-medium text-red-500 mt-0.5">{h.name}</p>
+              ))}
+            </div>
             <button onClick={() => setShowTaskForm(true)} className="px-3 py-2 rounded-lg bg-primary-500 hover:bg-primary-600 text-white text-xs font-medium transition-colors">
               {t('calendar.addTask')}
             </button>
           </div>
 
-          {selectedGoogleEvents.length > 0 && (
-            <div className="mb-4 space-y-1.5">
-              <p className="text-xs font-medium text-blue-600 dark:text-blue-400 flex items-center gap-1">
-                <CalendarDays className="w-3.5 h-3.5" />
-                Google Calendar
-              </p>
-              {selectedGoogleEvents.map((ev) => (
-                <div key={ev.id} className="flex items-center gap-3 p-3 rounded-lg bg-blue-50 dark:bg-blue-900/20">
-                  <div className="w-2 h-2 rounded-full bg-blue-500 flex-shrink-0" />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{ev.summary}</p>
-                    <p className="text-xs text-gray-400">{eventTimeLabel(ev)}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {selectedTasksSorted.length === 0 && selectedGoogleEvents.length === 0 ? (
+          {selectedTasksSorted.length === 0 ? (
             <div className="text-center py-8">
               <ListTodo className="w-6 h-6 text-gray-300 dark:text-gray-600 mx-auto mb-2" />
               <p className="text-sm text-gray-400">{t('calendar.noTasks')}</p>

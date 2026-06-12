@@ -1,35 +1,10 @@
 import { useState } from 'react'
 import { useProfileStore } from '../stores/useProfileStore'
+import { useAppStore } from '../stores/useAppStore'
+import Avatar from './Avatar'
 import { Pencil, Trash2, Plus, Lock, Mail } from 'lucide-react'
 import { useT } from '../i18n'
-
-function GooglePhoto({ url, alt }: { url: string; alt: string }) {
-  const fullUrl = url.startsWith('http') ? url : `https://lh3.googleusercontent.com${url}`
-  return (
-    <img
-      src={fullUrl}
-      alt={alt}
-      className="w-11 h-11 rounded-lg object-cover"
-      onError={(e) => {
-        (e.target as HTMLImageElement).style.display = 'none'
-      }}
-    />
-  )
-}
-
-function ProfileAvatar({ profile }: { profile: { avatar: string; googlePhotoUrl?: string | null } }) {
-  const hasPhoto = profile.googlePhotoUrl && profile.googlePhotoUrl.length > 0
-  return (
-    <div className="relative flex-shrink-0">
-      {hasPhoto && <GooglePhoto url={profile.googlePhotoUrl!} alt={profile.avatar} />}
-      {!hasPhoto && (
-        <span className="text-2xl w-11 h-11 rounded-lg bg-gray-100 dark:bg-dark-card flex items-center justify-center">
-          {profile.avatar}
-        </span>
-      )}
-    </div>
-  )
-}
+import { useConfirm } from '../hooks/useConfirm'
 
 export default function ProfileManager() {
   const profiles = useProfileStore((s) => s.profiles)
@@ -40,6 +15,7 @@ export default function ProfileManager() {
   const updateProfile = useProfileStore((s) => s.updateProfile)
 
   const t = useT()
+  const { confirm, ConfirmDialog } = useConfirm()
 
   const [showCreate, setShowCreate] = useState(false)
   const [newName, setNewName] = useState('')
@@ -49,9 +25,9 @@ export default function ProfileManager() {
 
   const handleSwitch = async (id: string) => {
     if (id === currentProfile?.id) return
-    if (window.confirm(t('profile.switchConfirm'))) {
-      await switchProfile(id)
-    }
+    const ok = await confirm({ title: t('common.confirm'), message: t('profile.switchConfirm'), confirmText: t('profile.switch'), cancelText: t('common.cancel') })
+    if (!ok) return
+    await switchProfile(id)
   }
 
   const handleCreate = async () => {
@@ -64,22 +40,22 @@ export default function ProfileManager() {
   }
 
   const handleDelete = async (id: string, name: string) => {
-    const confirm1 = window.confirm(t('profile.deleteConfirm', { name }))
-    if (!confirm1) return
-    const confirm2 = window.confirm(t('profile.deleteConfirm2'))
-    if (!confirm2) return
+    const ok = await confirm({ title: t('common.confirm'), message: t('profile.deleteConfirm', { name }), variant: 'danger', confirmText: t('common.delete'), cancelText: t('common.cancel') })
+    if (!ok) return
     await removeProfile(id)
   }
 
-  const handleSaveEdit = async (id: string) => {
+  const handleSaveEdit = async (_id: string) => {
     if (!editName.trim()) return
     await updateProfile({ name: editName.trim() })
     setEditingId(null)
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <>
+      <ConfirmDialog />
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
         <h2 className="text-xl font-bold text-gray-900 dark:text-white">{t('profile.title')}</h2>
         {profiles.length < 5 && (
           <button
@@ -105,7 +81,7 @@ export default function ProfileManager() {
               }`}
             >
               <div className="flex items-start gap-3">
-                <ProfileAvatar profile={profile} />
+                <Avatar name={profile.name} photoUrl={profile.googlePhotoUrl} />
 
                 <div className="flex-1 min-w-0">
                   {editingId === profile.id ? (
@@ -150,7 +126,7 @@ export default function ProfileManager() {
                         </p>
                       ) : (
                         <p className="text-xs text-gray-500 dark:text-gray-400">
-                          {t('profile.created', { date: new Date(profile.createdAt).toLocaleDateString('id-ID') })}
+                          {t('profile.created', { date: new Date(profile.createdAt).toLocaleDateString(useAppStore.getState().lang === 'en' ? 'en-US' : 'id-ID') })}
                         </p>
                       )}
                     </>
@@ -194,8 +170,8 @@ export default function ProfileManager() {
       </div>
 
       {showCreate && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-40 p-6">
-          <div className="bg-white dark:bg-dark-surface rounded-xl p-6 max-w-sm w-full shadow-xl">
+        <div className="modal-overlay">
+          <div className="modal-content p-6 max-w-sm">
             <h3 className="text-base font-bold text-gray-900 dark:text-white mb-4">{t('profile.newProfile')}</h3>
             <div className="space-y-4">
               <div>
@@ -244,5 +220,6 @@ export default function ProfileManager() {
         </div>
       )}
     </div>
+    </>
   )
 }

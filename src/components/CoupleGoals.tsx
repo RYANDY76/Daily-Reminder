@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react'
 import { useProfileStore } from '../stores/useProfileStore'
+import { useAppStore } from '../stores/useAppStore'
 import { useCoupleStore } from '../stores/useCoupleStore'
 import { useToast } from '../hooks/useToast'
+import { useConfirm } from '../hooks/useConfirm'
 import { useT } from '../i18n'
 import type { CoupleGoal } from '../types-couple'
 import Confetti from './Confetti'
@@ -9,6 +11,7 @@ import { Heart, Plus, Target, Calendar, CheckCircle, Circle, Trash2, X, Sparkles
 
 export default function CoupleGoals() {
   const t = useT()
+  const lang = useAppStore((s) => s.lang)
   const currentProfile = useProfileStore(s => s.currentProfile)
   const connection = useCoupleStore(s => s.connection)
   const goals = useCoupleStore(s => s.goals)
@@ -17,6 +20,7 @@ export default function CoupleGoals() {
   const updateGoal = useCoupleStore(s => s.updateGoal)
   const removeGoal = useCoupleStore(s => s.removeGoal)
   const { success } = useToast()
+  const { confirm, ConfirmDialog } = useConfirm()
   const [showForm, setShowForm] = useState(false)
   const [showConfetti, setShowConfetti] = useState(false)
   const [formData, setFormData] = useState({
@@ -89,9 +93,9 @@ export default function CoupleGoals() {
   }
 
   const handleDeleteGoal = async (goalId: string) => {
-    if (!window.confirm(t('goals.deleteConfirm'))) return
+    const ok = await confirm({ title: t('common.confirm'), message: t('goals.deleteConfirm'), variant: 'danger', confirmText: t('common.delete'), cancelText: t('common.cancel') })
+    if (!ok) return
     await removeGoal(goalId)
-    // Reload to show immediately
     await loadGoals()
     success(t('couple.goalDeleted'))
   }
@@ -112,6 +116,7 @@ export default function CoupleGoals() {
 
   return (
     <>
+      <ConfirmDialog />
       <Confetti show={showConfetti} onComplete={() => setShowConfetti(false)} />
       
       <div className="space-y-5">
@@ -153,7 +158,7 @@ export default function CoupleGoals() {
                   {goal.targetDate && (
                     <div className="flex items-center gap-2 text-xs text-gray-400">
                       <Calendar className="w-4 h-4" />
-                      <span>{t('couple.target')}: {new Date(goal.targetDate).toLocaleDateString()}</span>
+                      <span>{t('couple.target')}: {new Date(goal.targetDate).toLocaleDateString(lang === 'en' ? 'en-US' : 'id-ID')}</span>
                     </div>
                   )}
                 </div>
@@ -224,7 +229,7 @@ export default function CoupleGoals() {
                   <div>
                     <h4 className="font-semibold text-gray-900 dark:text-white">{goal.title}</h4>
                     <p className="text-xs text-gray-500 dark:text-gray-400">
-                      {t('goals.completed')} {new Date(goal.completedAt!).toLocaleDateString()}
+                      {t('goals.completed')} {new Date(goal.completedAt!).toLocaleDateString(lang === 'en' ? 'en-US' : 'id-ID')}
                     </p>
                   </div>
                 </div>

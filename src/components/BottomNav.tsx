@@ -19,7 +19,6 @@ import {
 } from 'lucide-react'
 import type { Page } from '../types'
 
-// 5 tab utama
 const mainTabs: { id: Page; label: string; icon: typeof LayoutDashboard }[] = [
   { id: 'dashboard', label: 'nav.today', icon: LayoutDashboard },
   { id: 'calendar', label: 'nav.calendar', icon: CalendarDays },
@@ -27,7 +26,6 @@ const mainTabs: { id: Page; label: string; icon: typeof LayoutDashboard }[] = [
   { id: 'habits', label: 'nav.habits', icon: Target },
 ]
 
-// Tab tambahan di "More"
 const moreTabs: { id: Page; label: string; icon: typeof LayoutDashboard }[] = [
   { id: 'couple', label: 'nav.couple', icon: Heart },
   { id: 'goals', label: 'nav.goals', icon: Flag },
@@ -48,7 +46,6 @@ export default function BottomNav() {
   const coupleLoadedRef = useRef(false)
   const pollRef = useRef<ReturnType<typeof setInterval>>()
 
-  // Lazily load couple store for love notes badge
   useEffect(() => {
     const profile = currentProfile
     if (!profile || coupleLoadedRef.current) return
@@ -78,6 +75,13 @@ export default function BottomNav() {
     return () => { if (pollRef.current) clearInterval(pollRef.current) }
   }, [currentProfile?.id])
 
+  useEffect(() => {
+    if (!showMore) return
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setShowMore(false) }
+    document.addEventListener('keydown', onKey)
+    return () => document.removeEventListener('keydown', onKey)
+  }, [showMore])
+
   const isMoreActive = allMoreIds.includes(currentPage)
 
   const handleTabClick = (id: Page) => {
@@ -87,27 +91,27 @@ export default function BottomNav() {
 
   return (
     <>
-      {/* More drawer overlay */}
       {showMore && (
         <div
           className="md:hidden fixed inset-0 z-40 bg-black/30 backdrop-blur-sm"
           onClick={() => setShowMore(false)}
+          aria-hidden="true"
         />
       )}
 
-      {/* More drawer panel */}
       {showMore && (
-        <div className="md:hidden fixed bottom-20 left-4 right-4 z-50 bg-white dark:bg-dark-surface rounded-2xl shadow-2xl border border-gray-100 dark:border-dark-border animate-slide-in-up overflow-hidden safe-area-pb">
+        <div role="dialog" aria-modal="true" aria-label={t('nav.more')} className="md:hidden fixed bottom-[4.5rem] left-4 right-4 z-50 bg-white dark:bg-dark-surface rounded-2xl shadow-modal animate-slide-in-up safe-area-pb">
           <div className="flex items-center justify-between px-4 pt-4 pb-2">
             <span className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">{t('nav.more')}</span>
             <button
               onClick={() => setShowMore(false)}
-              className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-dark-card transition-colors"
+              className="p-1.5 rounded-xl hover:bg-gray-100 dark:hover:bg-dark-card transition-colors"
+              aria-label={t('common.close')}
             >
               <X className="w-4 h-4 text-gray-400" />
             </button>
           </div>
-          <div className="grid grid-cols-2 gap-1 p-3">
+          <div className="p-2">
             {moreTabs.map((tab) => {
               const isActive = currentPage === tab.id
               const Icon = tab.icon
@@ -116,21 +120,21 @@ export default function BottomNav() {
                 <button
                   key={tab.id}
                   onClick={() => handleTabClick(tab.id)}
-                  className={`relative flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-150 min-h-tap ${
+                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-150 min-h-tap ${
                     isActive
-                      ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400'
+                      ? 'text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/15'
                       : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-dark-card'
                   }`}
                 >
                   <div className="relative">
                     <Icon className="w-4 h-4" />
                     {showBadge && (
-                      <span className="absolute -top-1 -right-1 w-2 h-2 bg-pink-500 rounded-full animate-pulse" />
+                      <span className="absolute -top-1 -right-1 w-2 h-2 bg-pink-500 rounded-full" />
                     )}
                   </div>
-                  <span>{t(tab.label)}</span>
+                  <span className="flex-1 text-left">{t(tab.label)}</span>
                   {showBadge && (
-                    <span className="ml-auto text-xs px-1.5 py-0.5 bg-pink-500 text-white rounded-full">
+                    <span className="text-xs px-1.5 py-0.5 bg-pink-500 text-white rounded-full font-medium">
                       {unreadCount}
                     </span>
                   )}
@@ -141,9 +145,8 @@ export default function BottomNav() {
         </div>
       )}
 
-      {/* Bottom nav bar */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white/90 dark:bg-dark-surface/90 backdrop-blur-xl border-t border-gray-200/80 dark:border-dark-border z-30 safe-area-pb">
-        <div className="flex justify-around items-center h-16 px-1">
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white/80 dark:bg-dark-surface/80 backdrop-blur-xl border-t border-gray-200/60 dark:border-dark-border/60 z-30 safe-area-pb">
+        <div className="flex justify-around items-center h-14 px-1">
           {mainTabs.map((tab) => {
             const isActive = currentPage === tab.id
             const Icon = tab.icon
@@ -151,7 +154,7 @@ export default function BottomNav() {
               <button
                 key={tab.id}
                 onClick={() => handleTabClick(tab.id)}
-                className={`relative flex flex-col items-center justify-center gap-1 flex-1 py-1 h-full transition-all duration-200 ${
+                className={`relative flex flex-col items-center justify-center flex-1 h-full transition-all duration-200 ${
                   isActive
                     ? 'text-primary-600 dark:text-primary-400'
                     : 'text-gray-400 dark:text-gray-500'
@@ -160,20 +163,19 @@ export default function BottomNav() {
                 aria-current={isActive ? 'page' : undefined}
               >
                 {isActive && <span className="nav-pill" />}
-                <div className={`flex items-center justify-center w-8 h-8 rounded-xl transition-all duration-200 ${
+                <div className={`flex items-center justify-center w-9 h-9 rounded-xl transition-all duration-200 ${
                   isActive ? 'bg-primary-50 dark:bg-primary-900/20' : ''
                 }`}>
                   <Icon className="w-5 h-5" />
                 </div>
-                <span className="text-[10px] font-medium leading-none">{t(tab.label)}</span>
+                <span className="text-[10px] font-medium leading-none mt-0.5">{t(tab.label)}</span>
               </button>
             )
           })}
 
-          {/* More button */}
           <button
             onClick={() => setShowMore(!showMore)}
-            className={`relative flex flex-col items-center justify-center gap-1 flex-1 py-1 h-full transition-all duration-200 ${
+            className={`relative flex flex-col items-center justify-center flex-1 h-full transition-all duration-200 ${
               isMoreActive || showMore
                 ? 'text-primary-600 dark:text-primary-400'
                 : 'text-gray-400 dark:text-gray-500'
@@ -182,12 +184,12 @@ export default function BottomNav() {
             aria-expanded={showMore}
           >
             {(isMoreActive || showMore) && <span className="nav-pill" />}
-            <div className={`flex items-center justify-center w-8 h-8 rounded-xl transition-all duration-200 ${
+            <div className={`flex items-center justify-center w-9 h-9 rounded-xl transition-all duration-200 ${
               isMoreActive || showMore ? 'bg-primary-50 dark:bg-primary-900/20' : ''
             }`}>
               <MoreHorizontal className="w-5 h-5" />
             </div>
-            <span className="text-[10px] font-medium leading-none">{t('nav.more')}</span>
+            <span className="text-[10px] font-medium leading-none mt-0.5">{t('nav.more')}</span>
           </button>
         </div>
       </nav>

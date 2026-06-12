@@ -72,8 +72,6 @@ function createTaskFromRecurring(source: Task, date: string, profileId: string):
     status: 'pending',
     isRecurring: false,
     createdAt: Date.now(),
-    updatedAt: Date.now(),
-    googleEventId: null,
-    syncedToGoogle: false
+    updatedAt: Date.now()
   }
 }

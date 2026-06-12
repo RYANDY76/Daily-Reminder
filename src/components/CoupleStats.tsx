@@ -3,10 +3,10 @@ import { useProfileStore } from '../stores/useProfileStore'
 import { useCoupleStore } from '../stores/useCoupleStore'
 import { useT } from '../i18n'
 import { getTodayDate } from '../dates'
-import { getTasksForDate, getTasksForDateRange } from '../database'
+import { getTasksForDateRange } from '../database'
 import { db } from '../database'
 import SkeletonLoader from './SkeletonLoader'
-import { TrendingUp, Trophy, Target, Timer, Flame, BarChart3, Calendar } from 'lucide-react'
+import { TrendingUp, Trophy, Target, Timer, Flame, BarChart3 } from 'lucide-react'
 
 type Period = 'today' | 'week' | 'month'
 
@@ -100,7 +100,7 @@ export default function CoupleStats() {
         completionRate: partnerRate
       })
     } catch (error) {
-      console.error('Failed to load couple stats:', error)
+      if (import.meta.env.DEV) console.error('Failed to load couple stats:', error)
     } finally {
       setLoading(false)
     }

@@ -59,3 +59,107 @@ export function DashboardSkeleton() {
     </div>
   )
 }
+
+export function CalendarSkeleton() {
+  return (
+    <div className="space-y-4 animate-pulse">
+      <div className="flex items-center justify-between">
+        <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-40" />
+        <div className="flex gap-2">
+          <div className="h-8 w-8 bg-gray-200 dark:bg-gray-700 rounded-lg" />
+          <div className="h-8 w-8 bg-gray-200 dark:bg-gray-700 rounded-lg" />
+        </div>
+      </div>
+      <div className="grid grid-cols-7 gap-1">
+        {Array.from({ length: 7 }, (_, i) => (
+          <div key={i} className="h-4 bg-gray-200 dark:bg-gray-700 rounded" />
+        ))}
+      </div>
+      <div className="grid grid-cols-7 gap-1">
+        {Array.from({ length: 35 }, (_, i) => (
+          <div key={i} className="aspect-square bg-gray-200 dark:bg-gray-700 rounded-lg" />
+        ))}
+      </div>
+    </div>
+  )
+}
+
+export function StatsSkeleton() {
+  return (
+    <div className="space-y-6 animate-pulse">
+      <div className="flex items-center justify-between">
+        <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-24" />
+        <div className="h-8 w-24 bg-gray-200 dark:bg-gray-700 rounded-xl" />
+      </div>
+      <div className="grid grid-cols-2 gap-3">
+        <SkeletonCard />
+        <SkeletonCard />
+        <SkeletonCard />
+        <SkeletonCard />
+      </div>
+      <SkeletonCard className="h-48" />
+    </div>
+  )
+}
+
+export function GoalsSkeleton() {
+  return (
+    <div className="space-y-4 animate-pulse">
+      <div className="flex items-center justify-between">
+        <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-24" />
+        <div className="h-8 w-8 bg-gray-200 dark:bg-gray-700 rounded-lg" />
+      </div>
+      <div className="grid grid-cols-2 gap-3">
+        <SkeletonCard />
+        <SkeletonCard />
+      </div>
+      {Array.from({ length: 3 }, (_, i) => (
+        <div key={i} className="bg-white dark:bg-dark-card rounded-xl border border-gray-100 dark:border-dark-border p-4">
+          <div className="flex items-start gap-3">
+            <div className="w-10 h-10 rounded-xl bg-gray-200 dark:bg-gray-700" />
+            <div className="flex-1">
+              <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-2/3 mb-2" />
+              <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-1/2" />
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+export function HabitsSkeleton() {
+  return (
+    <div className="space-y-4 animate-pulse">
+      <div className="flex items-center justify-between">
+        <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-32" />
+        <div className="h-8 w-8 bg-gray-200 dark:bg-gray-700 rounded-lg" />
+      </div>
+      <div className="grid grid-cols-3 gap-3">
+        <SkeletonCard />
+        <SkeletonCard />
+        <SkeletonCard />
+      </div>
+      <div className="grid grid-cols-7 gap-2">
+        {Array.from({ length: 7 }, (_, i) => (
+          <div key={i} className="h-10 bg-gray-200 dark:bg-gray-700 rounded-lg" />
+        ))}
+      </div>
+      {Array.from({ length: 3 }, (_, i) => (
+        <div key={i} className="bg-white dark:bg-dark-card rounded-xl border border-gray-100 dark:border-dark-border p-4">
+          <div className="flex items-start gap-3">
+            <div className="w-9 h-9 rounded-xl bg-gray-200 dark:bg-gray-700" />
+            <div className="flex-1">
+              <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/2 mb-2" />
+              <div className="flex gap-2">
+                {Array.from({ length: 7 }, (_, j) => (
+                  <div key={j} className="w-6 h-6 rounded-full bg-gray-200 dark:bg-gray-700" />
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+}
