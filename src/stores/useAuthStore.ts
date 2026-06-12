@@ -38,14 +38,19 @@ export const useAuthStore = create<AuthState>((set) => ({
   },
 
   signOut: async () => {
-    if (authUnsubscribe) {
-      authUnsubscribe()
-      authUnsubscribe = null
+    try {
+      if (authUnsubscribe) {
+        authUnsubscribe()
+        authUnsubscribe = null
+      }
+      const supabase = getSupabase()
+      if (supabase) {
+        await supabase.auth.signOut()
+      }
+    } catch (err) {
+      console.error('Sign out error:', err)
+    } finally {
+      set({ user: null, session: null })
     }
-    const supabase = getSupabase()
-    if (supabase) {
-      await supabase.auth.signOut()
-    }
-    set({ user: null, session: null })
   }
 }))

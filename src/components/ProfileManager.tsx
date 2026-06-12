@@ -55,7 +55,11 @@ export default function ProfileManager() {
       cancelText: t('common.cancel')
     })
     if (!ok) return
-    await useAuthStore.getState().signOut()
+    try {
+      await useAuthStore.getState().signOut()
+    } catch {
+      // signOut already handles errors internally
+    }
     localStorage.removeItem('daily_reminder_guest')
     localStorage.removeItem('daily_reminder_last_profile')
     window.location.reload()

@@ -94,6 +94,7 @@
 }
 
 @layer utilities {
+  .translate-x-4\.5 { --tw-translate-x: 1.125rem; }
   .translate-x-5\.5 { --tw-translate-x: 1.375rem; }
   .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
   .no-scrollbar::-webkit-scrollbar { display: none; }
