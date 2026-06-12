@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useProfileStore } from '../stores/useProfileStore'
 import { useBiometricAuth } from '../hooks/useBiometricAuth'
+import { useInstallPrompt } from '../hooks/useInstallPrompt'
 import { generatePDF } from '../utils/pdfExport'
 import { getLast7DaysHistory, getTasksForDate, getDailyHistory, db } from '../database'
 import { getTodayDate, getLast7Days } from '../dates'
@@ -9,7 +10,7 @@ import { useT } from '../i18n'
 import { isAnalyticsEnabled, setAnalyticsEnabled } from '../utils/analytics'
 import DisplaySettings from './settings/DisplaySettings'
 import NotificationSettings from './settings/NotificationSettings'
-import { FileText, ShieldCheck, Download, Trash2, Fingerprint, Lock, Bell } from 'lucide-react'
+import { FileText, ShieldCheck, Download, Trash2, Fingerprint, Lock, Bell, Smartphone } from 'lucide-react'
 
 export default function Settings() {
   const profile = useProfileStore((s) => s.currentProfile)
@@ -28,6 +29,7 @@ export default function Settings() {
   const { register, isAvailable, loading: bioLoading } = useBiometricAuth()
   const [bioSupported, setBioSupported] = useState(false)
   const [bioError, setBioError] = useState('')
+  const { installPrompt, promptInstall, isStandalone } = useInstallPrompt()
 
   useEffect(() => {
     isAvailable().then(setBioSupported)
@@ -149,6 +151,36 @@ export default function Settings() {
           <DisplaySettings />
         </div>
       </section>
+
+      {!isStandalone && (
+      <section>
+        <h3 className="section-title mb-3 flex items-center gap-2">
+          <Smartphone className="w-3.5 h-3.5" />
+          {t('install.title')}
+        </h3>
+        <div className="card-border p-4">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 shrink-0 rounded-xl bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center shadow-sm">
+              <Download className="w-6 h-6 text-white" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-gray-900 dark:text-white">{t('install.desc')}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{t('install.settingsDesc')}</p>
+            </div>
+            {installPrompt ? (
+              <button
+                onClick={promptInstall}
+                className="px-4 py-2 rounded-xl bg-primary-500 hover:bg-primary-600 text-white text-sm font-bold transition-colors shadow-sm shrink-0"
+              >
+                {t('install.button')}
+              </button>
+            ) : (
+              <span className="text-xs text-gray-400 dark:text-gray-500 shrink-0">{t('install.browserHint')}</span>
+            )}
+          </div>
+        </div>
+      </section>
+      )}
 
       <section>
         <h3 className="section-title mb-3 flex items-center gap-2">

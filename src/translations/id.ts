@@ -251,6 +251,8 @@ const id: Record<string, string> = {
     'install.title': 'Pasang Daily Reminder',
     'install.desc': 'Pasang aplikasi ini di layar utama untuk akses lebih cepat.',
     'install.button': 'Pasang',
+    'install.settingsDesc': 'Akses offline, notifikasi, dan tampilan layar penuh.',
+    'install.browserHint': 'Gunakan menu browser: ⋮ → Pasang aplikasi',
     'update.title': 'Pembaruan Tersedia',
     'update.desc': 'Versi baru telah tersedia. Muat ulang untuk mendapatkan fitur terbaru.',
     'update.button': 'Muat Ulang',
