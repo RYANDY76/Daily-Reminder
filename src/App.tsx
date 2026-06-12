@@ -28,14 +28,34 @@ import type { Page } from './types'
 
 const PUBLIC_PATHS = new Set(['/about'])
 
+function useAuthGate() {
+  const authUser = useAuthStore((s) => s.user)
+  const authLoading = useAuthStore((s) => s.loading)
+  const profiles = useProfileStore((s) => s.profiles)
+  const profileLoading = useProfileStore((s) => s.loading)
+  const showWelcome = useProfileStore((s) => s.showWelcome)
+
+  const hasExistingProfile = profiles.length > 0
+  const hasSupabaseSession = authUser !== null
+
+  // After loading, user is authenticated if:
+  // 1. Has an existing local profile (guest or previously logged in), OR
+  // 2. Has a valid Supabase session
+  const persisted = hasExistingProfile || hasSupabaseSession
+
+  return {
+    authenticated: persisted,
+    authReady: !authLoading && !profileLoading,
+    showWelcome: showWelcome && !hasExistingProfile
+  }
+}
+
 export default function App() {
   const t = useT()
   const location = useLocation()
   const currentProfile = useProfileStore((s) => s.currentProfile)
-  const showWelcome = useProfileStore((s) => s.showWelcome)
   const pinLocked = useProfileStore((s) => s.pinLocked)
   const loadProfiles = useProfileStore((s) => s.loadProfiles)
-  const loading = useProfileStore((s) => s.loading)
 
   const setPage = useAppStore((s) => s.setPage)
   const currentPage = useAppStore((s) => s.currentPage)
@@ -50,9 +70,10 @@ export default function App() {
 
   const [initialized, setInitialized] = useState(false)
   const [showShortcutsHelp, setShowShortcutsHelp] = useState(false)
-  const [authenticated, setAuthenticated] = useState(() => false)
   const dataLoadedRef = useRef(false)
   const lastRefreshRef = useRef(0)
+
+  const { authenticated, authReady, showWelcome } = useAuthGate()
 
   useIdleTimeout()
   useAnalytics()
@@ -180,7 +201,7 @@ export default function App() {
     }
   }, [refreshCoreData])
 
-  if (!initialized || loading) {
+  if (!initialized || !authReady) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-white dark:bg-dark-bg transition-colors duration-300">
         <div className="flex flex-col items-center gap-4">
@@ -201,12 +222,11 @@ export default function App() {
     return (
       <LoginPage
         onComplete={() => {
-          setAuthenticated(true)
           dataLoadedRef.current = false
           loadProfiles()
         }}
         onGuest={() => {
-          setAuthenticated(true)
+          loadProfiles()
         }}
       />
     )

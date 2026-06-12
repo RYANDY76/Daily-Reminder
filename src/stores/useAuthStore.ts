@@ -2,6 +2,8 @@ import { create } from 'zustand'
 import { getSupabase } from '../lib/supabase'
 import type { User, Session } from '@supabase/supabase-js'
 
+let authUnsubscribe: (() => void) | null = null
+
 interface AuthState {
   user: User | null
   session: Session | null
@@ -22,21 +24,28 @@ export const useAuthStore = create<AuthState>((set) => ({
       return
     }
 
-    // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
       set({ session, user: session?.user ?? null, loading: false })
     })
 
-    // Listen for auth changes
-    supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       set({ session, user: session?.user ?? null })
     })
+
+    if (typeof subscription?.unsubscribe === 'function') {
+      authUnsubscribe = () => subscription.unsubscribe()
+    }
   },
 
   signOut: async () => {
+    if (authUnsubscribe) {
+      authUnsubscribe()
+      authUnsubscribe = null
+    }
     const supabase = getSupabase()
     if (supabase) {
       await supabase.auth.signOut()
     }
+    set({ user: null, session: null })
   }
 }))

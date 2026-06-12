@@ -32,15 +32,21 @@ export default function LoginPage({ onComplete, onGuest }: LoginPageProps) {
   const [emailError, setEmailError] = useState<string | null>(null)
   const [showEmailForm, setShowEmailForm] = useState(false)
   const [mounted, setMounted] = useState(false)
+  const [googleProfileError, setGoogleProfileError] = useState<string | null>(null)
 
   useEffect(() => { setMounted(true) }, [])
 
   const handleGoogleLogin = async () => {
     clearError()
+    setGoogleProfileError(null)
     const userInfo = await login()
     if (!userInfo) return
-    await createProfileFromGoogle(userInfo)
-    onComplete()
+    try {
+      await createProfileFromGoogle(userInfo)
+      onComplete()
+    } catch (err) {
+      setGoogleProfileError((err as Error).message)
+    }
   }
 
   const features = useMemo(() => [
@@ -171,8 +177,8 @@ export default function LoginPage({ onComplete, onGuest }: LoginPageProps) {
               </span>
             </button>
 
-            {googleError && (
-              <p className="text-xs text-red-500 text-center">{googleError}</p>
+            {(googleError || googleProfileError) && (
+              <p className="text-xs text-red-500 text-center">{googleProfileError || googleError}</p>
             )}
 
             <div className="relative">
