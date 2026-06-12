@@ -8,14 +8,18 @@ import { BarChart3, TrendingUp, Calendar, Flame, Target, Clock, Trophy } from 'l
 
 type ViewRange = '7' | '30'
 
+function dateToStr(date: Date): string {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
+}
+
 function getDateNDaysAgo(n: number): string {
   const d = new Date()
   d.setDate(d.getDate() - (n - 1))
-  return d.toISOString().split('T')[0]
+  return dateToStr(d)
 }
 
 function getTodayDate(): string {
-  return new Date().toISOString().split('T')[0]
+  return dateToStr(new Date())
 }
 
 function getLast30Days(): string[] {
@@ -23,7 +27,7 @@ function getLast30Days(): string[] {
   for (let i = 29; i >= 0; i--) {
     const d = new Date()
     d.setDate(d.getDate() - i)
-    dates.push(d.toISOString().split('T')[0])
+    dates.push(dateToStr(d))
   }
   return dates
 }

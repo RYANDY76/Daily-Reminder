@@ -208,6 +208,10 @@ export async function saveDailyHistory(history: DailyHistory): Promise<void> {
   )
 }
 
+function dateToStr(date: Date): string {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
+}
+
 export async function getDailyHistory(profileId: string, date: string): Promise<DailyHistory | undefined> {
   return dbCall(
     () => db.history.where('profileId').equals(profileId).filter(h => h.date === date).first(),
@@ -225,20 +229,17 @@ export async function getHistoryRange(profileId: string, startDate: string, endD
 }
 
 export async function getLast7DaysHistory(profileId: string): Promise<DailyHistory[]> {
-  const dates: string[] = []
-  for (let i = 6; i >= 0; i--) {
-    const d = new Date()
-    d.setDate(d.getDate() - i)
-    dates.push(d.toISOString().split('T')[0])
-  }
-  return dbCall(
-    async () => {
-      const results = await Promise.all(dates.map(date => getDailyHistory(profileId, date)))
-      return results.filter((h): h is DailyHistory => h !== undefined)
-    },
-    [],
-    'getLast7DaysHistory'
-  )
+  const end = new Date()
+  const start = new Date()
+  start.setDate(start.getDate() - 6)
+  return getHistoryRange(profileId, dateToStr(start), dateToStr(end))
+}
+
+export async function getLastNDaysHistory(profileId: string, n: number): Promise<DailyHistory[]> {
+  const end = new Date()
+  const start = new Date()
+  start.setDate(start.getDate() - (n - 1))
+  return getHistoryRange(profileId, dateToStr(start), dateToStr(end))
 }
 
 export async function saveHabit(habit: Habit): Promise<void> {
@@ -301,21 +302,4 @@ export async function deleteGoal(id: string): Promise<void> {
   return dbCall(() => db.goals.delete(id).then(), undefined, 'deleteGoal')
 }
 
-// ─── Extended History ─────────────────────────────────────────────────────────
 
-export async function getLastNDaysHistory(profileId: string, n: number): Promise<DailyHistory[]> {
-  const dates: string[] = []
-  for (let i = n - 1; i >= 0; i--) {
-    const d = new Date()
-    d.setDate(d.getDate() - i)
-    dates.push(d.toISOString().split('T')[0])
-  }
-  return dbCall(
-    async () => {
-      const results = await Promise.all(dates.map(date => getDailyHistory(profileId, date)))
-      return results.filter((h): h is DailyHistory => h !== undefined)
-    },
-    [],
-    'getLastNDaysHistory'
-  )
-}
