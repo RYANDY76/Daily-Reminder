@@ -277,3 +277,29 @@ export async function pullCoupleData(coupleId: string): Promise<{
     taskComments: commentsRes.data?.map(r => r.data as TaskComment) || []
   }
 }
+
+let activeSubscriptionChannel: any = null
+
+export function subscribeToCoupleData(coupleId: string, onUpdate: () => void) {
+  const sb = getSupabase()
+  if (!sb) return
+
+  unsubscribeCoupleData()
+
+  activeSubscriptionChannel = sb.channel(`couple_sync_${coupleId}`)
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'couple_connections', filter: `id=eq.${coupleId}` }, onUpdate)
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'couple_goals', filter: `couple_id=eq.${coupleId}` }, onUpdate)
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'couple_love_notes', filter: `couple_id=eq.${coupleId}` }, onUpdate)
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'couple_activity', filter: `couple_id=eq.${coupleId}` }, onUpdate)
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'couple_shared_tasks', filter: `couple_id=eq.${coupleId}` }, onUpdate)
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'couple_task_comments', filter: `couple_id=eq.${coupleId}` }, onUpdate)
+    .subscribe()
+}
+
+export function unsubscribeCoupleData() {
+  const sb = getSupabase()
+  if (sb && activeSubscriptionChannel) {
+    sb.removeChannel(activeSubscriptionChannel)
+  }
+  activeSubscriptionChannel = null
+}

@@ -4,7 +4,6 @@
  */
 
 import type { CoupleConnection, SharedTask, CoupleGoal, LoveNote, ActivityFeedItem, TaskComment } from './types-couple'
-import { openDB } from 'idb'
 import { db } from './database'
 import { recordAttempt, isRateLimited } from './utils/rateLimiter'
 import {
@@ -39,14 +38,32 @@ export async function migrateOldCoupleDatabase(): Promise<void> {
       const exists = dbs.some(d => d.name === oldDBName)
       if (!exists) return
 
-      const oldDb = await openDB(oldDBName, 2)
+      const getStoreData = (dbObj: IDBDatabase, storeName: string): Promise<any[]> => {
+        return new Promise((resolve, reject) => {
+          if (!dbObj.objectStoreNames.contains(storeName)) {
+            resolve([])
+            return
+          }
+          const tx = dbObj.transaction(storeName, 'readonly')
+          const store = tx.objectStore(storeName)
+          const request = store.getAll()
+          request.onsuccess = () => resolve(request.result)
+          request.onerror = () => reject(request.error)
+        })
+      }
 
-      const connections = await oldDb.getAll('connections')
-      const sharedTasks = await oldDb.getAll('sharedTasks')
-      const coupleGoals = await oldDb.getAll('coupleGoals')
-      const loveNotes = await oldDb.getAll('loveNotes')
-      const activityFeed = await oldDb.getAll('activityFeed')
-      const taskComments = await oldDb.getAll('taskComments')
+      const oldDb: IDBDatabase = await new Promise((resolve, reject) => {
+        const req = indexedDB.open(oldDBName)
+        req.onsuccess = () => resolve(req.result)
+        req.onerror = () => reject(req.error)
+      })
+
+      const connections = await getStoreData(oldDb, 'connections')
+      const sharedTasks = await getStoreData(oldDb, 'sharedTasks')
+      const coupleGoals = await getStoreData(oldDb, 'coupleGoals')
+      const loveNotes = await getStoreData(oldDb, 'loveNotes')
+      const activityFeed = await getStoreData(oldDb, 'activityFeed')
+      const taskComments = await getStoreData(oldDb, 'taskComments')
 
       await db.transaction('rw', [
         db.connections, db.sharedTasks, db.coupleGoals,
@@ -61,9 +78,9 @@ export async function migrateOldCoupleDatabase(): Promise<void> {
       })
 
       oldDb.close()
-      await indexedDB.deleteDatabase(oldDBName)
-    } catch (_err) {
-      if (import.meta.env.DEV) console.error('[Migration] Couple database migration failed:', _err)
+      indexedDB.deleteDatabase(oldDBName)
+    } catch (e) {
+      console.error('Failed to migrate couple DB', e)
     }
   })()
 

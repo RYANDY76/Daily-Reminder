@@ -22,8 +22,6 @@ describe('pdfExport', () => {
     const profile = {
       id: 'p1', name: 'Test', avatar: '', accentColor: '#000',
       pin: null, darkMode: 'system' as const,
-      googleId: null, googleEmail: null, googlePhotoUrl: null,
-      googleAccessToken: null, googleRefreshToken: null,
       supabaseUserId: null, biometricEnabled: false,
       biometricCredentialId: null, consentGiven: true,
       createdAt: Date.now(), lastSyncAt: null

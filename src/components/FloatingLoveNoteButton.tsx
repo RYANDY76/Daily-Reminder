@@ -23,7 +23,7 @@ export default function FloatingLoveNoteButton() {
   const sendLoveNote = useCoupleStore(s => s.sendLoveNote)
   const getPartnerName = useCoupleStore(s => s.getPartnerName)
   const getPartnerId = useCoupleStore(s => s.getPartnerId)
-  const { success } = useToast()
+  const { success, error: showError } = useToast()
   
   const [showModal, setShowModal] = useState(false)
   const [showEmojiPicker, setShowEmojiPicker] = useState(false)
@@ -60,7 +60,8 @@ export default function FloatingLoveNoteButton() {
       setMessage('')
       setSelectedEmoji('Heart')
     } catch (error) {
-      console.error('Failed to send love note:', error)
+      if (import.meta.env.DEV) console.error('Failed to send love note:', error)
+      showError(t('couple.noteFailed'))
     } finally {
       setSending(false)
     }

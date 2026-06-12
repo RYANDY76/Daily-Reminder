@@ -20,7 +20,7 @@ export default function ShareTaskModal({ task, onClose }: ShareTaskModalProps) {
   const getPartnerId = useCoupleStore(s => s.getPartnerId)
   const shareTask = useTaskStore(s => s.shareTask)
   const unshareTask = useTaskStore(s => s.unshareTask)
-  const { success } = useToast()
+  const { success, error } = useToast()
   
   const [assignedTo, setAssignedTo] = useState<'me' | 'partner' | 'both'>(
     task.assignedTo || 'both'
@@ -39,8 +39,9 @@ export default function ShareTaskModal({ task, onClose }: ShareTaskModalProps) {
       await shareTask(task.id, partnerId, assignedTo)
       success(t('couple.taskShared', { name: partnerName }))
       onClose()
-    } catch (error) {
-      if (import.meta.env.DEV) console.error('Failed to share task:', error)
+    } catch (err) {
+      if (import.meta.env.DEV) console.error('Failed to share task:', err)
+      error(t('couple.shareFailed'))
     } finally {
       setSharing(false)
     }
@@ -52,8 +53,9 @@ export default function ShareTaskModal({ task, onClose }: ShareTaskModalProps) {
       await unshareTask(task.id)
       success(t('couple.unshareTask'))
       onClose()
-    } catch (error) {
-      if (import.meta.env.DEV) console.error('Failed to unshare task:', error)
+    } catch (err) {
+      if (import.meta.env.DEV) console.error('Failed to unshare task:', err)
+      error(t('couple.unshareFailed'))
     } finally {
       setSharing(false)
     }

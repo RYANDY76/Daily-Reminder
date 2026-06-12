@@ -2,7 +2,6 @@ import Dexie, { type EntityTable } from 'dexie'
 import type { Task, Profile, DailyHistory, Habit, MoodLog, PomodoroSession, Goal } from './types'
 import type { CoupleConnection, SharedTask, CoupleGoal, LoveNote, ActivityFeedItem, TaskComment } from './types-couple'
 import { AppErrorHandler } from './utils/errorHandler'
-import { encryptToken, decryptToken } from './crypto'
 
 class DailyReminderDB extends Dexie {
   tasks!: EntityTable<Task, 'id'>
@@ -40,7 +39,7 @@ class DailyReminderDB extends Dexie {
     })
     this.version(7).stores({
       tasks: 'id, profileId, date, session, done, recurringId, sortOrder',
-      profiles: 'id, name, googleId, supabaseUserId',
+      profiles: 'id, name, supabaseUserId',
       history: 'id, profileId, date',
       habits: 'id, profileId',
       moodLogs: 'id, profileId, date',
@@ -130,51 +129,23 @@ export async function getTasksByRecurringId(recurringId: string): Promise<Task[]
 }
 
 export async function saveProfile(profile: Profile): Promise<void> {
-  const toSave = { ...profile }
-  if (toSave.googleAccessToken) {
-    toSave.googleAccessToken = await encryptToken(toSave.googleAccessToken)
-  }
-  if (toSave.googleRefreshToken) {
-    toSave.googleRefreshToken = await encryptToken(toSave.googleRefreshToken)
-  }
-  return dbCall(() => db.profiles.put(toSave).then(), undefined, 'saveProfile')
-}
-
-async function decryptProfile(profile: Profile | undefined): Promise<Profile | undefined> {
-  if (!profile) return profile
-  return {
-    ...profile,
-    googleAccessToken: profile.googleAccessToken ? await decryptToken(profile.googleAccessToken) : null,
-    googleRefreshToken: profile.googleRefreshToken ? await decryptToken(profile.googleRefreshToken) : null,
-  }
+  return dbCall(() => db.profiles.put(profile).then(), undefined, 'saveProfile')
 }
 
 export async function getProfile(id: string): Promise<Profile | undefined> {
-  const profile = await dbCall(() => db.profiles.get(id), undefined, 'getProfile')
-  return decryptProfile(profile)
-}
-
-export async function getProfileByGoogleId(googleId: string): Promise<Profile | undefined> {
-  const profile = await dbCall(
-    () => db.profiles.where('googleId').equals(googleId).first(),
-    undefined,
-    'getProfileByGoogleId'
-  )
-  return decryptProfile(profile)
+  return dbCall(() => db.profiles.get(id), undefined, 'getProfile')
 }
 
 export async function getProfileBySupabaseId(supabaseUserId: string): Promise<Profile | undefined> {
-  const profile = await dbCall(
+  return dbCall(
     () => db.profiles.where('supabaseUserId').equals(supabaseUserId).first(),
     undefined,
     'getProfileBySupabaseId'
   )
-  return decryptProfile(profile)
 }
 
 export async function getAllProfiles(): Promise<Profile[]> {
-  const profiles = await dbCall(() => db.profiles.toArray(), [], 'getAllProfiles')
-  return Promise.all(profiles.map(p => decryptProfile(p).then(r => r!)))
+  return dbCall(() => db.profiles.toArray(), [], 'getAllProfiles')
 }
 
 export async function deleteProfile(id: string): Promise<void> {
@@ -193,6 +164,20 @@ export async function deleteProfile(id: string): Promise<void> {
         await db.pomodoroSessions.where('profileId').equals(id).delete()
         await db.goals.where('profileId').equals(id).delete()
         await db.profiles.delete(id)
+      })
+
+      // Third transaction: Couple data
+      await db.transaction('rw', [db.connections, db.sharedTasks, db.coupleGoals, db.loveNotes, db.activityFeed, db.taskComments], async () => {
+        const connections = await db.connections.filter(c => c.profile1Id === id || c.profile2Id === id).toArray()
+        for (const conn of connections) {
+          const coupleId = conn.id
+          await db.sharedTasks.where('coupleId').equals(coupleId).delete()
+          await db.coupleGoals.where('coupleId').equals(coupleId).delete()
+          await db.loveNotes.where('coupleId').equals(coupleId).delete()
+          await db.activityFeed.where('coupleId').equals(coupleId).delete()
+          await db.taskComments.where('coupleId').equals(coupleId).delete()
+          await db.connections.delete(coupleId)
+        }
       })
     },
     undefined,

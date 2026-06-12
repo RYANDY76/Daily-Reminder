@@ -1,12 +1,9 @@
-import DOMPurify from 'dompurify'
-
 export function sanitizeInput(value: string): string {
-  return DOMPurify.sanitize(value.trim(), { ALLOWED_TAGS: [] })
+  return value.trim().replace(/<[^>]*>/g, '')
 }
 
 export function sanitizeHtml(value: string): string {
-  return DOMPurify.sanitize(value.trim(), {
-    ALLOWED_TAGS: ['b', 'i', 'em', 'strong', 'a'],
-    ALLOWED_ATTR: ['href']
-  })
+  return value.trim()
+    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+    .replace(/<(?!\/?(b|i|em|strong|a)(?:\s[^>]*)?>)[^>]+>/g, '')
 }

@@ -16,7 +16,7 @@ describe('crypto', () => {
   })
 
   it('encrypts and decrypts tokens with AES', async () => {
-    const secret = 'google-access-token-abc'
+    const secret = 'test-secret-token-abc'
     const encrypted = await encryptToken(secret)
     expect(encrypted.startsWith('v2:')).toBe(true)
     expect(await decryptToken(encrypted)).toBe(secret)

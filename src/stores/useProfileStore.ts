@@ -1,15 +1,8 @@
 import { create } from 'zustand'
 import type { Profile } from '../types'
-import { getAllProfiles, saveProfile, deleteProfile as deleteProfileDb, getProfile, getProfileByGoogleId, getProfileBySupabaseId } from '../database'
+import { getAllProfiles, saveProfile, deleteProfile as deleteProfileDb, getProfile, getProfileBySupabaseId } from '../database'
 import { hashPin } from '../crypto'
 import { getSupabase } from '../lib/supabase'
-
-interface GoogleUserInfo {
-  id: string
-  name: string
-  email: string
-  picture: string
-}
 
 interface ProfileState {
   profiles: Profile[]
@@ -19,7 +12,6 @@ interface ProfileState {
   pinLocked: boolean
   loadProfiles: () => Promise<void>
   createProfile: (name: string, pin: string | null, consentGiven?: boolean) => Promise<Profile>
-  createProfileFromGoogle: (googleInfo: GoogleUserInfo) => Promise<Profile>
   createProfileFromSupabase: (supabaseUserId: string, email: string) => Promise<Profile>
   switchProfile: (profileId: string) => Promise<void>
   updateProfile: (updates: Partial<Profile>) => Promise<void>
@@ -62,53 +54,10 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
       accentColor: '#1D9E75',
       pin: pin ? await hashPin(pin, id) : null,
       darkMode: 'system',
-      googleId: null,
-      googleEmail: null,
-      googlePhotoUrl: null,
-      googleAccessToken: null,
-      googleRefreshToken: null,
       supabaseUserId: null,
       biometricEnabled: false,
       biometricCredentialId: null,
       consentGiven,
-      createdAt: Date.now(),
-      lastSyncAt: null
-    }
-    await saveProfile(profile)
-    const profiles = await getAllProfiles()
-    localStorage.setItem('daily_reminder_last_profile', profile.id)
-    applyProfileTheme(profile)
-    set({ profiles, currentProfile: profile, showWelcome: false, pinLocked: false })
-    return profile
-  },
-
-  createProfileFromGoogle: async (googleInfo) => {
-    const existing = await getProfileByGoogleId(googleInfo.id)
-    if (existing) {
-      localStorage.setItem('daily_reminder_last_profile', existing.id)
-      applyProfileTheme(existing)
-      const profiles = await getAllProfiles()
-      set({ profiles, currentProfile: existing, showWelcome: false, pinLocked: existing.pin ? true : false })
-      return existing
-    }
-
-    const photoUrl = googleInfo.picture?.startsWith('http') ? googleInfo.picture : `https://lh3.googleusercontent.com${googleInfo.picture}`
-    const profile: Profile = {
-      id: crypto.randomUUID(),
-      name: googleInfo.name,
-      avatar: photoUrl,
-      accentColor: '#1D9E75',
-      pin: null,
-      darkMode: 'system',
-      googleId: googleInfo.id,
-      googleEmail: googleInfo.email,
-      googlePhotoUrl: photoUrl,
-      googleAccessToken: null,
-      googleRefreshToken: null,
-      supabaseUserId: null,
-      biometricEnabled: false,
-      biometricCredentialId: null,
-      consentGiven: true,
       createdAt: Date.now(),
       lastSyncAt: null
     }
@@ -142,11 +91,6 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
       accentColor: '#1D9E75',
       pin: null,
       darkMode: 'system',
-      googleId: null,
-      googleEmail: null,
-      googlePhotoUrl: null,
-      googleAccessToken: null,
-      googleRefreshToken: null,
       supabaseUserId,
       biometricEnabled: false,
       biometricCredentialId: null,

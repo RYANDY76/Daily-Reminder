@@ -37,18 +37,11 @@ vi.mock('./utils/errorHandler', () => ({
   }
 }))
 
-let mockEncryptCalls = 0
 vi.mock('./crypto', () => ({
-  encryptToken: vi.fn((t: string) => {
-    mockEncryptCalls++
-    return Promise.resolve(`v2:encrypted_${t}`)
-  }),
-  decryptToken: vi.fn((t: string) => {
-    if (t.startsWith('v2:encrypted_')) {
-      return Promise.resolve(t.replace('v2:encrypted_', ''))
-    }
-    return Promise.resolve('')
-  })
+  hashPin: vi.fn(),
+  verifyPin: vi.fn(),
+  encryptToken: vi.fn(),
+  decryptToken: vi.fn(),
 }))
 
 describe('database', () => {
@@ -87,57 +80,6 @@ describe('database', () => {
       'high',
       expect.any(Object)
     )
-  })
-
-  it('encrypts google tokens on saveProfile', async () => {
-    const { saveProfile } = await import('./database')
-    const profile = {
-      id: 'test-profile',
-      name: 'Test',
-      avatar: '',
-      accentColor: '#1D9E75',
-      pin: null,
-      darkMode: 'system' as const,
-      googleId: 'google-123',
-      googleEmail: 'test@gmail.com',
-      googlePhotoUrl: null,
-      googleAccessToken: 'secret-token',
-      googleRefreshToken: 'refresh-secret',
-      supabaseUserId: null,
-      biometricEnabled: false,
-      biometricCredentialId: null,
-      consentGiven: true,
-      createdAt: Date.now(),
-      lastSyncAt: null
-    }
-    await saveProfile(profile)
-    expect(mockEncryptCalls).toBeGreaterThan(0)
-  })
-
-  it('does not call encrypt when tokens are null', async () => {
-    const before = mockEncryptCalls
-    const { saveProfile } = await import('./database')
-    const profile = {
-      id: 'test-profile-2',
-      name: 'Test',
-      avatar: '',
-      accentColor: '#1D9E75',
-      pin: null,
-      darkMode: 'system' as const,
-      googleId: null,
-      googleEmail: null,
-      googlePhotoUrl: null,
-      googleAccessToken: null,
-      googleRefreshToken: null,
-      supabaseUserId: null,
-      biometricEnabled: false,
-      biometricCredentialId: null,
-      consentGiven: true,
-      createdAt: Date.now(),
-      lastSyncAt: null
-    }
-    await saveProfile(profile)
-    expect(mockEncryptCalls).toBe(before)
   })
 
   it('should return undefined fallback on getTaskById error', async () => {

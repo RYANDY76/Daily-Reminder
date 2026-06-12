@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useProfileStore } from '../../stores/useProfileStore'
 import { useT } from '../../i18n'
+import { useToast } from '../../hooks/useToast'
 import { exportToCSV, exportToJSON } from '../../utils/exportData'
 import { getTasksForDate, getLast7DaysHistory, getDailyHistory } from '../../database'
 import { getTodayDate, getLast7Days } from '../../dates'
@@ -8,6 +9,7 @@ import type { DailyHistory } from '../../types'
 
 export default function ExportSettings() {
   const t = useT()
+  const { error } = useToast()
   const profile = useProfileStore((s) => s.currentProfile)
 
   const [exportScope, setExportScope] = useState<'today' | 'weekly' | 'custom'>('today')
@@ -72,6 +74,7 @@ export default function ExportSettings() {
       }
     } catch (err) {
       console.error('Export failed:', err)
+      error(t('settings.exportFailed'))
     } finally {
       setExporting(false)
       setExportModal(false)

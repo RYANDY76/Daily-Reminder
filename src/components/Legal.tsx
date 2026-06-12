@@ -25,7 +25,7 @@ const legalCopy: Record<Lang, {
         title: '1. Informasi yang Kami Kumpulkan',
         body: 'Daily Reminder menyimpan data berikut secara lokal di perangkat Anda:',
         items: [
-          'Nama profil dan foto jika login dengan Google',
+          'Nama profil dan foto',
           'Daftar tugas, jadwal, dan catatan',
           'Riwayat produktivitas harian',
           'Pengaturan aplikasi'
@@ -36,8 +36,8 @@ const legalCopy: Record<Lang, {
         body: 'Data utama disimpan di browser atau perangkat Anda. Jika fitur cloud diaktifkan, data yang dipilih dapat disinkronkan ke Supabase sesuai akun yang digunakan.'
       },
       {
-        title: '3. Akun Google',
-        body: 'Jika Anda login dengan Google, aplikasi memakai nama, email, dan foto profil untuk membuat profil. Akses kalender hanya digunakan untuk fitur sinkronisasi yang Anda aktifkan.'
+        title: '3. Akun',
+        body: 'Anda dapat membuat profil dengan nama dan PIN. Data profil disimpan secara lokal di perangkat Anda.'
       },
       {
         title: '4. Notifikasi',
@@ -79,7 +79,7 @@ const legalCopy: Record<Lang, {
       },
       {
         title: '5. Layanan',
-        body: 'Kami berusaha menjaga fitur tetap berjalan dengan baik, tetapi tidak menjamin layanan pihak ketiga seperti Google atau Supabase selalu tersedia.'
+        body: 'Kami berusaha menjaga fitur tetap berjalan dengan baik, tetapi tidak menjamin layanan pihak ketiga seperti Supabase selalu tersedia.'
       },
       {
         title: '6. Perubahan',
@@ -98,7 +98,7 @@ const legalCopy: Record<Lang, {
         title: '1. Information We Collect',
         body: 'Daily Reminder stores the following data locally on your device:',
         items: [
-          'Profile name and photo when signing in with Google',
+          'Profile name and photo',
           'Tasks, schedules, and notes',
           'Daily productivity history',
           'App settings'
@@ -109,8 +109,8 @@ const legalCopy: Record<Lang, {
         body: 'Core data is stored in your browser or device. If cloud features are enabled, selected data may sync to Supabase under the account you use.'
       },
       {
-        title: '3. Google Account',
-        body: 'When you sign in with Google, the app uses your name, email, and profile photo to create your profile. Calendar access is only used for sync features you enable.'
+        title: '3. Account',
+        body: 'You can create a profile with a name and PIN. Profile data is stored locally on your device.'
       },
       {
         title: '4. Notifications',
@@ -152,7 +152,7 @@ const legalCopy: Record<Lang, {
       },
       {
         title: '5. Service',
-        body: 'We try to keep features working well, but third-party services such as Google or Supabase may not always be available.'
+        body: 'We try to keep features working well, but third-party services such as Supabase may not always be available.'
       },
       {
         title: '6. Changes',

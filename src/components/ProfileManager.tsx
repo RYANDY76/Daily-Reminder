@@ -3,7 +3,7 @@ import { useProfileStore } from '../stores/useProfileStore'
 import { useAppStore } from '../stores/useAppStore'
 import { useAuthStore } from '../stores/useAuthStore'
 import Avatar from './Avatar'
-import { Pencil, Trash2, Plus, Lock, Mail, LogOut } from 'lucide-react'
+import { Pencil, Trash2, Plus, Lock, LogOut } from 'lucide-react'
 import { useT } from '../i18n'
 import { useConfirm } from '../hooks/useConfirm'
 
@@ -97,7 +97,7 @@ export default function ProfileManager() {
               }`}
             >
               <div className="flex items-start gap-3">
-                <Avatar name={profile.name} photoUrl={profile.googlePhotoUrl} />
+                <Avatar name={profile.name} photoUrl={null} />
 
                 <div className="flex-1 min-w-0">
                   {editingId === profile.id ? (
@@ -129,22 +129,10 @@ export default function ProfileManager() {
                       <p className="font-semibold text-gray-900 dark:text-white flex items-center gap-1.5 flex-wrap">
                         {profile.name}
                         {profile.pin && <Lock className="w-3 h-3 text-gray-400" />}
-                        {profile.googleId && (
-                          <span className="text-[10px] px-1.5 py-0.5 rounded bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 font-medium">
-                            {t('profile.googleBadge')}
-                          </span>
-                        )}
                       </p>
-                      {profile.googleEmail ? (
-                        <p className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1 truncate">
-                          <Mail className="w-3 h-3 flex-shrink-0" />
-                          <span className="truncate">{profile.googleEmail}</span>
-                        </p>
-                      ) : (
-                        <p className="text-xs text-gray-500 dark:text-gray-400">
-                          {t('profile.created', { date: new Date(profile.createdAt).toLocaleDateString(useAppStore.getState().lang === 'en' ? 'en-US' : 'id-ID') })}
-                        </p>
-                      )}
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        {t('profile.created', { date: new Date(profile.createdAt).toLocaleDateString(useAppStore.getState().lang === 'en' ? 'en-US' : 'id-ID') })}
+                      </p>
                     </>
                   )}
                 </div>

@@ -26,7 +26,7 @@ export default function LoveNotes() {
   const markNoteRead = useCoupleStore(s => s.markNoteRead)
   const getPartnerName = useCoupleStore(s => s.getPartnerName)
   const getPartnerId = useCoupleStore(s => s.getPartnerId)
-  const { success } = useToast()
+  const { success, error: showError } = useToast()
   
   const [showSendModal, setShowSendModal] = useState(false)
   const [showEmojiPicker, setShowEmojiPicker] = useState(false)
@@ -74,8 +74,9 @@ export default function LoveNotes() {
       setShowSendModal(false)
       setMessage('')
       setSelectedEmoji('Heart')
-    } catch (error) {
-      if (import.meta.env.DEV) console.error('Failed to send love note:', error)
+    } catch (err) {
+      if (import.meta.env.DEV) console.error('Failed to send love note:', err)
+      showError(t('couple.noteFailed'))
     } finally {
       setSending(false)
     }
