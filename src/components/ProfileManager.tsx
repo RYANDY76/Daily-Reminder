@@ -1,8 +1,9 @@
 import { useState } from 'react'
 import { useProfileStore } from '../stores/useProfileStore'
 import { useAppStore } from '../stores/useAppStore'
+import { useAuthStore } from '../stores/useAuthStore'
 import Avatar from './Avatar'
-import { Pencil, Trash2, Plus, Lock, Mail } from 'lucide-react'
+import { Pencil, Trash2, Plus, Lock, Mail, LogOut } from 'lucide-react'
 import { useT } from '../i18n'
 import { useConfirm } from '../hooks/useConfirm'
 
@@ -43,6 +44,21 @@ export default function ProfileManager() {
     const ok = await confirm({ title: t('common.confirm'), message: t('profile.deleteConfirm', { name }), variant: 'danger', confirmText: t('common.delete'), cancelText: t('common.cancel') })
     if (!ok) return
     await removeProfile(id)
+  }
+
+  const handleSignOut = async () => {
+    const ok = await confirm({
+      title: t('profile.signOutTitle'),
+      message: t('profile.signOutMessage'),
+      variant: 'danger',
+      confirmText: t('profile.signOut'),
+      cancelText: t('common.cancel')
+    })
+    if (!ok) return
+    await useAuthStore.getState().signOut()
+    localStorage.removeItem('daily_reminder_guest')
+    localStorage.removeItem('daily_reminder_last_profile')
+    window.location.reload()
   }
 
   const handleSaveEdit = async (_id: string) => {
@@ -167,6 +183,16 @@ export default function ProfileManager() {
             </div>
           )
         })}
+      </div>
+
+      <div className="pt-4 border-t border-gray-200 dark:border-dark-border">
+        <button
+          onClick={handleSignOut}
+          className="w-full py-3 px-4 rounded-xl border border-red-200 dark:border-red-900/30 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all flex items-center justify-center gap-2 text-sm font-medium min-h-tap"
+        >
+          <LogOut className="w-4 h-4" />
+          {t('profile.signOut')}
+        </button>
       </div>
 
       {showCreate && (
