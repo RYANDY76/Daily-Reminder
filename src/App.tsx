@@ -27,26 +27,31 @@ import { initWebVitals } from './lib/webVitals'
 import type { Page } from './types'
 
 const PUBLIC_PATHS = new Set(['/about'])
+const GUEST_FLAG_KEY = 'daily_reminder_guest'
 
 function useAuthGate() {
   const authUser = useAuthStore((s) => s.user)
   const authLoading = useAuthStore((s) => s.loading)
   const profiles = useProfileStore((s) => s.profiles)
   const profileLoading = useProfileStore((s) => s.loading)
-  const showWelcome = useProfileStore((s) => s.showWelcome)
+
+  const [guestMode, setGuestMode] = useState(() => localStorage.getItem(GUEST_FLAG_KEY) === 'true')
 
   const hasExistingProfile = profiles.length > 0
   const hasSupabaseSession = authUser !== null
 
-  // After loading, user is authenticated if:
-  // 1. Has an existing local profile (guest or previously logged in), OR
-  // 2. Has a valid Supabase session
-  const persisted = hasExistingProfile || hasSupabaseSession
-
   return {
-    authenticated: persisted,
+    authenticated: guestMode || hasExistingProfile || hasSupabaseSession,
     authReady: !authLoading && !profileLoading,
-    showWelcome: showWelcome && !hasExistingProfile
+    showWelcome: profiles.length === 0 && !guestMode && !hasSupabaseSession,
+    enableGuest: () => {
+      localStorage.setItem(GUEST_FLAG_KEY, 'true')
+      setGuestMode(true)
+    },
+    disableGuest: () => {
+      localStorage.removeItem(GUEST_FLAG_KEY)
+      setGuestMode(false)
+    }
   }
 }
 
@@ -73,7 +78,7 @@ export default function App() {
   const dataLoadedRef = useRef(false)
   const lastRefreshRef = useRef(0)
 
-  const { authenticated, authReady, showWelcome } = useAuthGate()
+  const { authenticated, authReady, showWelcome, enableGuest, disableGuest } = useAuthGate()
 
   useIdleTimeout()
   useAnalytics()
@@ -222,10 +227,12 @@ export default function App() {
     return (
       <LoginPage
         onComplete={() => {
+          disableGuest()
           dataLoadedRef.current = false
           loadProfiles()
         }}
         onGuest={() => {
+          enableGuest()
           loadProfiles()
         }}
       />
