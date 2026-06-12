@@ -24,76 +24,63 @@ export default function SwipeableCard({
 }: SwipeableCardProps) {
   const [swipeX, setSwipeX] = useState(0)
   const [isDragging, setIsDragging] = useState(false)
+  const [resetting, setResetting] = useState(false)
   const startX = useRef(0)
+  const triggeredRef = useRef(false)
   const cardRef = useRef<HTMLDivElement>(null)
 
+  const resetSwipe = () => {
+    setResetting(true)
+    setSwipeX(0)
+    triggeredRef.current = false
+    setTimeout(() => setResetting(false), 300)
+  }
+
   useEffect(() => {
-    if (Math.abs(swipeX) > threshold) {
-      if (swipeX > 0 && onSwipeRight) {
-        onSwipeRight()
-        setSwipeX(threshold)
-      } else if (swipeX < 0 && onSwipeLeft) {
-        onSwipeLeft()
-        setSwipeX(-threshold)
-      }
+    if (triggeredRef.current || Math.abs(swipeX) <= threshold) return
+    triggeredRef.current = true
+
+    if (swipeX > 0 && onSwipeRight) {
+      onSwipeRight()
+      setTimeout(resetSwipe, 200)
+    } else if (swipeX < 0 && onSwipeLeft) {
+      onSwipeLeft()
+      setTimeout(resetSwipe, 200)
     }
   }, [swipeX, threshold, onSwipeLeft, onSwipeRight])
 
-  const handleMouseStart = (e: React.MouseEvent) => {
-    if (Math.abs(swipeX) > 0) return
+  const handleDragStart = (clientX: number) => {
+    if (triggeredRef.current) return
     setIsDragging(true)
-    startX.current = e.clientX
+    startX.current = clientX
   }
 
-  const handleMouseMove = (e: React.MouseEvent) => {
-    if (!isDragging) return
-    const currentX = e.clientX
-    const diff = currentX - startX.current
+  const handleDragMove = (clientX: number, clientY?: number) => {
+    if (!isDragging || triggeredRef.current) return
+    const diff = clientX - startX.current
+    if (clientY !== undefined && Math.abs(diff) <= Math.abs(clientY - startX.current)) return
     if (Math.abs(diff) > 0) {
-      e.preventDefault()
       setSwipeX(Math.max(-100, Math.min(100, diff)))
     }
   }
 
-  const handleMouseEnd = () => {
+  const handleDragEnd = () => {
     setIsDragging(false)
-    if (Math.abs(swipeX) > threshold) {
+    if (Math.abs(swipeX) > threshold && !triggeredRef.current) {
       setSwipeX(swipeX > 0 ? 100 : -100)
     } else {
-      setSwipeX(0)
+      resetSwipe()
     }
   }
 
-  const handleTouchStart = (e: React.TouchEvent) => {
-    if (Math.abs(swipeX) > 0) return // Already swiped
-    setIsDragging(true)
-    startX.current = e.touches[0].clientX
-  }
-
+  const handleMouseStart = (e: React.MouseEvent) => handleDragStart(e.clientX)
+  const handleMouseMove = (e: React.MouseEvent) => handleDragMove(e.clientX)
+  const handleTouchStart = (e: React.TouchEvent) => handleDragStart(e.touches[0].clientX)
   const handleTouchMove = (e: React.TouchEvent) => {
-    if (!isDragging) return
-    
-    const currentX = e.touches[0].clientX
-    const diff = currentX - startX.current
-    
-    // Only allow horizontal drag
-    if (Math.abs(diff) > Math.abs(e.touches[0].clientY - startX.current)) {
-      e.preventDefault()
-      setSwipeX(Math.max(-100, Math.min(100, diff)))
-    }
+    handleDragMove(e.touches[0].clientX, e.touches[0].clientY)
   }
 
-  const handleTouchEnd = () => {
-    setIsDragging(false)
-    
-    if (Math.abs(swipeX) > threshold) {
-      // Swipe completed
-      setSwipeX(swipeX > 0 ? 100 : -100)
-    } else {
-      // Reset
-      setSwipeX(0)
-    }
-  }
+  const transClass = isDragging ? 'duration-75' : 'duration-200 ease-out'
 
   return (
     <div
@@ -101,29 +88,26 @@ export default function SwipeableCard({
       className="relative overflow-hidden"
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
-      onTouchEnd={handleTouchEnd}
+      onTouchEnd={handleDragEnd}
       onMouseDown={handleMouseStart}
       onMouseMove={handleMouseMove}
-      onMouseUp={handleMouseEnd}
-      onMouseLeave={handleMouseEnd}
+      onMouseUp={handleDragEnd}
+      onMouseLeave={handleDragEnd}
     >
-      {/* Left Action */}
       {leftAction && (
         <div className="absolute inset-y-0 left-0 bg-red-500 flex items-center pl-4">
           {leftAction}
         </div>
       )}
 
-      {/* Right Action */}
       {rightAction && (
         <div className="absolute inset-y-0 right-0 bg-green-500 flex items-center pr-4">
           {rightAction}
         </div>
       )}
 
-      {/* Draggable Card */}
       <div
-        className="relative z-10 bg-white dark:bg-dark-surface rounded-xl border border-gray-200 dark:border-dark-border transition-transform duration-150 ease-out"
+        className={`relative z-10 bg-white dark:bg-dark-surface rounded-xl border border-gray-200 dark:border-dark-border transition-transform ${transClass} ${resetting ? 'duration-300' : ''}`}
         style={{
           transform: `translateX(${swipeX}px)`,
           boxShadow: swipeX === 0 ? '0 2px 8px rgba(0,0,0,0.1)' : 'none'
