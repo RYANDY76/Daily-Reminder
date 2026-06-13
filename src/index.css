@@ -94,8 +94,8 @@
 }
 
 @layer utilities {
-  .translate-x-4\.5 { --tw-translate-x: 1.125rem; }
-  .translate-x-5\.5 { --tw-translate-x: 1.375rem; }
+  .translate-x-4\.5 { --tw-translate-x: 1.125rem; transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y)); }
+  .translate-x-5\.5 { --tw-translate-x: 1.375rem; transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y)); }
   .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
   .no-scrollbar::-webkit-scrollbar { display: none; }
 }

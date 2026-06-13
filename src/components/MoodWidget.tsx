@@ -10,7 +10,7 @@ import { Zap, Smile } from 'lucide-react'
 const MOOD_COLORS: Record<MoodLevel, string> = {
   1: '#EF4444', 2: '#F97316', 3: '#F59E0B', 4: '#22C55E', 5: '#10B981'
 }
-const MOOD_LABELS: Record<MoodLevel, string> = { 1: '1', 2: '2', 3: '3', 4: '4', 5: '5' }
+const MOOD_LABELS: Record<MoodLevel, string> = { 1: '😞', 2: '😕', 3: '😐', 4: '🙂', 5: '😄' }
 
 const ENERGY_LEVELS: Record<MoodLevel, { bars: number; color: string }> = {
   1: { bars: 1, color: '#EF4444' },
@@ -87,7 +87,7 @@ export default function MoodWidget() {
         role="button"
         aria-label={t('mood.editToday')}
       >
-        <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold text-sm" style={{ backgroundColor: MOOD_COLORS[moodLog.mood] }}>
+        <div className="w-10 h-10 rounded-xl flex items-center justify-center text-lg" style={{ backgroundColor: MOOD_COLORS[moodLog.mood] }}>
           {MOOD_LABELS[moodLog.mood]}
         </div>
         <div className="flex-1 min-w-0">
@@ -121,10 +121,10 @@ export default function MoodWidget() {
             <button
               key={level}
               onClick={() => setSelectedMood(level)}
-              className={`flex-1 py-3 rounded-xl text-lg font-bold transition-all ${
+              className={`flex-1 py-3 rounded-xl text-xl transition-all ${
                 selectedMood === level
-                  ? 'ring-2 ring-primary-500 scale-105 text-white'
-                  : 'bg-gray-100 dark:bg-dark-surface hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-500'
+                  ? 'ring-2 ring-primary-500 border-2 border-primary-300 dark:border-primary-400 scale-105 shadow-lg bg-white dark:bg-dark-card'
+                  : 'bg-gray-100 dark:bg-dark-surface hover:bg-gray-200 dark:hover:bg-gray-700'
               }`}
               style={selectedMood === level ? { backgroundColor: MOOD_COLORS[level] } : {}}
             >
@@ -164,7 +164,7 @@ export default function MoodWidget() {
                 ))}
               </div>
               <span className={`text-[10px] font-medium leading-none ${
-                selectedEnergy === level ? 'text-yellow-700 dark:text-yellow-400' : 'text-gray-400'
+                selectedEnergy === level ? 'text-yellow-700 dark:text-yellow-400' : 'text-gray-500 dark:text-gray-400'
               }`}>{energyLabelMap[level]}</span>
             </button>
           ))}

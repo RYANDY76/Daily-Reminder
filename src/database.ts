@@ -1,6 +1,7 @@
 import Dexie, { type EntityTable } from 'dexie'
 import type { Task, Profile, DailyHistory, Habit, MoodLog, PomodoroSession, Goal } from './types'
 import type { CoupleConnection, SharedTask, CoupleGoal, LoveNote, ActivityFeedItem, TaskComment } from './types-couple'
+import { encryptToken, decryptToken } from './crypto'
 import { AppErrorHandler } from './utils/errorHandler'
 
 class DailyReminderDB extends Dexie {
@@ -39,7 +40,22 @@ class DailyReminderDB extends Dexie {
     })
     this.version(7).stores({
       tasks: 'id, profileId, date, session, done, recurringId, sortOrder',
-      profiles: 'id, name, supabaseUserId',
+      profiles: 'id, name, googleId, supabaseUserId',
+      history: 'id, profileId, date',
+      habits: 'id, profileId',
+      moodLogs: 'id, profileId, date',
+      pomodoroSessions: 'id, profileId, date, taskId',
+      goals: 'id, profileId',
+      connections: 'id, profile1Id, profile2Id, inviteCode',
+      sharedTasks: 'id, coupleId, date, sharedWith',
+      coupleGoals: 'id, coupleId, completed',
+      loveNotes: 'id, coupleId, toProfileId, taskId',
+      activityFeed: 'id, coupleId, timestamp',
+      taskComments: 'id, coupleId, taskId'
+    })
+    this.version(8).stores({
+      tasks: 'id, profileId, date, session, done, recurringId, sortOrder, [profileId+date]',
+      profiles: 'id, name, googleId, supabaseUserId',
       history: 'id, profileId, date',
       habits: 'id, profileId',
       moodLogs: 'id, profileId, date',
@@ -63,7 +79,7 @@ if (typeof navigator !== 'undefined' && navigator.storage && navigator.storage.p
     if (!persistent && import.meta.env.DEV) {
       console.warn('[Storage] Dexie IndexedDB might be evicted under storage pressure.')
     }
-  }).catch(() => {})
+  }).catch(() => { if (import.meta.env.DEV) console.warn('[DB] persist request failed') })
 }
 
 async function dbCall<T>(fn: () => Promise<T>, fallback: T, context?: string): Promise<T> {
@@ -106,7 +122,7 @@ export async function getAllTasksForProfile(profileId: string): Promise<Task[]> 
 
 export async function getTasksForDateRange(profileId: string, startDate: string, endDate: string): Promise<Task[]> {
   return dbCall(
-    () => db.tasks.where({ profileId }).filter(t => t.date >= startDate && t.date <= endDate).toArray(),
+    () => db.tasks.where('[profileId+date]').between([profileId, startDate], [profileId, endDate+'\uffff']).toArray(),
     [],
     'getTasksForDateRange'
   )
@@ -129,23 +145,51 @@ export async function getTasksByRecurringId(recurringId: string): Promise<Task[]
 }
 
 export async function saveProfile(profile: Profile): Promise<void> {
-  return dbCall(() => db.profiles.put(profile).then(), undefined, 'saveProfile')
+  const toSave = { ...profile }
+  if (toSave.googleAccessToken) {
+    toSave.googleAccessToken = await encryptToken(toSave.googleAccessToken)
+  }
+  if (toSave.googleRefreshToken) {
+    toSave.googleRefreshToken = await encryptToken(toSave.googleRefreshToken)
+  }
+  return dbCall(() => db.profiles.put(toSave).then(), undefined, 'saveProfile')
+}
+
+async function decryptProfile(profile: Profile | undefined): Promise<Profile | undefined> {
+  if (!profile) return profile
+  return {
+    ...profile,
+    googleAccessToken: profile.googleAccessToken ? await decryptToken(profile.googleAccessToken) : null,
+    googleRefreshToken: profile.googleRefreshToken ? await decryptToken(profile.googleRefreshToken) : null,
+  }
 }
 
 export async function getProfile(id: string): Promise<Profile | undefined> {
-  return dbCall(() => db.profiles.get(id), undefined, 'getProfile')
+  const profile = await dbCall(() => db.profiles.get(id), undefined, 'getProfile')
+  return decryptProfile(profile)
+}
+
+export async function getProfileByGoogleId(googleId: string): Promise<Profile | undefined> {
+  const profile = await dbCall(
+    () => db.profiles.where('googleId').equals(googleId).first(),
+    undefined,
+    'getProfileByGoogleId'
+  )
+  return decryptProfile(profile)
 }
 
 export async function getProfileBySupabaseId(supabaseUserId: string): Promise<Profile | undefined> {
-  return dbCall(
+  const profile = await dbCall(
     () => db.profiles.where('supabaseUserId').equals(supabaseUserId).first(),
     undefined,
     'getProfileBySupabaseId'
   )
+  return decryptProfile(profile)
 }
 
 export async function getAllProfiles(): Promise<Profile[]> {
-  return dbCall(() => db.profiles.toArray(), [], 'getAllProfiles')
+  const profiles = await dbCall(() => db.profiles.toArray(), [], 'getAllProfiles')
+  return Promise.all(profiles.map(p => decryptProfile(p).then(r => r!)))
 }
 
 export async function deleteProfile(id: string): Promise<void> {
@@ -252,6 +296,14 @@ export async function getMoodLog(profileId: string, date: string): Promise<MoodL
     () => db.moodLogs.where({ profileId }).filter(m => m.date === date).first(),
     undefined,
     'getMoodLog'
+  )
+}
+
+export async function getMoodLogsRange(profileId: string, startDate: string, endDate: string): Promise<MoodLog[]> {
+  return dbCall(
+    () => db.moodLogs.where({ profileId }).filter(m => m.date >= startDate && m.date <= endDate).toArray(),
+    [],
+    'getMoodLogsRange'
   )
 }
 

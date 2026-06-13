@@ -13,6 +13,7 @@ function loadQueue(): OfflineAction[] {
     const raw = localStorage.getItem(STORAGE_KEY)
     return raw ? JSON.parse(raw) : []
   } catch {
+    if (import.meta.env.DEV) console.warn('[OfflineQueue] load failed')
     return []
   }
 }
@@ -60,7 +61,8 @@ export async function processOfflineQueue(
     try {
       await executor(item)
       processed++
-    } catch {
+    } catch (e) {
+      if (import.meta.env.DEV) console.warn('[OfflineQueue] executor failed:', e)
       if (item.retryCount < item.maxRetries) {
         pending.push({ ...item, retryCount: item.retryCount + 1 })
       }

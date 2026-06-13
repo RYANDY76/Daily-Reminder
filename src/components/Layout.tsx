@@ -27,8 +27,11 @@ export default function Layout({ children }: LayoutProps) {
 
   return (
     <>
+      <a href="#main-content" className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[60] focus:px-4 focus:py-2 focus:bg-primary-500 focus:text-white focus:rounded-lg focus:font-medium focus:text-sm">
+        {useAppStore.getState().lang === 'en' ? 'Skip to content' : 'Langsung ke konten'}
+      </a>
       <Header />
-      <main className="pb-20 md:pb-0 md:pl-64">
+      <main id="main-content" className="pb-20 md:pb-0 md:pl-64">
         <div
           ref={contentRef}
           className="max-w-4xl xl:max-w-6xl 2xl:max-w-7xl mx-auto px-4 py-4 md:py-8 page-enter"

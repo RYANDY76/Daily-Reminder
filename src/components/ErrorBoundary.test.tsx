@@ -41,8 +41,8 @@ describe('ErrorBoundary', () => {
       </ErrorBoundary>
     )
     expect(screen.queryByText('Content loaded')).not.toBeInTheDocument()
-    // Should show error UI with "Something went wrong" message
-    expect(screen.getByText('Something went wrong')).toBeInTheDocument()
+    // Should show error UI
+    expect(screen.getByText('error.boundaryTitle')).toBeInTheDocument()
   })
 
   it('logs error to AppErrorHandler', async () => {
@@ -69,13 +69,11 @@ describe('ErrorBoundary', () => {
       </ErrorBoundary>
     )
     
-    // Find retry button (text includes "Retry (0/3)")
-    const retryButton = screen.getByText(/Retry/i)
+    const retryButton = screen.getByText(/error\.retry/i)
     expect(retryButton).toBeInTheDocument()
     
-    // Click retry - since component still throws, it will show error again
     fireEvent.click(retryButton)
-    expect(screen.getByText('Something went wrong')).toBeInTheDocument()
+    expect(screen.getByText('error.boundaryTitle')).toBeInTheDocument()
   })
 
   it('disables retry after max retries', () => {
@@ -91,7 +89,6 @@ describe('ErrorBoundary', () => {
       fireEvent.click(retryButton)
     }
     
-    // After max retries, should show "Max retries reached"
-    expect(screen.getByText('Max retries reached')).toBeInTheDocument()
+    expect(screen.getByText('error.maxRetries')).toBeInTheDocument()
   })
 })

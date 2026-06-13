@@ -32,6 +32,7 @@ const GUEST_FLAG_KEY = 'daily_reminder_guest'
 function useAuthGate() {
   const authUser = useAuthStore((s) => s.user)
   const authLoading = useAuthStore((s) => s.loading)
+  const signedOut = useAuthStore((s) => s.signedOut)
   const profiles = useProfileStore((s) => s.profiles)
   const profileLoading = useProfileStore((s) => s.loading)
 
@@ -41,7 +42,7 @@ function useAuthGate() {
   const hasSupabaseSession = authUser !== null
 
   return {
-    authenticated: guestMode || hasExistingProfile || hasSupabaseSession,
+    authenticated: !signedOut && (guestMode || hasExistingProfile || hasSupabaseSession),
     authReady: !authLoading && !profileLoading,
     showWelcome: profiles.length === 0 && !guestMode && !hasSupabaseSession,
     enableGuest: () => {
@@ -227,11 +228,13 @@ export default function App() {
     return (
       <LoginPage
         onComplete={() => {
+          useAuthStore.getState().resetSignedOut()
           disableGuest()
           dataLoadedRef.current = false
           loadProfiles()
         }}
         onGuest={() => {
+          useAuthStore.getState().resetSignedOut()
           enableGuest()
           loadProfiles()
         }}
@@ -265,7 +268,7 @@ export default function App() {
         <FAB
           onClick={() => useAppStore.getState().requestAddTask()}
           label={t('task.add')}
-          className="!bottom-24 md:!bottom-8"
+          className="!bottom-24 md:!bottom-8 md:hidden"
         />
       )}
       <InstallPrompt />

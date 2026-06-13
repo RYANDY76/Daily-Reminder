@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react'
 import { useT } from '../i18n'
 import { useProfileStore } from '../stores/useProfileStore'
-import { getLastNDaysHistory, getPomodoroSessionsRange } from '../database'
+import { getLastNDaysHistory, getPomodoroSessionsRange, getMoodLogsRange } from '../database'
 import { formatDateShort } from '../dates'
-import type { DailyHistory, PomodoroSession } from '../types'
-import { BarChart3, TrendingUp, Calendar, Flame, Target, Clock, Trophy } from 'lucide-react'
+import type { DailyHistory, PomodoroSession, MoodLog, MoodLevel } from '../types'
+import { BarChart3, TrendingUp, Calendar, Flame, Target, Clock, Trophy, Smile } from 'lucide-react'
 
 type ViewRange = '7' | '30'
 
@@ -37,6 +37,7 @@ export default function Stats() {
   const currentProfile = useProfileStore((s) => s.currentProfile)
   const [history, setHistory] = useState<DailyHistory[]>([])
   const [pomodoroSessions, setPomodoroSessions] = useState<PomodoroSession[]>([])
+  const [moodLogs, setMoodLogs] = useState<MoodLog[]>([])
   const [loading, setLoading] = useState(true)
   const [chartView, setChartView] = useState<'bar' | 'line'>('bar')
   const [range, setRange] = useState<ViewRange>('7')
@@ -50,10 +51,12 @@ export default function Stats() {
     const end = getTodayDate()
     Promise.all([
       getLastNDaysHistory(currentProfile.id, n),
-      getPomodoroSessionsRange(currentProfile.id, start, end)
-    ]).then(([hist, pomo]) => {
+      getPomodoroSessionsRange(currentProfile.id, start, end),
+      getMoodLogsRange(currentProfile.id, start, end)
+    ]).then(([hist, pomo, mood]) => {
       setHistory(hist)
       setPomodoroSessions(pomo)
+      setMoodLogs(mood)
       setLoading(false)
     })
   }, [currentProfile, range])
@@ -209,6 +212,64 @@ export default function Stats() {
           <span className="text-xs text-gray-400">{t('stats.more')}</span>
         </div>
       </div>
+
+      {/* Mood History Chart */}
+      {moodLogs.length > 0 && (
+        <div className="card p-4">
+          <div className="flex items-center gap-2 mb-4">
+            <Smile className="w-4 h-4 text-gray-500" />
+            <p className="text-sm font-medium text-gray-700 dark:text-gray-300">{t('stats.moodHistory')}</p>
+          </div>
+          <div className="relative">
+            <svg viewBox="0 0 280 180" className="w-full h-48">
+              <line x1="30" y1="10" x2="30" y2="160" stroke="#e5e7eb" strokeWidth="1" className="dark:stroke-gray-700" />
+              {[1, 2, 3, 4, 5].map((level) => (
+                <g key={level}>
+                  <line x1="30" y1={160 - ((level - 1) / 4) * 150} x2="275" y2={160 - ((level - 1) / 4) * 150} stroke="#e5e7eb" strokeWidth="0.5" className="dark:stroke-gray-700" />
+                  <text x="24" y={164 - ((level - 1) / 4) * 150} textAnchor="end" fontSize="9" fill="#9E9E9E">{level}</text>
+                </g>
+              ))}
+              {(() => {
+                const moodChart = lastNDays.map((date, i) => {
+                  const log = moodLogs.find(m => m.date === date)
+                  if (!log) return null
+                  const x = 40 + i * (235 / Math.max(lastNDays.length - 1, 1))
+                  const moodY = 160 - ((log.mood - 1) / 4) * 150
+                  const energyY = 160 - ((log.energy - 1) / 4) * 150
+                  const prev = lastNDays.slice(0, i).reverse().find(d => moodLogs.find(m => m.date === d))
+                  const prevIdx = prev ? lastNDays.indexOf(prev) : null
+                  const prevX = prevIdx !== null ? 40 + prevIdx * (235 / Math.max(lastNDays.length - 1, 1)) : null
+                  const prevMoodY = prev ? 160 - ((moodLogs.find(m => m.date === prev)!.mood - 1) / 4) * 150 : null
+                  const prevEnergyY = prev ? 160 - ((moodLogs.find(m => m.date === prev)!.energy - 1) / 4) * 150 : null
+                  return { x, moodY, energyY, prevX, prevMoodY, prevEnergyY, mood: log.mood, energy: log.energy, date: formatDateShort(date) }
+                }).filter(Boolean) as { x: number; moodY: number; energyY: number; prevX: number | null; prevMoodY: number | null; prevEnergyY: number | null; mood: MoodLevel; energy: MoodLevel; date: string }[]
+                return <>
+                  {moodChart.map((d, i) => (
+                    <g key={i}>
+                      {d.prevX !== null && d.prevMoodY !== null && (
+                        <line x1={d.prevX} y1={d.prevMoodY} x2={d.x} y2={d.moodY} stroke="#1D9E75" strokeWidth="2" />
+                      )}
+                      {d.prevX !== null && d.prevEnergyY !== null && (
+                        <line x1={d.prevX} y1={d.prevEnergyY} x2={d.x} y2={d.energyY} stroke="#F59E0B" strokeWidth="2" strokeDasharray="4 2" />
+                      )}
+                      <circle cx={d.x} cy={d.moodY} r={4} fill="#1D9E75" className="cursor-pointer" />
+                      <circle cx={d.x} cy={d.energyY} r={4} fill="#F59E0B" className="cursor-pointer" />
+                    </g>
+                  ))}
+                </>
+              })()}
+            </svg>
+          </div>
+          <div className="flex gap-4 justify-center mt-1">
+            <span className="flex items-center gap-1.5 text-xs text-gray-500">
+              <span className="w-2.5 h-2.5 rounded-full bg-primary-500" /> {t('stats.moodLine')}
+            </span>
+            <span className="flex items-center gap-1.5 text-xs text-gray-500">
+              <span className="w-2.5 h-2.5 rounded-full bg-yellow-500" /> {t('stats.energyLine')}
+            </span>
+          </div>
+        </div>
+      )}
 
       {/* Bar/Line Chart */}
       <div className="card p-4">

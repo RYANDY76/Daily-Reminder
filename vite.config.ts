@@ -1,9 +1,10 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
+import { visualizer } from 'rollup-plugin-visualizer'
 import path from 'path'
 
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
   plugins: [
     react(),
     VitePWA({
@@ -24,6 +25,10 @@ export default defineConfig({
           { src: '/icons/icon-192x192.png', sizes: '192x192', type: 'image/png' },
           { src: '/icons/icon-512x512.png', sizes: '512x512', type: 'image/png' },
           { src: '/icons/maskable-icon-512x512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' }
+        ],
+        screenshots: [
+          { src: '/screenshots/narrow.png', sizes: '375x812', type: 'image/png', form_factor: 'narrow' },
+          { src: '/screenshots/wide.png', sizes: '1280x800', type: 'image/png', form_factor: 'wide' }
         ]
       },
       workbox: {
@@ -52,7 +57,8 @@ export default defineConfig({
           }
         ]
       }
-    })
+    }),
+    ...(process.env.ANALYZE === 'true' ? [visualizer({ open: true, gzipSize: true, brotliSize: true })] : []),
   ],
   resolve: {
     alias: {
@@ -66,6 +72,7 @@ export default defineConfig({
     }
   },
   build: {
+    sourcemap: mode === 'production' ? 'hidden' : true,
     rollupOptions: {
       output: {
         manualChunks: {
@@ -76,4 +83,4 @@ export default defineConfig({
       }
     }
   }
-})
+}))

@@ -14,6 +14,7 @@ function isValidUrl(url: string): boolean {
     const parsed = new URL(url)
     return parsed.protocol === 'https:' && url.includes('.supabase.')
   } catch {
+    if (import.meta.env.DEV) console.warn('[Supabase] URL validation failed')
     return false
   }
 }

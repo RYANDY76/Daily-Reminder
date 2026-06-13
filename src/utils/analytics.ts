@@ -20,6 +20,7 @@ function getEvents(): AnalyticsEvent[] {
   try {
     return JSON.parse(localStorage.getItem(ANALYTICS_KEY) || '[]')
   } catch {
+    if (import.meta.env.DEV) console.warn('[Analytics] failed to parse events')
     return []
   }
 }

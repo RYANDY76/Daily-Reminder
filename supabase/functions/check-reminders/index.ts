@@ -18,10 +18,9 @@ interface HabitData {
 }
 
 Deno.serve(async (req) => {
-  // Allow cron (no auth) or service role bearer
   const cronSecret = Deno.env.get('CRON_SECRET')
   const authHeader = req.headers.get('Authorization')
-  if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
+  if (!cronSecret || authHeader !== `Bearer ${cronSecret}`) {
     return new Response('Unauthorized', { status: 401 })
   }
 

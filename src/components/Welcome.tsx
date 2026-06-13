@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { useProfileStore } from '../stores/useProfileStore'
-import { CheckCircle2, Sparkles, ArrowRight, UserPlus, Target, Timer, BarChart3, ShieldCheck } from 'lucide-react'
+import { CheckCircle2, Sparkles, ArrowRight, UserPlus, LogIn, Target, Timer, BarChart3, ShieldCheck } from 'lucide-react'
+import GoogleSignInButton from './GoogleSignInButton'
+import type { GoogleUserInfo } from '../hooks/useGoogleAuth'
 import { useT } from '../i18n'
 
 interface WelcomeProps {
@@ -17,10 +19,12 @@ const features = [
 export default function Welcome({ onComplete }: WelcomeProps) {
   const t = useT()
   const createProfile = useProfileStore((s) => s.createProfile)
+  const createProfileFromGoogle = useProfileStore((s) => s.createProfileFromGoogle)
   const [step, setStep] = useState(0)
   const [name, setName] = useState('')
   const [pin, setPin] = useState('')
   const [error, setError] = useState('')
+  const [googleError, setGoogleError] = useState('')
   const [consentGiven, setConsentGiven] = useState(false)
 
   const handleCreate = async () => {
@@ -32,6 +36,12 @@ export default function Welcome({ onComplete }: WelcomeProps) {
     if (!consentGiven) { setError(t('welcome.consentRequired')); return }
     setError('')
     await createProfile(name.trim(), pin.length === 4 ? pin : null, true)
+    onComplete()
+  }
+
+  const handleGoogleSuccess = async (userInfo: GoogleUserInfo) => {
+    setGoogleError('')
+    await createProfileFromGoogle(userInfo)
     onComplete()
   }
 
@@ -70,6 +80,31 @@ export default function Welcome({ onComplete }: WelcomeProps) {
 
         {/* Auth options */}
         <div className="flex-1 px-6 pb-8 space-y-4">
+          {/* Google login */}
+          <div className="card p-5 shadow-sm">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center">
+                <LogIn className="w-5 h-5 text-blue-500" />
+              </div>
+              <div>
+                <h2 className="font-semibold text-gray-900 dark:text-white text-sm">{t('welcome.login')}</h2>
+                <p className="text-xs text-gray-400 dark:text-gray-500">{t('welcome.loginDesc')}</p>
+              </div>
+            </div>
+            <GoogleSignInButton onSuccess={handleGoogleSuccess} onError={(err) => setGoogleError(err)} />
+            {googleError && <p className="text-red-500 text-xs mt-2 text-center">{googleError}</p>}
+          </div>
+
+          {/* Divider */}
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-gray-200 dark:border-dark-border" />
+            </div>
+            <div className="relative flex justify-center text-xs">
+              <span className="bg-white dark:bg-dark-bg px-3 text-gray-400">{t('welcome.or')}</span>
+            </div>
+          </div>
+
           {/* Register */}
           <div className="card p-5 shadow-sm">
             <div className="flex items-center gap-3 mb-4">

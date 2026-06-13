@@ -122,7 +122,7 @@ export default function SessionCard({ session, tasks, icon, batchMode = false, s
               ? 'bg-primary-100 dark:bg-primary-800/30'
               : 'bg-gray-100 dark:bg-dark-card'
           }`}>
-            <icon.Icon className="w-5 h-5" />
+            <icon.Icon className="w-5 h-5" aria-label={icon.label} role="img" />
           </div>
           <div className="text-left">
             <h3 className="font-semibold text-gray-900 dark:text-white text-sm flex items-center gap-2">
@@ -165,7 +165,7 @@ export default function SessionCard({ session, tasks, icon, batchMode = false, s
         <div className={`px-3 pb-3 space-y-1 ${dragOver ? 'bg-primary-50/30 dark:bg-primary-900/10' : ''}`}>
           {tasks.length === 0 ? (
             <div className="text-center py-8">
-              <icon.Icon className="w-8 h-8 text-gray-300 dark:text-gray-600 mx-auto mb-2" />
+              <icon.Icon className="w-8 h-8 text-gray-300 dark:text-gray-600 mx-auto mb-2" aria-label={icon.label} role="img" />
               <p className="text-sm text-gray-400 dark:text-gray-500 mb-3">
                 {t('session.empty' + session.charAt(0).toUpperCase() + session.slice(1))}
               </p>

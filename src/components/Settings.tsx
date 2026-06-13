@@ -10,7 +10,7 @@ import { useT } from '../i18n'
 import { isAnalyticsEnabled, setAnalyticsEnabled } from '../utils/analytics'
 import DisplaySettings from './settings/DisplaySettings'
 import NotificationSettings from './settings/NotificationSettings'
-import { FileText, ShieldCheck, Download, Trash2, Fingerprint, Lock, Bell, Smartphone } from 'lucide-react'
+import { FileText, ShieldCheck, Download, Trash2, Fingerprint, Lock, Bell, Smartphone, Share2 } from 'lucide-react'
 
 export default function Settings() {
   const profile = useProfileStore((s) => s.currentProfile)
@@ -225,6 +225,33 @@ export default function Settings() {
           )}
           {bioError && (
             <p className="text-xs text-red-500 px-4 pb-3">{bioError}</p>
+          )}
+        </div>
+      </section>
+
+      <section>
+        <h3 className="section-title mb-3 flex items-center gap-2">
+          <Share2 className="w-3.5 h-3.5" />
+          {t('settings.share')}
+        </h3>
+        <div className="card-border p-4">
+          <button
+            onClick={() => {
+              if (navigator.share) {
+                navigator.share({
+                  title: 'Daily Reminder',
+                  text: t('settings.shareText'),
+                  url: 'https://daily-reminder-zeta.vercel.app'
+                }).catch(() => {})
+              }
+            }}
+            className="btn-primary w-full flex items-center justify-center gap-2"
+          >
+            <Share2 className="w-4 h-4" />
+            {t('settings.shareApp')}
+          </button>
+          {typeof navigator.share === 'undefined' && (
+            <p className="text-xs text-gray-400 text-center mt-2">{t('settings.shareNotSupported')}</p>
           )}
         </div>
       </section>

@@ -15,20 +15,28 @@ import {
   addActivityFeedItem,
   addPointsToConnection
 } from '../database-couple'
-import { isCoupleSyncEnabled } from '../services/coupleSync'
+import { subscribeToCoupleData, unsubscribeCoupleData, isCoupleSyncEnabled } from '../services/coupleSync'
 
-let syncPollTimer: ReturnType<typeof setInterval> | null = null
+let activeSyncProfileId: string | null = null
 
-function startSyncPoll(refresh: () => Promise<void>) {
-  if (!isCoupleSyncEnabled() || syncPollTimer) return
-  syncPollTimer = setInterval(() => { refresh().catch(() => {}) }, 15000)
+function startSyncRealtime(profileId: string, refresh: () => Promise<void>) {
+  if (!isCoupleSyncEnabled()) return
+  // Prevent duplicate subscriptions
+  if (activeSyncProfileId === profileId) return
+  
+  activeSyncProfileId = profileId
+  const connection = useCoupleStore.getState().connection
+  if (connection) {
+    subscribeToCoupleData(connection.id, () => {
+      // Triggered when any couple table changes
+      refresh().catch(() => {})
+    })
+  }
 }
 
-function stopSyncPoll() {
-  if (syncPollTimer) {
-    clearInterval(syncPollTimer)
-    syncPollTimer = null
-  }
+function stopSyncRealtime() {
+  unsubscribeCoupleData()
+  activeSyncProfileId = null
 }
 
 interface CoupleState {
@@ -85,14 +93,14 @@ export const useCoupleStore = create<CoupleState>((set, get) => ({
         state.loadLoveNotes(profileId),
         state.loadActivityFeed()
       ])
-      startSyncPoll(async () => {
+      startSyncRealtime(profileId, async () => {
         await get().loadConnection(profileId)
         await get().loadGoals()
         await get().loadLoveNotes(profileId)
         await get().loadActivityFeed()
       })
     } else {
-      stopSyncPoll()
+      stopSyncRealtime()
     }
   },
 
@@ -115,7 +123,7 @@ export const useCoupleStore = create<CoupleState>((set, get) => ({
     const { connection } = get()
     if (connection) {
       await disconnectCouple(connection.id)
-      stopSyncPoll()
+      stopSyncRealtime()
       set({ connection: null, goals: [], loveNotes: [], activityFeed: [] })
     }
   },

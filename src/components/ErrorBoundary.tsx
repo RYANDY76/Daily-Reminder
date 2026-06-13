@@ -14,6 +14,7 @@ interface State {
   errorInfo: string | null
   retryCount: number
   maxRetries: number
+  lang: string
 }
 
 export default class ErrorBoundary extends Component<Props, State> {
@@ -24,8 +25,19 @@ export default class ErrorBoundary extends Component<Props, State> {
       error: null,
       errorInfo: null,
       retryCount: 0,
-      maxRetries: 3
+      maxRetries: 3,
+      lang: this.getLang()
     }
+  }
+
+  private getLang(): string {
+    try {
+      return JSON.parse(localStorage.getItem('daily_reminder_lang') || '"id"')
+    } catch { return 'id' }
+  }
+
+  private tr(key: string): string {
+    return t(key)
   }
 
   static getDerivedStateFromError(error: Error): Partial<State> {
@@ -35,17 +47,15 @@ export default class ErrorBoundary extends Component<Props, State> {
   componentDidCatch(error: Error, errorInfo: any) {
     const componentStack = errorInfo?.componentStack || null
     console.error('ErrorBoundary caught:', error, errorInfo)
-    
-    // Log to our error handler with component stack
     AppErrorHandler.logError(
       'COMPONENT_ERROR',
       error.message,
       'critical',
       { error, componentStack }
     )
-    
     this.setState({
-      errorInfo: componentStack
+      errorInfo: componentStack,
+      lang: this.getLang()
     })
   }
 
@@ -80,10 +90,10 @@ export default class ErrorBoundary extends Component<Props, State> {
               </div>
               <div>
                 <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-                  Something went wrong
+                  {this.tr('error.boundaryTitle')}
                 </h2>
                 <p className="text-sm text-gray-500 dark:text-gray-400">
-                  {this.state.error?.message || t('error.generic')}
+                  {this.state.error?.message || this.tr('error.generic')}
                 </p>
               </div>
             </div>
@@ -91,7 +101,7 @@ export default class ErrorBoundary extends Component<Props, State> {
             {import.meta.env.DEV && this.state.errorInfo && (
               <details className="text-xs text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-dark-bg p-3 rounded-lg overflow-auto max-h-40">
                 <summary className="cursor-pointer font-medium mb-2">
-                  Error Details (Dev Only)
+                  {this.tr('error.devDetails')}
                 </summary>
                 <pre className="whitespace-pre-wrap break-words">
                   {this.state.errorInfo}
@@ -107,19 +117,19 @@ export default class ErrorBoundary extends Component<Props, State> {
               >
                 <RefreshCw className="w-4 h-4" />
                 {this.state.retryCount >= this.state.maxRetries
-                  ? 'Max retries reached'
-                  : `Retry (${this.state.retryCount}/${this.state.maxRetries})`}
+                  ? this.tr('error.maxRetries')
+                  : `${this.tr('error.retry')} (${this.state.retryCount}/${this.state.maxRetries})`}
               </button>
               <button
                 onClick={this.handleReload}
                 className="px-4 py-2.5 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg font-medium transition-colors"
               >
-                Clear &amp; Reload
+                {this.tr('error.clearReload')}
               </button>
             </div>
 
             <p className="text-xs text-center text-gray-400 dark:text-gray-500">
-              Reload will clear local caches and refresh the page
+              {this.tr('error.clearReloadHint')}
             </p>
           </div>
         </div>

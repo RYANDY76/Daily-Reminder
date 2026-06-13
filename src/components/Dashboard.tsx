@@ -15,7 +15,7 @@ import { getUserMessage } from '../utils/errorHandler'
 import { getHabitsForProfile } from '../database'
 import type { Habit } from '../types'
 import { SESSION_ORDER, type SessionType } from '../types'
-import { useT, t } from '../i18n'
+import { useT } from '../i18n'
 import { getSessionFromHour } from '../dates'
 import SessionCard from './SessionCard'
 import DailyPlan from './DailyPlan'
@@ -37,15 +37,14 @@ import OverdueWarning from './dashboard/OverdueWarning'
 
 import type { LucideIcon } from 'lucide-react'
 
-const sessionIcons: Record<SessionType, { Icon: LucideIcon; label: string }> = {
-  pagi:  { Icon: Sunrise, label: t('session.pagi') },
-  siang: { Icon: Sun,     label: t('session.siang') },
-  sore:  { Icon: Sunset,  label: t('session.sore') },
-  malam: { Icon: Moon,    label: t('session.malam') },
-}
-
 export default function Dashboard() {
   const t = useT()
+  const sessionIcons: Record<SessionType, { Icon: LucideIcon; label: string }> = {
+    pagi:  { Icon: Sunrise, label: t('session.pagi') },
+    siang: { Icon: Sun,     label: t('session.siang') },
+    sore:  { Icon: Sunset,  label: t('session.sore') },
+    malam: { Icon: Moon,    label: t('session.malam') },
+  }
   usePerformance('Dashboard', import.meta.env.DEV)
   
   const todayTasks = useTaskStore((s) => s.todayTasks)
@@ -58,17 +57,25 @@ export default function Dashboard() {
   const { trigger } = useHaptic()
   const { success, error: showError } = useToast()
   const { confirm, ConfirmDialog } = useConfirm()
-  const { checkAndNotify, requestPermission } = useNotifications()
+  const { checkAndNotify, requestPermission, updatePrefs } = useNotifications()
+  const setNotificationEnabled = useAppStore((s) => s.setNotificationEnabled)
+
+  const handleRequestPermission = useCallback(async () => {
+    const ok = await requestPermission()
+    if (ok) {
+      updatePrefs({ enabled: true })
+      setNotificationEnabled(true)
+    }
+  }, [requestPermission, updatePrefs, setNotificationEnabled])
   const { isOffline, queueToggleDone, queueDelete } = useOffline()
   const notifiedRef = useRef(false)
   const [habits, setHabits] = useState<Habit[]>([])
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedTag, setSelectedTag] = useState<string | null>(null)
   const [showArchive, setShowArchive] = useState(false)
-  // Skip skeleton if App.tsx already pre-loaded tasks (todayTasks will be non-empty or loading=false)
   const taskStoreLoading = useTaskStore((s) => s.loading)
   const [initialLoading, setInitialLoading] = useState(
-    () => todayTasks.length === 0 && taskStoreLoading
+    () => todayTasks.length === 0 && (taskStoreLoading || !currentProfile)
   )
   const [showAddTask, setShowAddTask] = useState(false)
   const [batchMode, setBatchMode] = useState(false)
@@ -339,9 +346,10 @@ export default function Dashboard() {
           totalTasks={totalTasks}
           batchMode={batchMode}
           notificationEnabled={notificationEnabled}
+          profileId={currentProfile?.id ?? null}
           onToggleBatchMode={toggleBatchMode}
           onShowAddTask={() => setShowAddTask(true)}
-          onRequestNotificationPermission={requestPermission}
+          onRequestNotificationPermission={handleRequestPermission}
         />
 
         <SearchBar

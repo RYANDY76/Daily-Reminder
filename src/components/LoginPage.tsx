@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useProfileStore } from '../stores/useProfileStore'
+import { useGoogleAuth } from '../hooks/useGoogleAuth'
 import { getSupabase } from '../lib/supabase'
 import { useT } from '../i18n'
 import { Loader2, ArrowRight, Mail, Lock, AlertCircle, CheckCircle2, Timer, Target, BarChart3, Sparkles } from 'lucide-react'
@@ -20,7 +21,9 @@ function FloatingShape({ className, delay = 0 }: { className: string; delay?: nu
 
 export default function LoginPage({ onComplete, onGuest }: LoginPageProps) {
   const t = useT()
+  const createProfileFromGoogle = useProfileStore((s) => s.createProfileFromGoogle)
   const createProfileFromSupabase = useProfileStore((s) => s.createProfileFromSupabase)
+  const { login, loading: googleLoading, error: googleError, clearError } = useGoogleAuth()
 
   const [emailMode, setEmailMode] = useState<'login' | 'register'>('login')
   const [email, setEmail] = useState('')
@@ -29,8 +32,22 @@ export default function LoginPage({ onComplete, onGuest }: LoginPageProps) {
   const [emailError, setEmailError] = useState<string | null>(null)
   const [showEmailForm, setShowEmailForm] = useState(false)
   const [mounted, setMounted] = useState(false)
+  const [googleProfileError, setGoogleProfileError] = useState<string | null>(null)
 
   useEffect(() => { setMounted(true) }, [])
+
+  const handleGoogleLogin = async () => {
+    clearError()
+    setGoogleProfileError(null)
+    const userInfo = await login()
+    if (!userInfo) return
+    try {
+      await createProfileFromGoogle(userInfo)
+      onComplete()
+    } catch (err) {
+      setGoogleProfileError((err as Error).message)
+    }
+  }
 
   const features = useMemo(() => [
     { icon: CheckCircle2, text: t('login.feature1') },
@@ -139,6 +156,40 @@ export default function LoginPage({ onComplete, onGuest }: LoginPageProps) {
           style={{ transitionDelay: '300ms' }}
         >
           <div className="bg-white/80 dark:bg-dark-card/80 backdrop-blur-xl rounded-2xl border border-gray-200/60 dark:border-dark-border/60 shadow-xl shadow-black/5 p-6 space-y-4">
+            {/* Google */}
+            <button
+              onClick={handleGoogleLogin}
+              disabled={googleLoading}
+              className="w-full py-2.5 px-4 rounded-xl border border-gray-200 dark:border-dark-border bg-white dark:bg-dark-card hover:bg-gray-50 dark:hover:bg-dark-surface transition-all flex items-center justify-center gap-3 active:scale-[0.98] shadow-xs"
+            >
+              {googleLoading ? (
+                <Loader2 className="w-5 h-5 animate-spin text-gray-400" />
+              ) : (
+                <svg className="w-5 h-5" viewBox="0 0 24 24">
+                  <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"/>
+                  <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                  <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                  <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                </svg>
+              )}
+              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                {googleLoading ? t('google.processing') : t('google.continue')}
+              </span>
+            </button>
+
+            {(googleError || googleProfileError) && (
+              <p className="text-xs text-red-500 text-center">{googleProfileError || googleError}</p>
+            )}
+
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-gray-200 dark:border-dark-border" />
+              </div>
+              <div className="relative flex justify-center">
+                <span className="bg-white dark:bg-dark-card px-3 text-xs text-gray-400">{t('welcome.or')}</span>
+              </div>
+            </div>
+
             {showEmailForm ? (
               <form onSubmit={handleEmailSubmit} className="space-y-3">
                 {emailError && (

@@ -8,14 +8,17 @@ interface AuthState {
   user: User | null
   session: Session | null
   loading: boolean
+  signedOut: boolean
   initialize: () => void
   signOut: () => Promise<void>
+  resetSignedOut: () => void
 }
 
 export const useAuthStore = create<AuthState>((set) => ({
   user: null,
   session: null,
   loading: true,
+  signedOut: false,
 
   initialize: () => {
     const supabase = getSupabase()
@@ -50,7 +53,9 @@ export const useAuthStore = create<AuthState>((set) => ({
     } catch (err) {
       console.error('Sign out error:', err)
     } finally {
-      set({ user: null, session: null })
+      set({ user: null, session: null, signedOut: true })
     }
-  }
+  },
+
+  resetSignedOut: () => set({ signedOut: false })
 }))

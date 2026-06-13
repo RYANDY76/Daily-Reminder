@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { useT } from '../i18n'
 import type { Task, RecurringConfig, SessionType, TaskPriority } from '../types'
 import { getSessionFromTime, getTodayDate } from '../dates'
@@ -13,7 +13,7 @@ import { parseNaturalLanguage } from '../utils/naturalLanguageParser'
 import { hasTimeIndicator, hasDateIndicator } from '../utils/naturalLanguage'
 import { getTemplates, saveTemplate, deleteTemplate, type TaskTemplate } from '../utils/templates'
 import { z } from 'zod'
-import { X, Sparkles, Bookmark, ChevronDown, Mic } from 'lucide-react'
+import { X, Sparkles, Bookmark, ChevronDown, Mic, MicOff } from 'lucide-react'
 import { sanitizeInput } from '../utils/sanitize'
 
 const taskSchema = z.object({
@@ -63,6 +63,27 @@ export default function TaskForm({ onClose, editTask, defaultSession, defaultDat
   const [voiceError, setVoiceError] = useState('')
   const profile = useProfileStore((s) => s.currentProfile)
   const recognitionRef = useRef<SpeechRecognition | null>(null)
+  const voiceErrorTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const clearVoiceError = useCallback(() => {
+    setVoiceError('')
+    if (voiceErrorTimerRef.current) {
+      clearTimeout(voiceErrorTimerRef.current)
+      voiceErrorTimerRef.current = null
+    }
+  }, [])
+
+  const setVoiceErrorAutoClear = useCallback((msg: string) => {
+    setVoiceError(msg)
+    if (voiceErrorTimerRef.current) clearTimeout(voiceErrorTimerRef.current)
+    voiceErrorTimerRef.current = setTimeout(() => setVoiceError(''), 5000)
+  }, [])
+
+  useEffect(() => {
+    return () => {
+      if (voiceErrorTimerRef.current) clearTimeout(voiceErrorTimerRef.current)
+    }
+  }, [])
 
   const isEditingRecurring = editTask?.isRecurring && editTask?.recurring !== null
 
@@ -73,18 +94,31 @@ export default function TaskForm({ onClose, editTask, defaultSession, defaultDat
     return () => document.removeEventListener('close-modals', handler)
   }, [onClose])
 
-  const startVoiceInput = () => {
-    setVoiceError('')
+  const startVoiceInput = async () => {
+    clearVoiceError()
 
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition
     if (!SR) {
-      setVoiceError(t('voice.notSupported'))
+      setVoiceErrorAutoClear(t('voice.notSupported'))
+      return
+    }
+
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      setVoiceErrorAutoClear(t('voice.notSupported'))
       return
     }
 
     if (recognitionRef.current) {
       recognitionRef.current.abort()
       recognitionRef.current = null
+    }
+
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+      stream.getTracks().forEach(t => t.stop())
+    } catch {
+      setVoiceErrorAutoClear(t('voice.microphoneBlocked'))
+      return
     }
 
     try {
@@ -103,7 +137,7 @@ export default function TaskForm({ onClose, editTask, defaultSession, defaultDat
         if (parsed.time) setTime(parsed.time)
         if (parsed.date) setDueDate(parsed.date)
         setIsListening(false)
-        setVoiceError('')
+        clearVoiceError()
         recognitionRef.current = null
       }
 
@@ -112,13 +146,13 @@ export default function TaskForm({ onClose, editTask, defaultSession, defaultDat
         setIsListening(false)
         recognitionRef.current = null
         if (e.error === 'not-allowed') {
-          setVoiceError(t('voice.microphoneBlocked'))
+          setVoiceErrorAutoClear(t('voice.microphoneBlocked'))
         } else if (e.error === 'no-speech') {
-          setVoiceError(t('voice.noSpeech'))
+          setVoiceErrorAutoClear(t('voice.noSpeech'))
         } else if (e.error === 'network') {
-          setVoiceError(t('voice.networkError'))
+          setVoiceErrorAutoClear(t('voice.networkError'))
         } else {
-          setVoiceError('Error: ' + e.error)
+          setVoiceErrorAutoClear('Error: ' + e.error)
         }
       }
 
@@ -133,7 +167,7 @@ export default function TaskForm({ onClose, editTask, defaultSession, defaultDat
     } catch (err: unknown) {
       if (import.meta.env.DEV) console.error('Voice start error:', err)
       const errMessage = err instanceof Error ? err.message : 'Unknown error'
-      setVoiceError(t('taskForm.voiceStartError', { error: errMessage }))
+      setVoiceErrorAutoClear(t('taskForm.voiceStartError', { error: errMessage }))
       setIsListening(false)
     }
   }
@@ -409,11 +443,13 @@ export default function TaskForm({ onClose, editTask, defaultSession, defaultDat
                   className={`px-3 py-3 rounded-xl border transition-colors min-h-tap ${
                     isListening
                       ? 'bg-red-500 border-red-500 text-white animate-pulse'
-                      : 'border-gray-300 dark:border-dark-border text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-dark-card'
+                      : voiceError
+                        ? 'border-red-300 dark:border-red-700 text-red-500 bg-red-50 dark:bg-red-900/10'
+                        : 'border-gray-300 dark:border-dark-border text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-dark-card'
                   }`}
                   aria-label={isListening ? t('voice.stop') : t('voice.start')}
                 >
-                  <Mic className="w-5 h-5" />
+                  {isListening ? <Mic className="w-5 h-5 animate-pulse" /> : voiceError ? <MicOff className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
                 </button>
               </div>
               {showNaturalPreview && (
@@ -426,7 +462,16 @@ export default function TaskForm({ onClose, editTask, defaultSession, defaultDat
                 <p aria-live="polite" className="text-xs text-red-500 mt-1 animate-pulse">{t('voice.listening')}</p>
               )}
               {voiceError && (
-                <p role="alert" className="text-xs text-red-500 mt-1">{voiceError}</p>
+                <div className="flex items-start gap-2 mt-1">
+                  <p role="alert" className="text-xs text-red-500 flex-1">{voiceError}</p>
+                  <button
+                    onClick={clearVoiceError}
+                    className="text-red-400 hover:text-red-600 transition-colors flex-shrink-0"
+                    aria-label={t('common.close')}
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </div>
               )}
             </div>
           )}

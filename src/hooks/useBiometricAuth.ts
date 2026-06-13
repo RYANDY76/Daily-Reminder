@@ -23,6 +23,7 @@ export function useBiometricAuth() {
     try {
       return await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable()
     } catch {
+      if (import.meta.env.DEV) console.warn('[Biometric] availability check failed')
       return false
     }
   }, [])

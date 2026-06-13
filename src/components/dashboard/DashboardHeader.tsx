@@ -1,12 +1,15 @@
+import { useState, useEffect } from 'react'
 import { useT } from '../../i18n'
 import { getTimeGreeting } from '../../dates'
-import { Plus, BellOff, CheckSquare } from 'lucide-react'
+import { getLastNDaysHistory } from '../../database'
+import { Plus, BellOff, CheckSquare, Flame } from 'lucide-react'
 
 interface DashboardHeaderProps {
   profileName: string | undefined
   totalTasks: number
   batchMode: boolean
   notificationEnabled: boolean
+  profileId: string | null
   onToggleBatchMode: () => void
   onShowAddTask: () => void
   onRequestNotificationPermission: () => void
@@ -17,17 +20,52 @@ export default function DashboardHeader({
   totalTasks,
   batchMode,
   notificationEnabled,
+  profileId,
   onToggleBatchMode,
   onShowAddTask,
   onRequestNotificationPermission
 }: DashboardHeaderProps) {
   const t = useT()
+  const [time, setTime] = useState(new Date())
+  const [streak, setStreak] = useState(0)
+
+  useEffect(() => {
+    const timer = setInterval(() => setTime(new Date()), 60000)
+    return () => clearInterval(timer)
+  }, [])
+
+  useEffect(() => {
+    if (!profileId) return
+    getLastNDaysHistory(profileId, 365).then(history => {
+      const sorted = [...history].sort((a, b) => b.date.localeCompare(a.date))
+      let count = 0
+      for (const h of sorted) {
+        const rate = h.tasksTotal > 0 ? h.tasksDone / h.tasksTotal : 0
+        if (rate >= 0.8) count++
+        else break
+      }
+      setStreak(count)
+    })
+  }, [profileId])
+
+  const timeStr = time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
 
   return (
     <div className="flex items-center justify-between flex-wrap gap-2">
       <div>
-        <h2 className="text-lg font-bold text-gray-900 dark:text-white">{getTimeGreeting(t)}</h2>
-        <p className="text-sm text-gray-500 dark:text-gray-400">{profileName || t('dashboard.welcome')}</p>
+        <h2 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
+          {getTimeGreeting(t)}
+          <span className="text-xs font-normal text-gray-400 dark:text-gray-500 tabular-nums">{timeStr}</span>
+        </h2>
+        <div className="flex items-center gap-3">
+          <p className="text-sm text-gray-500 dark:text-gray-400">{profileName || t('dashboard.welcome')}</p>
+          {streak > 0 && (
+            <span className="inline-flex items-center gap-1 text-xs font-medium text-orange-500 bg-orange-50 dark:bg-orange-900/20 px-2 py-0.5 rounded-full">
+              <Flame className="w-3 h-3" />
+              {streak} {t('dashboard.streakDays')}
+            </span>
+          )}
+        </div>
       </div>
       <div className="flex items-center gap-2">
         {!batchMode && totalTasks > 0 && (

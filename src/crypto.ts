@@ -43,6 +43,7 @@ async function getKeyFromStorage(): Promise<CryptoKey | null> {
     const raw = Uint8Array.from(atob(parts[1]), c => c.charCodeAt(0))
     return crypto.subtle.importKey('raw', raw, 'AES-GCM', false, ['encrypt', 'decrypt'])
   } catch {
+    if (import.meta.env.DEV) console.warn('[Crypto] key retrieval failed')
     return null
   }
 }

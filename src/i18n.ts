@@ -4,11 +4,16 @@ import type { Lang } from './types'
 import idTranslations from './translations/id'
 
 let enTranslations: Record<string, string> = {}
+let enReady = false
 import('./translations/en').then(mod => {
   enTranslations = mod.default
+  enReady = true
 })
 
 function lookup(key: string, lang: Lang, params?: Record<string, string | number>): string {
+  if (lang === 'en' && !enReady && import.meta.env.DEV) {
+    console.warn(`[i18n] EN not loaded yet, falling back to ID for "${key}"`)
+  }
   const map = lang === 'en' ? enTranslations : idTranslations
   let text = map[key] ?? idTranslations[key] ?? key
   if (params) {

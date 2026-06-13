@@ -75,7 +75,7 @@ export class AppErrorHandler {
         timestamp: new Date(e.timestamp).toISOString()
       }))
       localStorage.setItem('app_error_log', JSON.stringify(errors))
-    } catch { /* ignore storage errors */ }
+    } catch { if (import.meta.env.DEV) console.warn('[ErrorHandler] persist failed') }
   }
 
   static getErrors(): AppError[] {

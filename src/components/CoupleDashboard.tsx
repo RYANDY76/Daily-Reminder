@@ -39,6 +39,18 @@ export default function CoupleDashboard() {
     }
   }, [connection?.id, connection?.status, currentProfile?.id])
 
+  if (!currentProfile) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 text-center">
+        <div className="w-16 h-16 rounded-full bg-gradient-to-br from-pink-100 to-purple-100 dark:from-pink-900/20 dark:to-purple-900/20 flex items-center justify-center mb-4">
+          <Heart className="w-8 h-8 text-pink-500" />
+        </div>
+        <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">{t('couple.comingSoon')}</h2>
+        <p className="text-sm text-gray-500 dark:text-gray-400 max-w-xs">{t('couple.comingSoonDesc')}</p>
+      </div>
+    )
+  }
+
   return (
     <>
       <div className="space-y-5 pb-32 md:pb-0">

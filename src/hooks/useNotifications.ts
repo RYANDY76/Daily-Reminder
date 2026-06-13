@@ -28,6 +28,7 @@ function loadPrefs(): NotifPrefs {
     if (!raw) return defaultPrefs
     return { ...defaultPrefs, ...JSON.parse(raw) }
   } catch {
+    if (import.meta.env.DEV) console.warn('[Notif] prefs parse failed')
     return defaultPrefs
   }
 }
@@ -69,7 +70,8 @@ export function useNotifications() {
       }).catch(() => {
         new Notification(title, { body, tag })
       })
-    } catch {
+    } catch (e) {
+      if (import.meta.env.DEV) console.warn('[Notif] show notification failed:', e)
       new Notification(title, { body, tag })
     }
   }, [])

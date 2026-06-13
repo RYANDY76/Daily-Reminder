@@ -41,7 +41,7 @@ function sendToAnalytics(metric: WebVitalMetric) {
       })
     })
   } catch {
-    // silent
+    if (import.meta.env.DEV) console.warn('[WebVitals] send failed')
   }
 
   if (import.meta.env.DEV) {
@@ -64,7 +64,7 @@ export function initWebVitals() {
       observer.observe({ type, buffered: true })
       observerMap.set(entryType, observer)
     } catch {
-      // type not supported
+      if (import.meta.env.DEV) console.warn('[WebVitals] type not supported')
     }
   }
 

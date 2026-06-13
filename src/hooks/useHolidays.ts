@@ -44,6 +44,7 @@ async function fetchMonthHolidays(year: number, month: number): Promise<PublicHo
         isNational: true
       }))
   } catch {
+    if (import.meta.env.DEV) console.warn('[Holidays] fetch failed')
     return null
   }
 }
@@ -64,6 +65,7 @@ function getCached(): HolidayCache | null {
     if (cache.version !== CACHE_VERSION) return null
     return cache
   } catch {
+    if (import.meta.env.DEV) console.warn('[Holidays] cache parse failed')
     return null
   }
 }

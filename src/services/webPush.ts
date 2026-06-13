@@ -25,6 +25,7 @@ export function isWebPushSubscribed(): boolean {
     const parsed = JSON.parse(raw)
     return !!(parsed.endpoint && parsed.keys?.p256dh && parsed.keys?.auth)
   } catch {
+    if (import.meta.env.DEV) console.warn('[WebPush] subscription check failed')
     return false
   }
 }

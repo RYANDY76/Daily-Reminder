@@ -1,5 +1,5 @@
 import { lazy, Suspense } from 'react'
-import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
+import { Routes, Route, useLocation } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import Dashboard from './components/Dashboard'
 import ErrorBoundary from './components/ErrorBoundary'
@@ -14,6 +14,7 @@ const ProfileManager = lazy(() => import('./components/ProfileManager'))
 const Settings = lazy(() => import('./components/Settings'))
 const Goals = lazy(() => import('./components/Goals'))
 const Landing = lazy(() => import('./components/Landing'))
+const NotFound = lazy(() => import('./components/NotFound'))
 
 // Preload all lazy routes so they're ready before user navigates
 export function preloadRoutes() {
@@ -28,7 +29,8 @@ export function preloadRoutes() {
     () => import('./components/Goals'),
     () => import('./components/Landing'),
   ]
-  for (const route of routes) route()
+    for (const route of routes) route()
+    import('./components/NotFound')
 }
 
 function PageLoader({ page }: { page: string }) {
@@ -122,8 +124,8 @@ export default function AppRoutes() {
         <Route path="/profile" element={<PageTransition><LazyPage Component={ProfileManager as LazyComponent} skeleton="" /></PageTransition>} />
         <Route path="/settings" element={<PageTransition><LazyPage Component={Settings as LazyComponent} skeleton="" /></PageTransition>} />
         <Route path="/about" element={<PageTransition><LazyPage Component={Landing as LazyComponent} skeleton="" /></PageTransition>} />
-        {/* Fallback — redirect unknown routes to dashboard */}
-        <Route path="*" element={<Navigate to="/" replace />} />
+        {/* 404 */}
+        <Route path="*" element={<PageTransition><LazyPage Component={NotFound as LazyComponent} skeleton="" /></PageTransition>} />
       </Routes>
     </AnimatePresence>
   )

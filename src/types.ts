@@ -103,6 +103,11 @@ export interface Profile {
   accentColor: string
   pin: string | null
   darkMode: 'system' | 'light' | 'dark'
+  googleId: string | null
+  googleEmail: string | null
+  googlePhotoUrl: string | null
+  googleAccessToken: string | null
+  googleRefreshToken: string | null
   supabaseUserId: string | null
   biometricEnabled: boolean
   biometricCredentialId: string | null
