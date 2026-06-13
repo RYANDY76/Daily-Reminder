@@ -66,7 +66,7 @@ export function useNotifications() {
     if (tag) lastNotifiedRef.current.add(tag)
     try {
       navigator.serviceWorker.ready.then(reg => {
-        reg.showNotification(title, { body, tag, icon: '/icon-192.png' })
+        reg.showNotification(title, { body, tag, icon: '/favicon.svg' })
       }).catch(() => {
         new Notification(title, { body, tag })
       })

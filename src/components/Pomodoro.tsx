@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { Play, Pause, RotateCcw, Coffee, Clock, Maximize, Minimize, ListTodo, History, X, ClipboardList } from 'lucide-react'
+import { Play, Pause, RotateCcw, Coffee, Clock, Maximize, Minimize, ListTodo, History, X } from 'lucide-react'
 import { useT } from '../i18n'
 import { useProfileStore } from '../stores/useProfileStore'
 import { useTaskStore } from '../stores/useTaskStore'
@@ -93,7 +93,7 @@ export default function Pomodoro() {
     if (Notification.permission === 'granted') {
       new Notification(
         mode === 'work' ? t('pomodoro.notifBreakTitle') : t('pomodoro.notifWorkTitle'),
-        { body: mode === 'work' ? t('pomodoro.notifWorkEnd') : t('pomodoro.notifBreakEnd'), icon: '/icons/icon-192x192.png' }
+        { body: mode === 'work' ? t('pomodoro.notifWorkEnd') : t('pomodoro.notifBreakEnd'), icon: '/favicon.svg' }
       )
     }
   }, [mode, t])
@@ -207,7 +207,7 @@ export default function Pomodoro() {
           </button>
           {selectedTask && (
             <div className="flex items-center gap-1.5 text-sm text-gray-400 mb-4 max-w-xs truncate">
-              <ClipboardList className="w-4 h-4 flex-shrink-0" />
+              <ListTodo className="w-4 h-4 flex-shrink-0" />
               <span className="truncate">{selectedTask.title}</span>
             </div>
           )}

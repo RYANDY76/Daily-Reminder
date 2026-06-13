@@ -142,7 +142,7 @@ async function checkDueNotifications() {
       if (currentMinutes >= habitMin && currentMinutes <= habitMin + 30 && !notifiedKeys.has(habitKey)) {
         self.registration.showNotification(t(lang, 'habitReminder'), {
           body: t(lang, 'habitBody', { name: habit.name }),
-          icon: '/icons/icon-192x192.png',
+          icon: '/favicon.svg',
           tag: habitKey
         })
         notifiedKeys.set(habitKey, Date.now())
@@ -159,7 +159,7 @@ async function checkDueNotifications() {
       if (Math.abs(currentMinutes - taskMinutes) <= 2 && !notifiedKeys.has(timeKey)) {
         self.registration.showNotification(t(lang, 'taskTime'), {
           body: t(lang, 'taskBody', { title: task.title }),
-          icon: '/icons/icon-192x192.png',
+          icon: '/favicon.svg',
           tag: timeKey
         })
         notifiedKeys.set(timeKey, Date.now())
@@ -174,7 +174,7 @@ async function checkDueNotifications() {
           if (!notifiedKeys.has(warnKey)) {
             self.registration.showNotification(t(lang, 'deadlineClose'), {
               body: t(lang, 'deadlineCloseBody', { title: task.title, time: String(Math.ceil(diffHours * 60)) }),
-              icon: '/icons/icon-192x192.png',
+              icon: '/favicon.svg',
               tag: warnKey
             })
             notifiedKeys.set(warnKey, Date.now())
@@ -220,7 +220,7 @@ self.addEventListener('push', (event) => {
   event.waitUntil(
     self.registration.showNotification(payload.title || 'Avora', {
       body: payload.body || '',
-      icon: '/icons/icon-192x192.png',
+      icon: '/favicon.svg',
       tag: 'web-push-' + Date.now()
     })
   )

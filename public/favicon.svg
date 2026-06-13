@@ -1,57 +1,86 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
   <defs>
-    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#070B1A"/>
-      <stop offset="100%" stop-color="#0F1529"/>
-    </linearGradient>
+    <radialGradient id="bg" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#1A2038"/>
+      <stop offset="100%" stop-color="#070B1A"/>
+    </radialGradient>
     <linearGradient id="chrome" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#DCE4F2"/>
-      <stop offset="25%" stop-color="#FFFFFF"/>
-      <stop offset="50%" stop-color="#A0B0CC"/>
-      <stop offset="75%" stop-color="#DCE4F2"/>
-      <stop offset="100%" stop-color="#7080A0"/>
+      <stop offset="0%" stop-color="#B0C4DE"/>
+      <stop offset="15%" stop-color="#E8EEF6"/>
+      <stop offset="30%" stop-color="#FFFFFF"/>
+      <stop offset="45%" stop-color="#C0D0E8"/>
+      <stop offset="60%" stop-color="#8898B8"/>
+      <stop offset="75%" stop-color="#D0DAE8"/>
+      <stop offset="90%" stop-color="#6878A0"/>
+      <stop offset="100%" stop-color="#B0C0D8"/>
     </linearGradient>
-    <linearGradient id="blue-accent" x1="0" y1="1" x2="1" y2="0">
-      <stop offset="0%" stop-color="#55C8FF"/>
-      <stop offset="100%" stop-color="#3A8FD9"/>
+    <linearGradient id="chrome-dark" x1="1" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#405068"/>
+      <stop offset="30%" stop-color="#8898B8"/>
+      <stop offset="60%" stop-color="#506880"/>
+      <stop offset="100%" stop-color="#303848"/>
     </linearGradient>
-    <linearGradient id="purple-accent" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#8B5CF6"/>
-      <stop offset="100%" stop-color="#6D3FD6"/>
+    <linearGradient id="blue-left" x1="0" y1="0" x2="0.5" y2="1">
+      <stop offset="0%" stop-color="#55C8FF" stop-opacity="0.9"/>
+      <stop offset="40%" stop-color="#3AA8E8" stop-opacity="0.7"/>
+      <stop offset="100%" stop-color="#2080C0" stop-opacity="0.3"/>
     </linearGradient>
-    <linearGradient id="pink-accent" x1="1" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#EC6BFF"/>
-      <stop offset="100%" stop-color="#C845D9"/>
+    <linearGradient id="pink-right" x1="1" y1="0" x2="0.5" y2="1">
+      <stop offset="0%" stop-color="#EC6BFF" stop-opacity="0.9"/>
+      <stop offset="40%" stop-color="#D050E0" stop-opacity="0.7"/>
+      <stop offset="100%" stop-color="#A030C0" stop-opacity="0.3"/>
     </linearGradient>
-    <linearGradient id="chrome-loop" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#FFFFFF"/>
-      <stop offset="30%" stop-color="#DCE4F2"/>
-      <stop offset="60%" stop-color="#55C8FF"/>
-      <stop offset="100%" stop-color="#8B5CF6"/>
+    <linearGradient id="purple-accent" x1="0.5" y1="0" x2="0.5" y2="1">
+      <stop offset="0%" stop-color="#8B5CF6" stop-opacity="0.6"/>
+      <stop offset="100%" stop-color="#6D3FD6" stop-opacity="0.2"/>
     </linearGradient>
-    <filter id="glow">
-      <feGaussianBlur stdDeviation="1.5" result="blur"/>
+    <linearGradient id="chrome-highlight" x1="0.2" y1="0" x2="0.8" y2="1">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.8"/>
+      <stop offset="50%" stop-color="#E0E8F4" stop-opacity="0.4"/>
+      <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0.1"/>
+    </linearGradient>
+    <filter id="glow-blue">
+      <feGaussianBlur stdDeviation="8" result="blur"/>
       <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
     </filter>
+    <filter id="glow-pink">
+      <feGaussianBlur stdDeviation="6" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="soft-shadow">
+      <feDropShadow dx="0" dy="4" stdDeviation="8" flood-color="#000000" flood-opacity="0.4"/>
+    </filter>
   </defs>
-  <rect width="100" height="100" rx="22" fill="url(#bg)"/>
-  <!-- Outer fluid A shape -->
-  <path d="M50 8 L18 88 L32 88 L38 72 L62 72 L68 88 L82 88 L50 8Z" fill="url(#chrome)" opacity="0.95"/>
-  <!-- Inner cutout for A negative space -->
-  <path d="M50 32 L38 62 L62 62 L50 32Z" fill="url(#bg)"/>
-  <!-- Fluid/parametric diagonal accent left -->
-  <path d="M50 8 L18 88 L28 88 L50 24Z" fill="url(#blue-accent)" opacity="0.6"/>
-  <!-- Fluid/parametric diagonal accent right -->
-  <path d="M50 8 L82 88 L72 88 L50 24Z" fill="url(#pink-accent)" opacity="0.4"/>
-  <!-- Loop in the center (infinity/flow symbol) -->
-  <path d="M38 72 C34 60 42 50 50 50 C58 50 66 60 62 72 C60 78 54 82 50 82 C46 82 44 78 42 76" 
-        fill="none" stroke="url(#chrome-loop)" stroke-width="3.5" stroke-linecap="round" filter="url(#glow)"/>
-  <!-- Loop inner highlight -->
-  <path d="M40 71 C38 63 44 55 50 55 C56 55 62 63 60 71" 
-        fill="none" stroke="#FFFFFF" stroke-width="1" stroke-linecap="round" opacity="0.4"/>
-  <!-- Chrome shine highlight on A -->
-  <path d="M50 12 L44 28" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" opacity="0.5"/>
-  <!-- Purple glow dot accent -->
-  <circle cx="30" cy="80" r="2" fill="#8B5CF6" opacity="0.8" filter="url(#glow)"/>
-  <circle cx="70" cy="80" r="1.5" fill="#EC6BFF" opacity="0.6" filter="url(#glow)"/>
+  <rect width="512" height="512" fill="url(#bg)"/>
+  <!-- Ambient glow behind A -->
+  <ellipse cx="256" cy="300" rx="140" ry="80" fill="#55C8FF" opacity="0.06" filter="url(#glow-blue)"/>
+  <ellipse cx="256" cy="300" rx="120" ry="70" fill="#EC6BFF" opacity="0.04" filter="url(#glow-pink)"/>
+  <!-- Main A body - left leg -->
+  <path d="M256 60 L120 420 C115 435 118 445 125 450 L180 450 L220 340" fill="url(#chrome)" filter="url(#soft-shadow)"/>
+  <!-- Main A body - right leg -->
+  <path d="M256 60 L392 420 C397 435 394 445 387 450 L332 450 L292 340" fill="url(#chrome-dark)" filter="url(#soft-shadow)"/>
+  <!-- A crossbar - flowing liquid shape -->
+  <path d="M180 340 C200 310 230 295 256 295 C282 295 312 310 332 340 C340 355 335 365 328 370 C310 380 282 385 256 385 C230 385 202 380 184 370 C177 365 172 355 180 340Z" fill="url(#chrome)"/>
+  <!-- Inner cutout of A -->
+  <path d="M256 120 L340 340 C345 352 340 358 332 362 C318 368 290 372 256 372 C222 372 194 368 180 362 C172 358 167 352 172 340 L256 120Z" fill="url(#bg)"/>
+  <!-- Chrome highlight on top-left of A -->
+  <path d="M256 65 L240 110" stroke="url(#chrome-highlight)" stroke-width="6" stroke-linecap="round" opacity="0.7"/>
+  <!-- Blue reflection - left side of A -->
+  <path d="M256 65 L130 420 L160 420 L256 130Z" fill="url(#blue-left)" opacity="0.5"/>
+  <!-- Blue glow on left leg -->
+  <path d="M130 420 L145 420 L256 115 L256 65Z" fill="url(#blue-left)" opacity="0.3" filter="url(#glow-blue)"/>
+  <!-- Pink reflection - right side of A -->
+  <path d="M256 65 L382 420 L352 420 L256 130Z" fill="url(#pink-right)" opacity="0.5"/>
+  <!-- Pink glow on right leg -->
+  <path d="M382 420 L367 420 L256 115 L256 65Z" fill="url(#pink-right)" opacity="0.3" filter="url(#glow-pink)"/>
+  <!-- Crossbar chrome highlight -->
+  <path d="M190 345 C210 320 235 310 256 310 C277 310 302 320 322 345" stroke="url(#chrome-highlight)" stroke-width="2" stroke-linecap="round" fill="none" opacity="0.6"/>
+  <!-- Purple accent line on crossbar -->
+  <path d="M195 350 C215 325 238 315 256 315 C274 315 297 325 317 350" stroke="url(#purple-accent)" stroke-width="1.5" stroke-linecap="round" fill="none" opacity="0.4"/>
+  <!-- Chrome edge highlights -->
+  <path d="M256 65 L125 418" stroke="#FFFFFF" stroke-width="1.5" stroke-linecap="round" opacity="0.3"/>
+  <path d="M256 65 L387 418" stroke="#A0B0C8" stroke-width="1.5" stroke-linecap="round" opacity="0.3"/>
+  <!-- Bottom feet chrome accents -->
+  <ellipse cx="135" cy="448" rx="30" ry="4" fill="#FFFFFF" opacity="0.15"/>
+  <ellipse cx="377" cy="448" rx="30" ry="4" fill="#FFFFFF" opacity="0.1"/>
 </svg>
