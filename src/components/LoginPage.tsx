@@ -127,7 +127,7 @@ export default function LoginPage({ onComplete, onGuest }: LoginPageProps) {
             </svg>
           </div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white tracking-tight">
-            Daily Reminder
+            Avora
           </h1>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-1 leading-relaxed">
             {t('login.subtitle')}, <br />{t('login.subtitle2')}

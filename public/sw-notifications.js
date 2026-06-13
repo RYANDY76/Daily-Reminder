@@ -1,6 +1,6 @@
 /* eslint-disable no-restricted-globals */
 /**
- * Service worker notification checker for Daily Reminder PWA.
+ * Service worker notification checker for Avora PWA.
  * Reads cached tasks & habits from IndexedDB and fires notifications when due.
  */
 
@@ -89,7 +89,7 @@ async function getAllCachedTasks() {
 
 function t(lang, key, vars) {
   const id = {
-    taskTime: 'Daily Reminder',
+    taskTime: 'Avora',
     taskBody: 'Waktunya: {title}',
     deadlineClose: 'Deadline Mendekat',
     deadlineCloseBody: '"{title}" akan berakhir dalam {time} menit',
@@ -99,7 +99,7 @@ function t(lang, key, vars) {
     habitBody: 'Jangan lupa: {name}'
   }
   const en = {
-    taskTime: 'Daily Reminder',
+    taskTime: 'Avora',
     taskBody: 'Time for: {title}',
     deadlineClose: 'Deadline Approaching',
     deadlineCloseBody: '"{title}" will end in {time} minutes',
@@ -211,14 +211,14 @@ self.addEventListener('message', (event) => {
 
 self.addEventListener('push', (event) => {
   if (!event.data) return
-  let payload = { title: 'Daily Reminder', body: '' }
+  let payload = { title: 'Avora', body: '' }
   try {
     payload = event.data.json()
   } catch {
     payload.body = event.data.text()
   }
   event.waitUntil(
-    self.registration.showNotification(payload.title || 'Daily Reminder', {
+    self.registration.showNotification(payload.title || 'Avora', {
       body: payload.body || '',
       icon: '/icons/icon-192x192.png',
       tag: 'web-push-' + Date.now()

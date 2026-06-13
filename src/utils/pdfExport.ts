@@ -41,7 +41,7 @@ export async function generatePDF(
   doc.setFont('helvetica', 'bold')
   doc.setFontSize(20)
   doc.setTextColor(primaryColor)
-  doc.text('Daily Reminder', margin, y)
+  doc.text('Avora', margin, y)
   y += 6
 
   doc.setFont('helvetica', 'normal')

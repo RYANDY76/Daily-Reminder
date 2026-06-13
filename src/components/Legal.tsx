@@ -23,7 +23,7 @@ const legalCopy: Record<Lang, {
     privacy: [
       {
         title: '1. Informasi yang Kami Kumpulkan',
-        body: 'Daily Reminder menyimpan data berikut secara lokal di perangkat Anda:',
+        body: 'Avora menyimpan data berikut secara lokal di perangkat Anda:',
         items: [
           'Nama profil dan foto jika login dengan Google',
           'Daftar tugas, jadwal, dan catatan',
@@ -63,11 +63,11 @@ const legalCopy: Record<Lang, {
     terms: [
       {
         title: '1. Penerimaan',
-        body: 'Dengan menggunakan Daily Reminder, Anda menyetujui syarat dan ketentuan ini.'
+        body: 'Dengan menggunakan Avora, Anda menyetujui syarat dan ketentuan ini.'
       },
       {
         title: '2. Penggunaan',
-        body: 'Daily Reminder adalah aplikasi manajemen tugas pribadi. Anda bertanggung jawab atas data yang dimasukkan dan cara aplikasi digunakan.'
+        body: 'Avora adalah aplikasi manajemen tugas pribadi. Anda bertanggung jawab atas data yang dimasukkan dan cara aplikasi digunakan.'
       },
       {
         title: '3. Akun dan PIN',
@@ -96,7 +96,7 @@ const legalCopy: Record<Lang, {
     privacy: [
       {
         title: '1. Information We Collect',
-        body: 'Daily Reminder stores the following data locally on your device:',
+        body: 'Avora stores the following data locally on your device:',
         items: [
           'Profile name and photo when signing in with Google',
           'Tasks, schedules, and notes',
@@ -136,11 +136,11 @@ const legalCopy: Record<Lang, {
     terms: [
       {
         title: '1. Acceptance',
-        body: 'By using Daily Reminder, you agree to these terms and conditions.'
+        body: 'By using Avora, you agree to these terms and conditions.'
       },
       {
         title: '2. Use',
-        body: 'Daily Reminder is a personal task management app. You are responsible for the data you enter and how you use the app.'
+        body: 'Avora is a personal task management app. You are responsible for the data you enter and how you use the app.'
       },
       {
         title: '3. Account and PIN',

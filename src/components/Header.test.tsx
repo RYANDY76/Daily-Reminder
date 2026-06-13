@@ -24,7 +24,7 @@ vi.mock('../stores/useProfileStore', () => ({
 }))
 
 vi.mock('../i18n', () => ({
-  useT: () => (key: string) => key === 'app.name' ? 'Daily Reminder' : key,
+  useT: () => (key: string) => key === 'app.name' ? 'Avora' : key,
   t: (key: string) => key
 }))
 
@@ -41,7 +41,7 @@ vi.mock('./SyncStatusBadge', () => ({
 describe('Header', () => {
   it('renders app name', () => {
     render(<Header />)
-    expect(screen.getAllByText('Daily Reminder').length).toBeGreaterThanOrEqual(1)
+    expect(screen.getAllByText('Avora').length).toBeGreaterThanOrEqual(1)
   })
 
   it('renders profile name greeting', () => {

@@ -14,7 +14,7 @@ export async function sendTestPush(): Promise<{ ok: boolean; error?: string }> {
   const { data, error } = await sb.functions.invoke('send-push', {
     body: {
       profileId: profile.id,
-      title: 'Daily Reminder',
+      title: 'Avora',
       body: 'Push notifikasi berhasil!',
       url: '/',
       tag: `test-${Date.now()}`

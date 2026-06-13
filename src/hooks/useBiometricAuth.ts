@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react'
 
-const RP_NAME = 'Daily Reminder'
+const RP_NAME = 'Avora'
 
 function generateChallenge(): ArrayBuffer {
   const challenge = new Uint8Array(32)
@@ -43,7 +43,7 @@ export function useBiometricAuth() {
           user: {
             id: new TextEncoder().encode(profileId),
             name: profileId,
-            displayName: 'Daily Reminder'
+            displayName: 'Avora'
           },
           pubKeyCredParams: [{ type: 'public-key', alg: -7 }],
           authenticatorSelection: {

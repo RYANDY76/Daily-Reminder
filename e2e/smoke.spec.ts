@@ -14,10 +14,10 @@ async function enterApp(page: Page) {
   }
 }
 
-test.describe('Daily Reminder E2E', () => {
+test.describe('Avora E2E', () => {
   test('Landing page loads and shows app name', async ({ page }) => {
     await page.goto('/')
-    await expect(page.locator('text=Daily Reminder')).toBeVisible()
+    await expect(page.locator('text=Avora')).toBeVisible()
   })
 
   test('Guest mode enters the app', async ({ page }) => {

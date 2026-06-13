@@ -13,9 +13,9 @@ export default defineConfig(({ mode }) => ({
       devOptions: { enabled: false },
       includeAssets: ['favicon.svg', 'robots.txt', 'sitemap.xml'],
       manifest: {
-        name: 'Daily Reminder',
-        short_name: 'DailyRM',
-        description: 'Aplikasi jadwal harian berbasis web',
+        name: 'Avora',
+        short_name: 'Avora',
+        description: 'Aplikasi produktivitas all-in-one: tugas, habits, pomodoro, goals, dan couple tracker.',
         lang: 'id',
         theme_color: '#1D9E75',
         background_color: '#FFFFFF',

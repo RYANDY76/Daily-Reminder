@@ -240,7 +240,7 @@ export default function Settings() {
             onClick={() => {
               if (navigator.share) {
                 navigator.share({
-                  title: 'Daily Reminder',
+                  title: 'Avora',
                   text: t('settings.shareText'),
                   url: 'https://daily-reminder-zeta.vercel.app'
                 }).catch(() => {})
