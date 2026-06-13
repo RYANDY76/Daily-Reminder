@@ -60,16 +60,8 @@ export const useAppStore = create<AppState>((set) => ({
       } else {
         document.documentElement.classList.remove('dark')
       }
+      window.dispatchEvent(new CustomEvent('darkmode-changed', { detail: { darkMode: newDark } }))
       return { darkMode: newDark }
-    })
-    // Persist ke profile agar tidak konflik saat refresh
-    // Import dinamis untuk menghindari circular dependency
-    import('./useProfileStore').then(({ useProfileStore }) => {
-      const profile = useProfileStore.getState().currentProfile
-      if (profile) {
-        const current = useAppStore.getState().darkMode
-        useProfileStore.getState().updateProfile({ darkMode: current ? 'dark' : 'light' })
-      }
     })
   },
   setLang: (lang) => {

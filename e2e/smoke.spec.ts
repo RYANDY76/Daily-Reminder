@@ -1,8 +1,9 @@
-import { test, expect } from '@playwright/test'
+import { test, expect, type Page } from '@playwright/test'
 
 test.use({ viewport: { width: 375, height: 812 } })
 
-async function enterApp(page: any) {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+async function enterApp(page: Page) {
   await page.goto('/')
   await page.locator('button:has-text("Lanjut Tanpa Akun")').click()
   await page.waitForTimeout(2000)

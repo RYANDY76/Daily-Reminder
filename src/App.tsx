@@ -97,6 +97,21 @@ export default function App() {
     initWebVitals()
   }, [])
 
+  // Sync dark mode changes to current profile (avoids circular dep)
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail as { darkMode: boolean } | undefined
+      if (detail) {
+        const current = useProfileStore.getState().currentProfile
+        if (current) {
+          useProfileStore.getState().updateProfile({ darkMode: detail.darkMode ? 'dark' : 'light' })
+        }
+      }
+    }
+    window.addEventListener('darkmode-changed', handler)
+    return () => window.removeEventListener('darkmode-changed', handler)
+  }, [])
+
   // Global keyboard shortcuts
   useKeyboardShortcuts({
     onShowHelp: () => setShowShortcutsHelp(true),

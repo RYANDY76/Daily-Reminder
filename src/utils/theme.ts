@@ -31,8 +31,8 @@ function hslToHex(h: number, s: number, l: number): string {
 }
 
 const SHADES: Record<number, number> = {
-  50: 97, 100: 93, 200: 86, 300: 76, 400: 64,
-  500: 50, 600: 42, 700: 33, 800: 24, 900: 14
+  50: 97, 100: 92, 200: 84, 300: 72, 400: 58,
+  500: 35, 600: 28, 700: 21, 800: 15, 900: 10
 }
 
 export function applyAccentColor(hex: string) {
@@ -53,7 +53,20 @@ export function applyAccentColor(hex: string) {
   root.style.setProperty('--tw-primary-900', `var(--color-primary-900)`)
 }
 
+export function applyProfileTheme(accentColor: string, darkMode: string) {
+  applyAccentColor(accentColor)
+  const prefersDark = window.matchMedia?.('(prefers-color-scheme: dark)').matches ?? false
+  const isDark = darkMode === 'dark' || (darkMode === 'system' && prefersDark)
+  if (isDark) {
+    document.documentElement.classList.add('dark')
+  } else {
+    document.documentElement.classList.remove('dark')
+  }
+  const meta = document.querySelector('meta[name="theme-color"]')
+  if (meta) meta.setAttribute('content', accentColor)
+}
+
 export function loadAccentColor() {
   const saved = localStorage.getItem('daily_reminder_accent')
-  if (saved) applyAccentColor(saved)
+  applyAccentColor(saved || '#1D9E75')
 }

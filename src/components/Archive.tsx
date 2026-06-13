@@ -19,7 +19,6 @@ export default function Archive() {
 
   useEffect(() => {
     if (!profile) return
-    setLoading(true)
     getAllTasksForProfile(profile.id).then((all) => {
       setTasks(all)
       setLoading(false)

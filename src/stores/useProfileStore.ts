@@ -4,6 +4,7 @@ import { getAllProfiles, saveProfile, deleteProfile as deleteProfileDb, getProfi
 import { hashPin } from '../crypto'
 import { getSupabase } from '../lib/supabase'
 import type { GoogleUserInfo } from '../hooks/useGoogleAuth'
+import { applyProfileTheme } from '../utils/theme'
 
 interface ProfileState {
   profiles: Profile[]
@@ -43,7 +44,7 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
       pinLocked: currentProfile?.pin ? true : false
     })
     if (currentProfile) {
-      applyProfileTheme(currentProfile)
+      applyProfileTheme(currentProfile.accentColor, currentProfile.darkMode)
     }
   },
 
@@ -71,7 +72,7 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
     await saveProfile(profile)
     const profiles = await getAllProfiles()
     localStorage.setItem('daily_reminder_last_profile', profile.id)
-    applyProfileTheme(profile)
+    applyProfileTheme(profile.accentColor, profile.darkMode)
     set({ profiles, currentProfile: profile, showWelcome: false, pinLocked: false })
     return profile
   },
@@ -80,7 +81,7 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
     const existing = await getProfileByGoogleId(googleInfo.id)
     if (existing) {
       localStorage.setItem('daily_reminder_last_profile', existing.id)
-      applyProfileTheme(existing)
+      applyProfileTheme(existing.accentColor, existing.darkMode)
       const profiles = await getAllProfiles()
       set({ profiles, currentProfile: existing, showWelcome: false, pinLocked: existing.pin ? true : false })
       return existing
@@ -109,7 +110,7 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
     await saveProfile(profile)
     const profiles = await getAllProfiles()
     localStorage.setItem('daily_reminder_last_profile', profile.id)
-    applyProfileTheme(profile)
+      applyProfileTheme(profile.accentColor, profile.darkMode)
     set({ profiles, currentProfile: profile, showWelcome: false, pinLocked: false })
     return profile
   },
@@ -122,7 +123,7 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
         await saveProfile(existing)
       }
       localStorage.setItem('daily_reminder_last_profile', existing.id)
-      applyProfileTheme(existing)
+      applyProfileTheme(existing.accentColor, existing.darkMode)
       const profiles = await getAllProfiles()
       set({ profiles, currentProfile: existing, showWelcome: false, pinLocked: existing.pin ? true : false })
       return existing
@@ -151,7 +152,7 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
     await saveProfile(profile)
     const profiles = await getAllProfiles()
     localStorage.setItem('daily_reminder_last_profile', profile.id)
-    applyProfileTheme(profile)
+    applyProfileTheme(profile.accentColor, profile.darkMode)
     set({ profiles, currentProfile: profile, showWelcome: false, pinLocked: false })
     return profile
   },
@@ -164,7 +165,7 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
     if (profile.pin) {
       set({ currentProfile: profile, pinLocked: true })
     } else {
-      applyProfileTheme(profile)
+      applyProfileTheme(profile.accentColor, profile.darkMode)
       set({ currentProfile: profile, pinLocked: false })
     }
   },
@@ -175,14 +176,13 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
     const updated = { ...currentProfile, ...updates }
     await saveProfile(updated)
     if (updates.darkMode !== undefined || updates.accentColor) {
-      applyProfileTheme(updated)
+      applyProfileTheme(updated.accentColor, updated.darkMode)
     }
     set({ currentProfile: updated })
   },
 
   removeProfile: async (profileId) => {
     await deleteProfileDb(profileId)
-    // Cascade delete from Supabase cloud if configured
     try {
       const sb = getSupabase()
       if (sb) {
@@ -200,7 +200,7 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
     } else {
       const next = profiles[0]
       localStorage.setItem('daily_reminder_last_profile', next.id)
-      applyProfileTheme(next)
+      applyProfileTheme(next.accentColor, next.darkMode)
       set({ profiles, currentProfile: next })
     }
   },
@@ -217,19 +217,3 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
     set({ pinLocked: true })
   }
 }))
-
-function applyProfileTheme(profile: Profile) {
-  const prefersDark = window.matchMedia?.('(prefers-color-scheme: dark)').matches ?? false
-  const isDark = profile.darkMode === 'dark' || (profile.darkMode === 'system' && prefersDark)
-  if (isDark) {
-    document.documentElement.classList.add('dark')
-  } else {
-    document.documentElement.classList.remove('dark')
-  }
-  // Sync store to match actual DOM state
-  import('./useAppStore').then(({ useAppStore }) => {
-    useAppStore.getState().setDarkMode(isDark)
-  })
-  const meta = document.querySelector('meta[name="theme-color"]')
-  if (meta) meta.setAttribute('content', profile.accentColor)
-}

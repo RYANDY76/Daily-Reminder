@@ -163,3 +163,100 @@ export function HabitsSkeleton() {
     </div>
   )
 }
+
+export function PomodoroSkeleton() {
+  return (
+    <div className="space-y-6 animate-pulse">
+      <div className="flex items-center justify-between">
+        <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-32" />
+        <div className="h-8 w-20 bg-gray-200 dark:bg-gray-700 rounded-xl" />
+      </div>
+      <div className="flex justify-center">
+        <div className="w-48 h-48 rounded-full bg-gray-200 dark:bg-gray-700" />
+      </div>
+      <div className="flex justify-center gap-3">
+        <div className="h-12 w-32 bg-gray-200 dark:bg-gray-700 rounded-xl" />
+        <div className="h-12 w-32 bg-gray-200 dark:bg-gray-700 rounded-xl" />
+      </div>
+    </div>
+  )
+}
+
+export function ProfileSkeleton() {
+  return (
+    <div className="space-y-4 animate-pulse">
+      <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-24" />
+      <div className="space-y-3">
+        {Array.from({ length: 3 }, (_, i) => (
+          <div key={i} className="bg-white dark:bg-dark-surface rounded-xl p-4 border border-gray-100 dark:border-dark-border">
+            <div className="flex items-start gap-3">
+              <div className="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700" />
+              <div className="flex-1">
+                <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/3 mb-2" />
+                <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-1/2" />
+              </div>
+              <div className="h-8 w-16 bg-gray-200 dark:bg-gray-700 rounded-lg" />
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+export function SettingsSkeleton() {
+  return (
+    <div className="space-y-6 animate-pulse">
+      <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-24" />
+      <div className="space-y-2">
+        {Array.from({ length: 5 }, (_, i) => (
+          <div key={i} className="h-16 bg-gray-200 dark:bg-gray-700 rounded-xl" />
+        ))}
+      </div>
+    </div>
+  )
+}
+
+export function CoupleSkeleton() {
+  return (
+    <div className="space-y-4 animate-pulse">
+      <div className="flex items-center justify-between">
+        <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-32" />
+        <div className="h-8 w-8 bg-gray-200 dark:bg-gray-700 rounded-lg" />
+      </div>
+      <div className="grid grid-cols-2 gap-3">
+        <SkeletonCard className="h-32" />
+        <SkeletonCard className="h-32" />
+      </div>
+      <SkeletonCard className="h-48" />
+    </div>
+  )
+}
+
+export function LandingSkeleton() {
+  return (
+    <div className="space-y-6 animate-pulse">
+      <div className="flex justify-center pt-12">
+        <div className="w-20 h-20 bg-gray-200 dark:bg-gray-700 rounded-2xl" />
+      </div>
+      <div className="h-10 bg-gray-200 dark:bg-gray-700 rounded w-64 mx-auto" />
+      <div className="h-5 bg-gray-200 dark:bg-gray-700 rounded w-80 mx-auto" />
+      <div className="flex justify-center gap-3 pt-4">
+        <div className="h-12 w-40 bg-gray-200 dark:bg-gray-700 rounded-xl" />
+        <div className="h-12 w-40 bg-gray-200 dark:bg-gray-700 rounded-xl" />
+      </div>
+      <div className="h-40 bg-gray-200 dark:bg-gray-700 rounded-xl mx-4" />
+    </div>
+  )
+}
+
+export function NotFoundSkeleton() {
+  return (
+    <div className="flex flex-col items-center justify-center py-20 animate-pulse">
+      <div className="h-20 w-20 bg-gray-200 dark:bg-gray-700 rounded-full mb-4" />
+      <div className="h-10 bg-gray-200 dark:bg-gray-700 rounded w-32 mb-3" />
+      <div className="h-5 bg-gray-200 dark:bg-gray-700 rounded w-48 mb-6" />
+      <div className="h-12 w-36 bg-gray-200 dark:bg-gray-700 rounded-xl" />
+    </div>
+  )
+}

@@ -1,0 +1,13 @@
+<svg width="1200" height="630" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0c3d2f" />
+      <stop offset="100%" stop-color="#06231b" />
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#bg)" />
+  <text x="600" y="260" font-family="Inter, Arial, sans-serif" font-size="72" font-weight="700" fill="#1D9E75" text-anchor="middle">Daily Reminder</text>
+  <text x="600" y="340" font-family="Inter, Arial, sans-serif" font-size="28" fill="#99dfc7" text-anchor="middle">Atur Jadwal, Tingkatkan Produktivitas</text>
+  <rect x="480" y="400" width="240" height="56" rx="28" fill="#1D9E75" />
+  <text x="600" y="436" font-family="Inter, Arial, sans-serif" font-size="20" font-weight="600" fill="#ffffff" text-anchor="middle">Mulai Sekarang</text>
+</svg>

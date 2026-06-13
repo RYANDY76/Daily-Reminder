@@ -9,15 +9,27 @@ export default defineConfig({
   reporter: 'list',
   use: {
     baseURL: 'http://localhost:5173',
-    trace: 'on-first-retry'
+    trace: 'on-first-retry',
+    viewport: { width: 375, height: 812 },
   },
   projects: [
-    { name: 'chromium', use: { ...devices['Desktop Chrome'] } }
+    {
+      name: 'chromium',
+      use: { ...devices['Pixel 5'] },
+    },
+    {
+      name: 'firefox',
+      use: { ...devices['Pixel 5'] },
+    },
+    {
+      name: 'webkit',
+      use: { ...devices['iPhone 12'] },
+    },
   ],
   webServer: {
     command: 'npm run dev',
     url: 'http://localhost:5173',
     reuseExistingServer: !process.env.CI,
-    timeout: 120_000
-  }
+    timeout: 120_000,
+  },
 })

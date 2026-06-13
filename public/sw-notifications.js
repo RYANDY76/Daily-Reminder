@@ -17,6 +17,42 @@ function cleanupOldKeys() {
   }
 }
 
+let cleanupTimer = null
+
+/**
+ * Periodically purge stale cached tasks (older than 30 days) from IndexedDB
+ * to prevent unbounded storage growth.
+ */
+async function cleanupOldData() {
+  let db
+  try {
+    db = await openDB()
+    const tx = db.transaction(STORE, 'readwrite')
+    const store = tx.objectStore(STORE)
+    const all = await new Promise((resolve, reject) => {
+      const req = store.getAll()
+      req.onsuccess = () => resolve(req.result || [])
+      req.onerror = () => reject(req.error)
+    })
+    const cutoff = Date.now() - 30 * 24 * 60 * 60 * 1000
+    let deleted = 0
+    for (const record of all) {
+      const ts = record.updatedAt || record._cachedAt || 0
+      if (ts > 0 && ts < cutoff) {
+        store.delete(record.id)
+        deleted++
+      }
+    }
+    if (deleted > 0) {
+      console.log('[SW] Cleaned up ' + deleted + ' stale cache entries')
+    }
+  } catch (err) {
+    console.error('[SW] Cleanup error:', err)
+  } finally {
+    if (db) db.close()
+  }
+}
+
 let checkTimer = null
 
 function openDB() {
@@ -152,8 +188,11 @@ async function checkDueNotifications() {
 function startCheckLoop() {
   try {
     if (checkTimer) clearInterval(checkTimer)
+    if (cleanupTimer) clearInterval(cleanupTimer)
     checkDueNotifications()
+    cleanupOldData()
     checkTimer = setInterval(checkDueNotifications, CHECK_MS)
+    cleanupTimer = setInterval(cleanupOldData, 24 * 60 * 60 * 1000) // once per day
   } catch (err) {
     console.error('[SW] Failed to start check loop:', err)
   }

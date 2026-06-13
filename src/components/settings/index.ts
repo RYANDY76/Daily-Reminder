@@ -1,0 +1,5 @@
+export { default as DisplaySettings } from './DisplaySettings'
+export { default as ExportSettings } from './ExportSettings'
+export { default as NotificationSettings } from './NotificationSettings'
+export { default as LegalSettings } from './LegalSettings'
+export { default as BackupSettings } from './BackupSettings'

@@ -9,6 +9,31 @@
     <priority>1.0</priority>
   </url>
   <url>
+    <loc>https://daily-reminder-zeta.vercel.app/calendar</loc>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://daily-reminder-zeta.vercel.app/pomodoro</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://daily-reminder-zeta.vercel.app/habits</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://daily-reminder-zeta.vercel.app/goals</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://daily-reminder-zeta.vercel.app/stats</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
     <loc>https://daily-reminder-zeta.vercel.app/about</loc>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>

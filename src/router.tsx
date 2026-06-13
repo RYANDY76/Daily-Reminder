@@ -3,7 +3,7 @@ import { Routes, Route, useLocation } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import Dashboard from './components/Dashboard'
 import ErrorBoundary from './components/ErrorBoundary'
-import { CalendarSkeleton, StatsSkeleton, GoalsSkeleton, HabitsSkeleton } from './components/Skeleton'
+import { CalendarSkeleton, StatsSkeleton, GoalsSkeleton, HabitsSkeleton, PomodoroSkeleton, ProfileSkeleton, SettingsSkeleton, CoupleSkeleton, LandingSkeleton, NotFoundSkeleton } from './components/Skeleton'
 
 const Calendar = lazy(() => import('./components/Calendar'))
 const Pomodoro = lazy(() => import('./components/Pomodoro'))
@@ -38,7 +38,13 @@ function PageLoader({ page }: { page: string }) {
     calendar: <CalendarSkeleton />,
     stats: <StatsSkeleton />,
     goals: <GoalsSkeleton />,
-    habits: <HabitsSkeleton />
+    habits: <HabitsSkeleton />,
+    pomodoro: <PomodoroSkeleton />,
+    profile: <ProfileSkeleton />,
+    settings: <SettingsSkeleton />,
+    couple: <CoupleSkeleton />,
+    landing: <LandingSkeleton />,
+    notfound: <NotFoundSkeleton />
   }
   return (
     <div className="max-w-4xl mx-auto px-4 py-4 md:py-6">
@@ -116,16 +122,16 @@ export default function AppRoutes() {
       <Routes location={location} key={location.pathname}>
         <Route path="/" element={<PageTransition><Dashboard /></PageTransition>} />
         <Route path="/calendar" element={<PageTransition><LazyPage Component={Calendar as LazyComponent} skeleton="calendar" /></PageTransition>} />
-        <Route path="/pomodoro" element={<PageTransition><LazyPage Component={Pomodoro as LazyComponent} skeleton="" /></PageTransition>} />
+        <Route path="/pomodoro" element={<PageTransition><LazyPage Component={Pomodoro as LazyComponent} skeleton="pomodoro" /></PageTransition>} />
         <Route path="/habits" element={<PageTransition><LazyPage Component={HabitTracker as LazyComponent} skeleton="habits" /></PageTransition>} />
-        <Route path="/couple" element={<PageTransition><LazyPage Component={CoupleDashboard as LazyComponent} skeleton="" /></PageTransition>} />
+        <Route path="/couple" element={<PageTransition><LazyPage Component={CoupleDashboard as LazyComponent} skeleton="couple" /></PageTransition>} />
         <Route path="/goals" element={<PageTransition><LazyPage Component={Goals as LazyComponent} skeleton="goals" /></PageTransition>} />
         <Route path="/stats" element={<PageTransition><LazyPage Component={Stats as LazyComponent} skeleton="stats" /></PageTransition>} />
-        <Route path="/profile" element={<PageTransition><LazyPage Component={ProfileManager as LazyComponent} skeleton="" /></PageTransition>} />
-        <Route path="/settings" element={<PageTransition><LazyPage Component={Settings as LazyComponent} skeleton="" /></PageTransition>} />
-        <Route path="/about" element={<PageTransition><LazyPage Component={Landing as LazyComponent} skeleton="" /></PageTransition>} />
+        <Route path="/profile" element={<PageTransition><LazyPage Component={ProfileManager as LazyComponent} skeleton="profile" /></PageTransition>} />
+        <Route path="/settings" element={<PageTransition><LazyPage Component={Settings as LazyComponent} skeleton="settings" /></PageTransition>} />
+        <Route path="/about" element={<PageTransition><LazyPage Component={Landing as LazyComponent} skeleton="landing" /></PageTransition>} />
         {/* 404 */}
-        <Route path="*" element={<PageTransition><LazyPage Component={NotFound as LazyComponent} skeleton="" /></PageTransition>} />
+        <Route path="*" element={<PageTransition><LazyPage Component={NotFound as LazyComponent} skeleton="notfound" /></PageTransition>} />
       </Routes>
     </AnimatePresence>
   )

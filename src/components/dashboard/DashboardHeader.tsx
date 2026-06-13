@@ -69,14 +69,21 @@ export default function DashboardHeader({
       </div>
       <div className="flex items-center gap-2">
         {!batchMode && totalTasks > 0 && (
-          <button
-            onClick={onToggleBatchMode}
-            className="px-3 py-2 bg-gray-100 dark:bg-dark-card hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl text-sm font-semibold transition-all duration-150 min-h-tap flex items-center gap-2"
-            aria-label={t('batch.enable')}
-          >
-            <CheckSquare className="w-4 h-4" />
-            <span className="hidden sm:inline">{t('batch.select')}</span>
-          </button>
+          <div className="relative group">
+            <button
+              onClick={onToggleBatchMode}
+              className="px-3 py-2 bg-gray-100 dark:bg-dark-card hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl text-sm font-semibold transition-all duration-150 min-h-tap flex items-center gap-2"
+              aria-label={t('batch.enable')}
+            >
+              <CheckSquare className="w-4 h-4" />
+              <span className="hidden sm:inline">{t('batch.select')}</span>
+            </button>
+            <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50">
+              <div className="bg-gray-900 dark:bg-gray-700 text-white text-xs rounded-lg px-3 py-1.5 whitespace-nowrap shadow-lg">
+                {t('batch.tooltip') || 'Select multiple tasks to perform batch actions'}
+              </div>
+            </div>
+          </div>
         )}
         <button
           onClick={onShowAddTask}
