@@ -264,6 +264,8 @@ export default function Dashboard() {
         .catch(() => {
           loadTodayTasks().finally(() => setInitialLoading(false))
         })
+    } else {
+      setInitialLoading(false)
     }
   }, [currentProfile])
 

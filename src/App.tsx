@@ -25,9 +25,10 @@ import LoginPage from './components/LoginPage'
 import AppRoutes, { ROUTE_TO_PAGE, preloadRoutes } from './router'
 import { initWebVitals } from './lib/webVitals'
 import type { Page } from './types'
+import { STORAGE_KEYS } from './constants'
 
 const PUBLIC_PATHS = new Set(['/about'])
-const GUEST_FLAG_KEY = 'daily_reminder_guest'
+const GUEST_FLAG_KEY = STORAGE_KEYS.GUEST_FLAG
 
 function useAuthGate() {
   const authUser = useAuthStore((s) => s.user)
@@ -233,8 +234,12 @@ export default function App() {
           dataLoadedRef.current = false
           loadProfiles()
         }}
-        onGuest={() => {
+        onGuest={async () => {
           useAuthStore.getState().resetSignedOut()
+          const profiles = useProfileStore.getState().profiles
+          if (profiles.length === 0) {
+            await useProfileStore.getState().createProfile('Tamu', null, false)
+          }
           enableGuest()
           loadProfiles()
         }}

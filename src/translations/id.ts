@@ -80,6 +80,7 @@ const id: Record<string, string> = {
     'stats.chart7': 'Grafik 7 hari',
     'stats.chart30': 'Grafik 30 hari',
     'stats.tasksLabel': 'tugas',
+    'stats.noDataDesc': 'Mulai catat tugas harian untuk melihat statistik produktivitas.',
     'settings.title': 'Pengaturan',
     'settings.theme': 'Tema Aplikasi',
     'settings.currentTheme': 'Tema Aktif',

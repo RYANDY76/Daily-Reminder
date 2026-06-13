@@ -5,6 +5,7 @@ import { visualizer } from 'rollup-plugin-visualizer'
 import path from 'path'
 
 export default defineConfig(({ mode }) => ({
+  base: './',
   plugins: [
     react(),
     VitePWA({

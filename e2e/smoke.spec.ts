@@ -1,75 +1,158 @@
 import { test, expect } from '@playwright/test'
 
-test.describe('Daily Reminder E2E', () => {
-  test.beforeEach(async ({ page }) => {
-    await page.goto('/')
-  })
+test.use({ viewport: { width: 375, height: 812 } })
 
+async function enterApp(page: any) {
+  await page.goto('/')
+  await page.locator('button:has-text("Lanjut Tanpa Akun")').click()
+  await page.waitForTimeout(2000)
+  const skipBtn = page.locator('button:has-text("Lewati")')
+  if (await skipBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
+    await skipBtn.click()
+    await page.waitForTimeout(500)
+  }
+}
+
+test.describe('Daily Reminder E2E', () => {
   test('Landing page loads and shows app name', async ({ page }) => {
+    await page.goto('/')
     await expect(page.locator('text=Daily Reminder')).toBeVisible()
   })
 
-  test('Guest mode allows entering the app', async ({ page }) => {
-    // Click "Lanjut sebagai Tamu" (guest mode button)
-    const guestBtn = page.locator('button:has-text("Tamu")')
-    await expect(guestBtn).toBeVisible()
-    await guestBtn.click()
-
-    // Should navigate to Welcome page or directly to Dashboard
+  test('Guest mode enters the app', async ({ page }) => {
+    await page.goto('/')
+    await page.locator('button:has-text("Lanjut Tanpa Akun")').click()
     await page.waitForTimeout(2000)
 
-    // Check we're in the app — look for the Add Task button or heading
-    const heading = page.locator('h2:has-text("Ringkasan")')
-    await expect(heading).toBeVisible({ timeout: 10000 })
+    const skipBtn = page.locator('button:has-text("Lewati")')
+    if (await skipBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
+      await skipBtn.click()
+      await page.waitForTimeout(500)
+    }
+
+    await expect(page.getByRole('button', { name: 'Tambah Tugas' }).last()).toBeVisible({ timeout: 10000 })
   })
 
   test('Create a task via the FAB button', async ({ page }) => {
-    // Enter guest mode first
-    await page.locator('button:has-text("Tamu")').click()
+    await page.goto('/')
+    await page.locator('button:has-text("Lanjut Tanpa Akun")').click()
     await page.waitForTimeout(2000)
 
-    // Fill profile name in Welcome screen if shown
-    const nameInput = page.locator('input[placeholder*="Nama"]')
-    if (await nameInput.isVisible()) {
-      await nameInput.fill('Test User')
-      await page.locator('button:has-text("Mulai")').click()
-      await page.waitForTimeout(2000)
+    const skipBtn = page.locator('button:has-text("Lewati")')
+    if (await skipBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
+      await skipBtn.click()
+      await page.waitForTimeout(500)
     }
 
-    // Click the + (FAB) button
-    const fab = page.locator('button[aria-label*="Tambah"]').or(page.locator('button:has-text("+")'))
-    await expect(fab).toBeVisible({ timeout: 5000 })
-    await fab.click()
+    await page.getByRole('button', { name: 'Tambah Tugas' }).last().click()
+    await page.waitForTimeout(2000)
 
-    // Fill task form
-    const taskInput = page.locator('input[placeholder*="tugas"]')
-    await expect(taskInput).toBeVisible({ timeout: 5000 })
+    const taskInput = page.locator('#task-title')
+    await expect(taskInput).toBeVisible({ timeout: 10000 })
     await taskInput.fill('E2E Test Task')
+    await page.locator('.modal-content button:has-text("Tambah Tugas")').click()
+    await page.waitForTimeout(2000)
 
-    // Submit
-    await page.locator('button:has-text("Simpan")').click()
-    await page.waitForTimeout(1000)
-
-    // Verify task appears
-    await expect(page.locator('text=E2E Test Task')).toBeVisible({ timeout: 5000 })
+    await expect(page.locator('text=E2E Test Task')).toBeVisible({ timeout: 10000 })
   })
 
   test('Toggle dark mode', async ({ page }) => {
-    await page.locator('button:has-text("Tamu")').click()
+    await page.goto('/')
+    await page.locator('button:has-text("Lanjut Tanpa Akun")').click()
     await page.waitForTimeout(2000)
 
-    // Navigate to settings via URL
-    // First check if we're on dashboard
-    await page.waitForURL('**/*')
-    
-    // Find and click dark mode toggle (in header or settings)
-    // The dark mode toggle has aria-label that changes based on state
-    const darkToggle = page.locator('[aria-label*="Gelap"],[aria-label*="Terang"]')
-    if (await darkToggle.isVisible()) {
-      await darkToggle.click()
-      // Check that dark class was added to html
-      const hasDark = await page.evaluate(() => document.documentElement.classList.contains('dark'))
-      expect(hasDark).toBeTruthy()
+    const skipBtn = page.locator('button:has-text("Lewati")')
+    if (await skipBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
+      await skipBtn.click()
+      await page.waitForTimeout(500)
     }
+
+    await page.locator('[aria-label="Mode Gelap"]').last().click()
+    await page.waitForTimeout(500)
+
+    expect(await page.evaluate(() => document.documentElement.classList.contains('dark'))).toBeTruthy()
+  })
+
+  test('Navigate to Settings via bottom nav More menu', async ({ page }) => {
+    await page.goto('/')
+    await page.locator('button:has-text("Lanjut Tanpa Akun")').click()
+    await page.waitForTimeout(2000)
+
+    const skipBtn = page.locator('button:has-text("Lewati")')
+    if (await skipBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
+      await skipBtn.click()
+      await page.waitForTimeout(500)
+    }
+
+    await page.locator('button[aria-label="Lainnya"]').click()
+    await page.waitForTimeout(500)
+    await page.locator('[role="dialog"] button:has-text("Pengaturan")').click()
+    await page.waitForTimeout(2000)
+
+    expect(page.url()).toContain('/settings')
+  })
+
+  test('Navigate to Couple page via bottom nav More menu', async ({ page }) => {
+    await page.goto('/')
+    await page.locator('button:has-text("Lanjut Tanpa Akun")').click()
+    await page.waitForTimeout(2000)
+
+    const skipBtn = page.locator('button:has-text("Lewati")')
+    if (await skipBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
+      await skipBtn.click()
+      await page.waitForTimeout(500)
+    }
+
+    await page.locator('button[aria-label="Lainnya"]').click()
+    await page.waitForTimeout(500)
+    await page.locator('[role="dialog"] button:has-text("Pasangan")').click()
+    await page.waitForTimeout(2000)
+
+    expect(page.url()).toContain('/couple')
+  })
+
+  test('Export modal opens from Settings page', async ({ page }) => {
+    await page.goto('/')
+    await page.locator('button:has-text("Lanjut Tanpa Akun")').click()
+    await page.waitForTimeout(2000)
+
+    const skipBtn = page.locator('button:has-text("Lewati")')
+    if (await skipBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
+      await skipBtn.click()
+      await page.waitForTimeout(500)
+    }
+
+    await page.locator('button[aria-label="Lainnya"]').click()
+    await page.waitForTimeout(500)
+    await page.locator('[role="dialog"] button:has-text("Pengaturan")').click()
+    await page.waitForTimeout(2000)
+
+    await page.locator('button:has-text("Ekspor Jadwal")').click()
+    await page.waitForTimeout(1000)
+
+    await expect(page.locator('text=Ekspor Data')).toBeVisible({ timeout: 5000 })
+  })
+
+  test('Couple page shows connect dialog', async ({ page }) => {
+    await page.goto('/')
+    await page.locator('button:has-text("Lanjut Tanpa Akun")').click()
+    await page.waitForTimeout(2000)
+
+    const skipBtn = page.locator('button:has-text("Lewati")')
+    if (await skipBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
+      await skipBtn.click()
+      await page.waitForTimeout(500)
+    }
+
+    await page.locator('button[aria-label="Lainnya"]').click()
+    await page.waitForTimeout(500)
+    await page.locator('[role="dialog"] button:has-text("Pasangan")').click()
+    await page.waitForTimeout(2000)
+
+    await expect(page.locator('button:has-text("Mulai")')).toBeVisible({ timeout: 5000 })
+    await page.locator('button:has-text("Mulai")').click()
+    await page.waitForTimeout(1000)
+
+    await expect(page.locator('.fixed.z-50 h2:has-text("Hubungkan dengan Pasangan")')).toBeVisible({ timeout: 5000 })
   })
 })

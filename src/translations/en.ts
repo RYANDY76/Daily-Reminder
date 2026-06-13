@@ -80,6 +80,7 @@ const en: Record<string, string> = {
     'stats.chart7': '7-day chart',
     'stats.chart30': '30-day chart',
     'stats.tasksLabel': 'tasks',
+    'stats.noDataDesc': 'Start tracking your daily tasks to see productivity statistics.',
     'settings.title': 'Settings',
     'settings.theme': 'App Theme',
     'settings.currentTheme': 'Current Theme',

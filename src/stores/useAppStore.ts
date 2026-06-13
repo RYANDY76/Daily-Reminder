@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import type { Lang, Page, ToastMessage } from '../types'
+import { STORAGE_KEYS } from '../constants'
 
 interface AppState {
   currentPage: Page
@@ -26,8 +27,8 @@ interface AppState {
   setLastTaskId: (id: string | null) => void
 }
 
-const storedLang = (localStorage.getItem('daily_reminder_lang') as Lang) || 'id'
-const storedReminderLead = Number(localStorage.getItem('daily_reminder_reminder_lead_minutes') || 0)
+const storedLang = (localStorage.getItem(STORAGE_KEYS.LANG) as Lang) || 'id'
+const storedReminderLead = Number(localStorage.getItem(STORAGE_KEYS.REMINDER_LEAD_MINUTES) || 0)
 
 export const useAppStore = create<AppState>((set) => ({
   currentPage: 'dashboard',
@@ -72,12 +73,12 @@ export const useAppStore = create<AppState>((set) => ({
     })
   },
   setLang: (lang) => {
-    localStorage.setItem('daily_reminder_lang', lang)
+    localStorage.setItem(STORAGE_KEYS.LANG, lang)
     set({ lang })
   },
   setNotificationEnabled: (enabled) => set({ notificationEnabled: enabled }),
   setReminderLeadMinutes: (minutes) => {
-    localStorage.setItem('daily_reminder_reminder_lead_minutes', String(minutes))
+    localStorage.setItem(STORAGE_KEYS.REMINDER_LEAD_MINUTES, String(minutes))
     set({ reminderLeadMinutes: minutes })
   },
   setSidebarOpen: (open) => set({ sidebarOpen: open }),

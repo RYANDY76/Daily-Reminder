@@ -5,6 +5,7 @@ import { getLastNDaysHistory, getPomodoroSessionsRange, getMoodLogsRange } from 
 import { formatDateShort } from '../dates'
 import type { DailyHistory, PomodoroSession, MoodLog, MoodLevel } from '../types'
 import { BarChart3, TrendingUp, Calendar, Flame, Target, Clock, Trophy, Smile } from 'lucide-react'
+import EmptyState from './EmptyState'
 
 type ViewRange = '7' | '30'
 
@@ -123,6 +124,21 @@ export default function Stats() {
     return (
       <div className="flex items-center justify-center py-20">
         <div className="w-6 h-6 border-2 border-primary-500 border-t-transparent rounded-full animate-spin" />
+      </div>
+    )
+  }
+
+  const hasNoData = totalTasksAll === 0 && totalPomos === 0 && moodLogs.length === 0
+
+  if (hasNoData) {
+    return (
+      <div className="space-y-6">
+        <h2 className="page-heading">{t('stats.title')}</h2>
+        <EmptyState
+          icon={BarChart3}
+          title={t('stats.empty')}
+          description={t('stats.noDataDesc')}
+        />
       </div>
     )
   }

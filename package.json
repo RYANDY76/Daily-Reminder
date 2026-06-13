@@ -22,9 +22,18 @@
     "supabase:deploy-push": "npx supabase functions deploy send-push",
     "supabase:deploy-reminders": "npx supabase functions deploy check-reminders --no-verify-jwt",
     "audit": "npm audit --audit-level=moderate",
-    "package": "git archive --format=zip HEAD -o daily-reminder-source.zip"
+    "package": "git archive --format=zip HEAD -o daily-reminder-source.zip",
+    "cap:sync": "npx cap sync",
+    "cap:open:android": "npx cap open android",
+    "cap:open:ios": "npx cap open ios",
+    "cap:build:android": "npm run build && npx cap sync android",
+    "cap:build:ios": "npm run build && npx cap sync ios"
   },
   "dependencies": {
+    "@capacitor/android": "^8.4.0",
+    "@capacitor/cli": "^8.4.0",
+    "@capacitor/core": "^8.4.0",
+    "@capacitor/ios": "^8.4.0",
     "@sentry/browser": "^10.57.0",
     "@sentry/react": "^10.57.0",
     "@supabase/supabase-js": "^2.49.1",
