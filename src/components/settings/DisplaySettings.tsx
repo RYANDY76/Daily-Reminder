@@ -2,6 +2,7 @@ import { useAppStore } from '../../stores/useAppStore'
 import { useT } from '../../i18n'
 import type { Lang } from '../../types'
 import { applyAccentColor } from '../../utils/theme'
+import ToggleSwitch from '../ToggleSwitch'
 
 export default function DisplaySettings() {
   const toggleDarkMode = useAppStore((s) => s.toggleDarkMode)
@@ -20,19 +21,7 @@ export default function DisplaySettings() {
           <p className="text-sm font-medium text-gray-900 dark:text-white">{t('settings.darkMode')}</p>
           <p className="text-xs text-gray-500 dark:text-gray-400">{t('settings.darkModeDesc')}</p>
         </div>
-        <button
-          onClick={toggleDarkMode}
-          className={`relative w-12 h-7 rounded-full transition-colors duration-300 ease-in-out flex-shrink-0 ${
-            darkMode ? 'bg-primary-500' : 'bg-gray-300'
-          }`}
-          aria-label={t('settings.toggleDark')}
-        >
-          <div
-            className={`absolute top-0.5 w-6 h-6 bg-white rounded-full shadow-md transition-all duration-300 ease-in-out ${
-              darkMode ? 'translate-x-5' : 'translate-x-0.5'
-            }`}
-          />
-        </button>
+        <ToggleSwitch enabled={darkMode} onToggle={toggleDarkMode} ariaLabel={t('settings.toggleDark')} />
       </div>
 
       <div className="flex items-center justify-between pt-4 border-t border-gray-100 dark:border-dark-border">

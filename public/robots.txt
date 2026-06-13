@@ -1,4 +1,3 @@
 User-agent: *
 Allow: /
-
-Sitemap: https://daily-reminder.app/sitemap.xml
+Sitemap: https://daily-reminder-zeta.vercel.app/sitemap.xml

@@ -2,14 +2,17 @@ import { useState, useEffect } from 'react'
 import { useProfileStore } from '../stores/useProfileStore'
 import { useBiometricAuth } from '../hooks/useBiometricAuth'
 import { useInstallPrompt } from '../hooks/useInstallPrompt'
+import { useConfirm } from '../hooks/useConfirm'
 import { generatePDF } from '../utils/pdfExport'
-import { getLast7DaysHistory, getTasksForDate, getDailyHistory, db } from '../database'
+import { getLast7DaysHistory, getTasksForDate, getDailyHistory, db, deleteProfile } from '../database'
 import { getTodayDate, getLast7Days } from '../dates'
 import type { DailyHistory } from '../types'
 import { useT } from '../i18n'
 import { isAnalyticsEnabled, setAnalyticsEnabled } from '../utils/analytics'
+import { AppErrorHandler } from '../utils/errorHandler'
 import DisplaySettings from './settings/DisplaySettings'
 import NotificationSettings from './settings/NotificationSettings'
+import ToggleSwitch from './ToggleSwitch'
 import { FileText, ShieldCheck, Download, Trash2, Fingerprint, Lock, Bell, Smartphone, Share2 } from 'lucide-react'
 
 export default function Settings() {
@@ -30,6 +33,7 @@ export default function Settings() {
   const [bioSupported, setBioSupported] = useState(false)
   const [bioError, setBioError] = useState('')
   const { installPrompt, promptInstall, isStandalone } = useInstallPrompt()
+  const { confirm, ConfirmDialog } = useConfirm()
 
   useEffect(() => {
     isAvailable().then(setBioSupported)
@@ -53,19 +57,26 @@ export default function Settings() {
   const handleExportAllData = async () => {
     setExportAllLoading(true)
     try {
-      const [tasks, profiles, history, habits, moodLogs, pomodoroSessions, goals] = await Promise.all([
+      const [tasks, profiles, history, habits, moodLogs, pomodoroSessions, goals, connections, sharedTasks, coupleGoals, loveNotes, activityFeed, taskComments] = await Promise.all([
         db.tasks.toArray(),
         db.profiles.toArray(),
         db.history.toArray(),
         db.habits.toArray(),
         db.moodLogs.toArray(),
         db.pomodoroSessions.toArray(),
-        db.goals.toArray()
+        db.goals.toArray(),
+        db.connections.toArray(),
+        db.sharedTasks.toArray(),
+        db.coupleGoals.toArray(),
+        db.loveNotes.toArray(),
+        db.activityFeed.toArray(),
+        db.taskComments.toArray()
       ])
       const exportData = {
         exportDate: new Date().toISOString(),
         appVersion: '1.0',
-        tasks, profiles, history, habits, moodLogs, pomodoroSessions, goals
+        tasks, profiles, history, habits, moodLogs, pomodoroSessions, goals,
+        connections, sharedTasks, coupleGoals, loveNotes, activityFeed, taskComments
       }
       const json = JSON.stringify(exportData, null, 2)
       const blob = new Blob([json], { type: 'application/json;charset=utf-8' })
@@ -77,26 +88,23 @@ export default function Settings() {
       link.click()
       document.body.removeChild(link)
       URL.revokeObjectURL(url)
-    } catch {
-      // export failed silently
+    } catch (e) {
+      AppErrorHandler.logError('EXPORT_ERROR', 'Full data export failed', 'medium', { error: e })
     } finally {
       setExportAllLoading(false)
     }
   }
 
-  const handleDeleteAllData = () => {
-    if (!confirm(t('settings.deleteAllDataDesc'))) return
-    Promise.all([
-      db.tasks.clear(),
-      db.profiles.clear(),
-      db.history.clear(),
-      db.habits.clear(),
-      db.moodLogs.clear(),
-      db.pomodoroSessions.clear(),
-      db.goals.clear()
-    ]).then(() => {
+  const handleDeleteAllData = async () => {
+    const ok = await confirm({ title: t('common.confirm'), message: t('settings.deleteAllDataDesc'), variant: 'danger', confirmText: t('common.delete'), cancelText: t('common.cancel') })
+    if (!ok) return
+    try {
+      await deleteProfile(profile!.id)
+    } catch (e) {
+      AppErrorHandler.logError('DELETE_ERROR', 'Failed to delete all data', 'high', { error: e })
+    } finally {
       window.location.reload()
-    }).catch(() => {})
+    }
   }
 
   const handleExport = async () => {
@@ -133,8 +141,8 @@ export default function Settings() {
         orientation: exportOrientation,
         theme: exportTheme
       })
-    } catch {
-      // export failed silently
+    } catch (e) {
+      AppErrorHandler.logError('EXPORT_ERROR', 'PDF export failed', 'low', { error: e })
     } finally {
       setExporting(false)
       setExportModal(false)
@@ -143,6 +151,7 @@ export default function Settings() {
 
   return (
     <div className="space-y-6">
+      <ConfirmDialog />
       <h2 className="page-heading">{t('settings.title')}</h2>
 
       <section>
@@ -207,20 +216,12 @@ export default function Settings() {
                   <p className="text-xs text-gray-500 dark:text-gray-400">{t('settings.biometricDesc')}</p>
                 </div>
               </div>
-              <button
-                onClick={handleToggleBiometric}
+              <ToggleSwitch
+                enabled={!!profile?.biometricEnabled}
+                onToggle={handleToggleBiometric}
                 disabled={bioLoading}
-                className={`relative w-11 h-6 rounded-full transition-colors flex-shrink-0 ${
-                  profile?.biometricEnabled ? 'bg-primary-500' : 'bg-gray-300'
-                }`}
-                aria-label={t('settings.biometric')}
-              >
-                <div
-                  className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${
-                    profile?.biometricEnabled ? 'translate-x-5.5' : 'translate-x-0.5'
-                  }`}
-                />
-              </button>
+                ariaLabel={t('settings.biometric')}
+              />
             </div>
           )}
           {bioError && (
@@ -294,23 +295,15 @@ export default function Settings() {
                 <p className="text-xs text-gray-500 dark:text-gray-400">{t('settings.analyticsDesc')}</p>
               </div>
             </div>
-            <button
-              onClick={() => {
+            <ToggleSwitch
+              enabled={analyticsEnabled}
+              onToggle={() => {
                 const newVal = !analyticsEnabled
                 setAnalyticsLocal(newVal)
                 setAnalyticsEnabled(newVal)
               }}
-              className={`relative w-11 h-6 rounded-full transition-colors flex-shrink-0 ${
-                analyticsEnabled ? 'bg-primary-500' : 'bg-gray-300'
-              }`}
-              aria-label={t('settings.analytics')}
-            >
-              <div
-                className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${
-                  analyticsEnabled ? 'translate-x-5.5' : 'translate-x-0.5'
-                }`}
-              />
-            </button>
+              ariaLabel={t('settings.analytics')}
+            />
           </div>
           <div className="p-4 flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -319,23 +312,15 @@ export default function Settings() {
                 <p className="text-xs text-gray-500 dark:text-gray-400">{t('settings.sentryDesc')}</p>
               </div>
             </div>
-            <button
-              onClick={() => {
+            <ToggleSwitch
+              enabled={sentryEnabled}
+              onToggle={() => {
                 const newVal = !sentryEnabled
                 setSentryLocal(newVal)
                 localStorage.setItem('daily_reminder_sentry_enabled', String(newVal))
               }}
-              className={`relative w-11 h-6 rounded-full transition-colors flex-shrink-0 ${
-                sentryEnabled ? 'bg-primary-500' : 'bg-gray-300'
-              }`}
-              aria-label={t('settings.sentry')}
-            >
-              <div
-                className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${
-                  sentryEnabled ? 'translate-x-5.5' : 'translate-x-0.5'
-                }`}
-              />
-            </button>
+              ariaLabel={t('settings.sentry')}
+            />
           </div>
           <div className="p-4 space-y-3">
             <button
