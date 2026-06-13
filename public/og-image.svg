@@ -1,13 +1,67 @@
 <svg width="1200" height="630" xmlns="http://www.w3.org/2000/svg">
   <defs>
     <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#0c3d2f" />
-      <stop offset="100%" stop-color="#06231b" />
+      <stop offset="0%" stop-color="#070B1A"/>
+      <stop offset="50%" stop-color="#0F1529"/>
+      <stop offset="100%" stop-color="#1A1040"/>
     </linearGradient>
+    <linearGradient id="chrome" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#DCE4F2"/>
+      <stop offset="25%" stop-color="#FFFFFF"/>
+      <stop offset="50%" stop-color="#A0B0CC"/>
+      <stop offset="75%" stop-color="#DCE4F2"/>
+      <stop offset="100%" stop-color="#7080A0"/>
+    </linearGradient>
+    <linearGradient id="blue-accent" x1="0" y1="1" x2="1" y2="0">
+      <stop offset="0%" stop-color="#55C8FF"/>
+      <stop offset="100%" stop-color="#3A8FD9"/>
+    </linearGradient>
+    <linearGradient id="pink-accent" x1="1" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#EC6BFF"/>
+      <stop offset="100%" stop-color="#C845D9"/>
+    </linearGradient>
+    <linearGradient id="chrome-loop" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="30%" stop-color="#DCE4F2"/>
+      <stop offset="60%" stop-color="#55C8FF"/>
+      <stop offset="100%" stop-color="#8B5CF6"/>
+    </linearGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="2" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <!-- Decorative grid pattern -->
+    <pattern id="grid" width="60" height="60" patternUnits="userSpaceOnUse" opacity="0.03">
+      <path d="M60 0 L0 0 0 60" fill="none" stroke="#55C8FF" stroke-width="0.5"/>
+    </pattern>
   </defs>
-  <rect width="1200" height="630" fill="url(#bg)" />
-  <text x="600" y="260" font-family="Inter, Arial, sans-serif" font-size="96" font-weight="700" fill="#1D9E75" text-anchor="middle">Avora</text>
-  <text x="600" y="340" font-family="Inter, Arial, sans-serif" font-size="28" fill="#99dfc7" text-anchor="middle">Atur Jadwal, Tingkatkan Produktivitas</text>
-  <rect x="480" y="400" width="240" height="56" rx="28" fill="#1D9E75" />
-  <text x="600" y="436" font-family="Inter, Arial, sans-serif" font-size="20" font-weight="600" fill="#ffffff" text-anchor="middle">Mulai Sekarang</text>
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <rect width="1200" height="630" fill="url(#grid)"/>
+  <!-- Decorative glowing orbs -->
+  <circle cx="150" cy="150" r="120" fill="#55C8FF" opacity="0.04" filter="url(#glow)"/>
+  <circle cx="1050" cy="500" r="160" fill="#EC6BFF" opacity="0.03" filter="url(#glow)"/>
+  <circle cx="600" cy="315" r="200" fill="#8B5CF6" opacity="0.02" filter="url(#glow)"/>
+  <!-- Large A logo -->
+  <g transform="translate(200, 115) scale(3.5)">
+    <path d="M50 8 L18 88 L32 88 L38 72 L62 72 L68 88 L82 88 L50 8Z" fill="url(#chrome)" opacity="0.95"/>
+    <path d="M50 32 L38 62 L62 62 L50 32Z" fill="#070B1A"/>
+    <path d="M50 8 L18 88 L28 88 L50 24Z" fill="url(#blue-accent)" opacity="0.5"/>
+    <path d="M50 8 L82 88 L72 88 L50 24Z" fill="url(#pink-accent)" opacity="0.3"/>
+    <path d="M38 72 C34 60 42 50 50 50 C58 50 66 60 62 72 C60 78 54 82 50 82 C46 82 44 78 42 76" 
+          fill="none" stroke="url(#chrome-loop)" stroke-width="3.5" stroke-linecap="round"/>
+    <path d="M40 71 C38 63 44 55 50 55 C56 55 62 63 60 71" 
+          fill="none" stroke="#FFFFFF" stroke-width="1" stroke-linecap="round" opacity="0.4"/>
+    <circle cx="30" cy="80" r="2" fill="#8B5CF6" opacity="0.8"/>
+    <circle cx="70" cy="80" r="1.5" fill="#EC6BFF" opacity="0.6"/>
+  </g>
+  <!-- Tagline -->
+  <text x="500" y="280" font-family="Inter, Arial, sans-serif" font-size="20" fill="#55C8FF" opacity="0.6" letter-spacing="6" text-anchor="middle" font-weight="300">AVORA</text>
+  <text x="500" y="330" font-family="Inter, Arial, sans-serif" font-size="16" fill="#A0B0CC" text-anchor="middle" letter-spacing="2" font-weight="300">FUTURISTIK · PREMIUM · CERDAS</text>
+  <!-- Bottom bar -->
+  <rect x="460" y="400" width="280" height="50" rx="25" fill="url(#blue-accent)" opacity="0.9"/>
+  <text x="600" y="432" font-family="Inter, Arial, sans-serif" font-size="16" font-weight="600" fill="#FFFFFF" text-anchor="middle" letter-spacing="1">PRODUKTIVITAS TANPA BATAS</text>
+  <!-- Chrome accent line -->
+  <line x1="300" y1="490" x2="900" y2="490" stroke="url(#chrome)" stroke-width="0.5" opacity="0.3"/>
+  <!-- Bottom tagline -->
+  <text x="600" y="530" font-family="Inter, Arial, sans-serif" font-size="12" fill="#7080A0" text-anchor="middle" letter-spacing="3">#MASAKINMASAKINI</text>
 </svg>

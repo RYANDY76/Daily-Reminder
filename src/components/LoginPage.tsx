@@ -4,6 +4,7 @@ import { useGoogleAuth } from '../hooks/useGoogleAuth'
 import { getSupabase } from '../lib/supabase'
 import { useT } from '../i18n'
 import { Loader2, ArrowRight, Mail, Lock, AlertCircle, CheckCircle2, Timer, Target, BarChart3, Sparkles } from 'lucide-react'
+import AvoraLogo from './AvoraLogo'
 
 interface LoginPageProps {
   onComplete: () => void
@@ -121,10 +122,8 @@ export default function LoginPage({ onComplete, onGuest }: LoginPageProps) {
           className={`text-center mb-8 ${fadeClass()}`}
           style={{ transitionDelay: '0ms' }}
         >
-          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br from-primary-500 via-primary-600 to-indigo-600 shadow-lg shadow-primary-500/30 mb-4 ring-1 ring-white/20">
-            <svg className="w-7 h-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
-            </svg>
+          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br from-[#55C8FF] via-[#8B5CF6] to-[#EC6BFF] shadow-lg shadow-purple-500/30 mb-4 ring-1 ring-white/20">
+            <AvoraLogo className="w-8 h-8 text-white" />
           </div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white tracking-tight">
             Avora

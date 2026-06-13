@@ -5,6 +5,7 @@ import { useProfileStore } from '../stores/useProfileStore'
 import { useT } from '../i18n'
 import { getTimeGreeting, formatDate } from '../dates'
 import { getTodayDate } from '../dates'
+import AvoraLogo from './AvoraLogo'
 import {
   LayoutDashboard,
   BarChart3,
@@ -14,7 +15,6 @@ import {
   Timer,
   Sun,
   Moon,
-  ClipboardList,
   Target,
   Flag,
   Heart,
@@ -51,8 +51,8 @@ export default function Header() {
       <header className="hidden md:flex fixed left-0 top-0 h-full w-64 bg-white dark:bg-dark-surface z-30 flex-col transition-colors duration-300">
         <div className="px-5 pt-5 pb-4">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center shadow-soft">
-              <ClipboardList className="w-5 h-5 text-white" />
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#55C8FF] via-[#8B5CF6] to-[#EC6BFF] flex items-center justify-center shadow-soft">
+              <AvoraLogo className="w-5 h-5 text-white" />
             </div>
             <div>
               <h1 className="text-sm font-bold text-gray-900 dark:text-white leading-tight">
@@ -135,8 +135,8 @@ export default function Header() {
 
       <div className="md:hidden flex items-center justify-between px-4 py-3 bg-white/80 dark:bg-dark-surface/80 backdrop-blur-xl border-b border-gray-100/80 dark:border-dark-border/60 sticky top-0 z-20 transition-all duration-200">
         <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center shadow-soft">
-            <ClipboardList className="w-4 h-4 text-white" />
+          <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-[#55C8FF] via-[#8B5CF6] to-[#EC6BFF] flex items-center justify-center shadow-soft">
+            <AvoraLogo className="w-4 h-4 text-white" />
           </div>
           <div>
             <h1 className="text-sm font-bold text-gray-900 dark:text-white leading-tight">

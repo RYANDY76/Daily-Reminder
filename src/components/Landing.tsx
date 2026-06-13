@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom'
 import { useT } from '../i18n'
-import { CheckCircle2, Timer, Target, BarChart3, Heart, ArrowRight, ClipboardList } from 'lucide-react'
+import { CheckCircle2, Timer, Target, BarChart3, Heart, ArrowRight } from 'lucide-react'
+import AvoraLogo from './AvoraLogo'
 
 const features = [
   { icon: CheckCircle2, color: 'text-primary-500', key: 'welcome.feature1' },
@@ -20,8 +21,8 @@ export default function Landing() {
         <div className="absolute -bottom-8 -left-8 w-32 h-32 rounded-full bg-white/5" />
 
         <div className="relative max-w-lg mx-auto">
-          <div className="inline-flex items-center justify-center w-20 h-20 rounded-3xl bg-white/20 backdrop-blur-sm mb-5 shadow-lg">
-            <ClipboardList className="w-10 h-10 text-white" />
+          <div className="inline-flex items-center justify-center w-20 h-20 rounded-3xl bg-gradient-to-br from-[#55C8FF]/20 via-[#8B5CF6]/20 to-[#EC6BFF]/20 backdrop-blur-sm mb-5 shadow-lg">
+            <AvoraLogo className="w-12 h-12 text-white" />
           </div>
           <h1 className="text-4xl font-extrabold mb-3 tracking-tight">{t('app.name')}</h1>
           <p className="text-primary-100 text-base leading-relaxed">{t('landing.subtitle')}</p>
