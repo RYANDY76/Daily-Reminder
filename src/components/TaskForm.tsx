@@ -406,46 +406,46 @@ export default function TaskForm({ onClose, editTask, defaultSession, defaultDat
             onTimeChange={setTime}
           />
 
-          <div>
-            <label htmlFor="task-duedate" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              {t('task.dueDate')}
-            </label>
-            <input
-              id="task-duedate"
-              type="date"
-              value={dueDate}
-              onChange={(e) => setDueDate(e.target.value)}
-              className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-dark-border bg-white dark:bg-dark-card text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition-colors"
-            />
-          </div>
-
-          <div>
-            <label htmlFor="task-notes" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              {t('task.notes')}
-            </label>
-            <textarea
-              id="task-notes"
-              value={notes}
-              onChange={(e) => setNotes(sanitizeInput(e.target.value))}
-              placeholder={t('taskForm.notesPlaceholder')}
-              rows={2}
-              className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-dark-border bg-white dark:bg-dark-card text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition-colors resize-none"
-              maxLength={500}
-            />
-          </div>
-
           <button
             type="button"
             onClick={() => setShowAdvanced((value) => !value)}
             className="w-full flex items-center justify-between rounded-xl border border-gray-200 dark:border-dark-border px-4 py-3 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-dark-card transition-colors min-h-tap"
             aria-expanded={showAdvanced}
           >
-            <span>{t('taskForm.advancedDetails')}</span>
+            <span>{showAdvanced ? 'Sembunyikan opsi lainnya' : 'Tampilkan opsi lainnya'}</span>
             <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${showAdvanced ? 'rotate-180' : ''}`} />
           </button>
 
           {showAdvanced && (
             <div className="space-y-4 pt-1">
+              <div>
+                <label htmlFor="task-duedate" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  {t('task.dueDate')}
+                </label>
+                <input
+                  id="task-duedate"
+                  type="date"
+                  value={dueDate}
+                  onChange={(e) => setDueDate(e.target.value)}
+                  className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-dark-border bg-white dark:bg-dark-card text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition-colors"
+                />
+              </div>
+
+              <div>
+                <label htmlFor="task-notes" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  {t('task.notes')}
+                </label>
+                <textarea
+                  id="task-notes"
+                  value={notes}
+                  onChange={(e) => setNotes(sanitizeInput(e.target.value))}
+                  placeholder={t('taskForm.notesPlaceholder')}
+                  rows={2}
+                  className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-dark-border bg-white dark:bg-dark-card text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition-colors resize-none"
+                  maxLength={500}
+                />
+              </div>
+
               {!editTask && (
                 <TaskFormTemplateSelector
                   templates={templates}

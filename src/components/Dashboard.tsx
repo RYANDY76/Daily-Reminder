@@ -20,15 +20,15 @@ import { getSessionFromHour } from '../dates'
 import SessionCard from './SessionCard'
 import DailyPlan from './DailyPlan'
 import Archive from './Archive'
-import MoodWidget from './MoodWidget'
-import WeeklyReview from './WeeklyReview'
 import TaskForm from './TaskForm'
 import LoadingOverlay from './LoadingOverlay'
 import { DashboardSkeleton } from './Skeleton'
-import { Search, ArchiveIcon, WifiOff, Sun, Sunrise, Sunset, Moon } from 'lucide-react'
+import { Search, ArchiveIcon, WifiOff, Sun, Sunrise, Sunset, Moon, ChevronDown, ChevronUp } from 'lucide-react'
 import SmartReminder from './SmartReminder'
 import VoiceToTask from './VoiceToTask'
 import DailyChallenge from './DailyChallenge'
+import MoodWidget from './MoodWidget'
+import WeeklyReview from './WeeklyReview'
 
 // Sub-components
 import DashboardHeader from './dashboard/DashboardHeader'
@@ -84,6 +84,7 @@ export default function Dashboard() {
   const [batchMode, setBatchMode] = useState(false)
   const [selectedTasks, setSelectedTasks] = useState<Set<string>>(new Set())
   const [batchLoading, setBatchLoading] = useState(false)
+  const [showExtraWidgets, setShowExtraWidgets] = useState(false)
   const searchInputRef = useRef<HTMLInputElement>(null)
 
   const handleSearchShortcut = useCallback(() => {
@@ -373,10 +374,6 @@ export default function Dashboard() {
           missed={missed}
         />
 
-        <SmartReminder />
-        <VoiceToTask />
-        <DailyChallenge />
-
         <ProgressBar
           progress={progress}
           totalTasks={totalTasks}
@@ -390,6 +387,35 @@ export default function Dashboard() {
           <ArchiveIcon className="w-4 h-4" />
           {t('dashboard.archive')}
         </button>
+
+        {/* Extra widgets toggle */}
+        <button
+          onClick={() => setShowExtraWidgets(!showExtraWidgets)}
+          className="w-full flex items-center justify-center gap-2 text-xs font-medium text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors py-2"
+        >
+          {showExtraWidgets ? (
+            <>
+              <ChevronUp className="w-3.5 h-3.5" />
+              Sembunyikan widget tambahan
+            </>
+          ) : (
+            <>
+              <ChevronDown className="w-3.5 h-3.5" />
+              Tampilkan widget tambahan
+            </>
+          )}
+        </button>
+
+        {/* Extra widgets - hidden by default */}
+        {showExtraWidgets && (
+          <div className="space-y-5">
+            <SmartReminder />
+            <VoiceToTask />
+            <DailyChallenge />
+            <MoodWidget />
+            <WeeklyReview />
+          </div>
+        )}
 
         <DailyPlan
           tasks={filteredTasks}

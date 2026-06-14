@@ -35,7 +35,7 @@ Deno.serve(async (req) => {
     const body = await req.json()
     const profileId: string = body.profileId
     const payload: PushPayload = {
-      title: body.title || 'Daily Reminder',
+      title: body.title || 'Avora',
       body: body.body || '',
       url: body.url || '/',
       tag: body.tag || `test-${Date.now()}`

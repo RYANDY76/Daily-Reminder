@@ -61,6 +61,9 @@ vi.mock('../hooks/useOffline', () => ({
 }))
 vi.mock('./SmartReminder', () => ({ default: () => null }))
 vi.mock('./VoiceToTask', () => ({ default: () => null }))
+vi.mock('./DailyChallenge', () => ({ default: () => null }))
+vi.mock('./MoodWidget', () => ({ default: () => null }))
+vi.mock('./WeeklyReview', () => ({ default: () => null }))
 
 import Dashboard from './Dashboard'
 

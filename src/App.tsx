@@ -13,7 +13,6 @@ import { loadAccentColor } from './utils/theme'
 import { initAccessibility } from './components/AccessibilitySettings'
 import { useT } from './i18n'
 import Layout from './components/Layout'
-import Welcome from './components/Welcome'
 import PinModal from './components/PinModal'
 import ErrorBoundary from './components/ErrorBoundary'
 import { ToastContainer } from './components/Toast'
@@ -21,7 +20,6 @@ import FAB from './components/FAB'
 import KeyboardShortcutsHelp from './components/KeyboardShortcutsHelp'
 import InstallPrompt from './components/InstallPrompt'
 import UpdatePrompt from './components/UpdatePrompt'
-import OnboardingTour from './components/OnboardingTour'
 import ModeSelector from './components/ModeSelector'
 import DesktopSidebar from './components/DesktopSidebar'
 import Landing from './components/Landing'
@@ -49,7 +47,6 @@ function useAuthGate() {
   return {
     authenticated: !signedOut && (guestMode || hasExistingProfile || hasSupabaseSession),
     authReady: !authLoading && !profileLoading,
-    showWelcome: profiles.length === 0 && !guestMode && !hasSupabaseSession,
     enableGuest: () => {
       localStorage.setItem(GUEST_FLAG_KEY, 'true')
       setGuestMode(true)
@@ -86,7 +83,7 @@ export default function App() {
   const dataLoadedRef = useRef(false)
   const lastRefreshRef = useRef(0)
 
-  const { authenticated, authReady, showWelcome, enableGuest, disableGuest } = useAuthGate()
+  const { authenticated, authReady, enableGuest, disableGuest } = useAuthGate()
 
   useIdleTimeout()
   useAnalytics()
@@ -285,17 +282,6 @@ export default function App() {
     )
   }
 
-  if (showWelcome) {
-    return (
-      <Welcome
-        onComplete={() => {
-          dataLoadedRef.current = false
-          loadProfiles()
-        }}
-      />
-    )
-  }
-
   return (
     <>
       <ToastContainer toasts={toastQueue} onRemove={removeToast} />
@@ -332,7 +318,6 @@ export default function App() {
       )}
       <InstallPrompt />
       <UpdatePrompt />
-      <OnboardingTour />
     </>
   )
 }

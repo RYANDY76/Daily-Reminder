@@ -1,4 +1,4 @@
-# Daily Reminder
+# Avora
 
 Aplikasi pengingat harian berbasis web (PWA) untuk mengatur jadwal, kebiasaan, pomodoro, goals, dan mode couple.
 

@@ -8,7 +8,7 @@ interface ModeSelectorProps {
 }
 
 export default function ModeSelector({ onSelect }: ModeSelectorProps) {
-  const [selected, setSelected] = useState<AppMode>('pelajar')
+  const [selected, setSelected] = useState<AppMode>('mudah')
   const [step, setStep] = useState<'select' | 'prompt'>('select')
   const updateProfile = useProfileStore(s => s.updateProfile)
 

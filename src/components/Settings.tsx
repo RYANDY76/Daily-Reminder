@@ -18,7 +18,7 @@ import ToggleSwitch from './ToggleSwitch'
 import FamilyMode from './FamilyMode'
 import ScheduleTemplates from './ScheduleTemplates'
 import WeeklyReport from './WeeklyReport'
-import { FileText, ShieldCheck, Download, Trash2, Fingerprint, Lock, Bell, Smartphone, Share2, Eye, Users, Calendar, Printer } from 'lucide-react'
+import { FileText, ShieldCheck, Download, Trash2, Fingerprint, Lock, Bell, Smartphone, Share2, Eye, Users, Calendar, Printer, ChevronDown } from 'lucide-react'
 
 export default function Settings() {
   const profile = useProfileStore((s) => s.currentProfile)
@@ -42,6 +42,7 @@ export default function Settings() {
   const [showFamilyMode, setShowFamilyMode] = useState(false)
   const [showTemplates, setShowTemplates] = useState(false)
   const [showWeeklyReport, setShowWeeklyReport] = useState(false)
+  const [showAdvanced, setShowAdvanced] = useState(false)
 
   useEffect(() => {
     isAvailable().then(setBioSupported)
@@ -91,7 +92,7 @@ export default function Settings() {
       const url = URL.createObjectURL(blob)
       const link = document.createElement('a')
       link.href = url
-      link.download = `daily-reminder-full-export-${new Date().toISOString().split('T')[0]}.json`
+      link.download = `avora-export-${new Date().toISOString().split('T')[0]}.json`
       document.body.appendChild(link)
       link.click()
       document.body.removeChild(link)
@@ -162,6 +163,7 @@ export default function Settings() {
       <ConfirmDialog />
       <h2 className="page-heading">{t('settings.title')}</h2>
 
+      {/* Basic Settings - Always visible */}
       <section>
         <h3 className="section-title mb-3">{t('settings.display')}</h3>
         <div className="card-border p-4">
@@ -288,116 +290,139 @@ export default function Settings() {
         </div>
       </section>
 
-      <section>
-        <h3 className="section-title mb-3 flex items-center gap-2">
-          <Calendar className="w-3.5 h-3.5" />
-          Template Jadwal
-        </h3>
-        <div className="card-border p-4">
-          <button onClick={() => setShowTemplates(true)} className="btn-primary w-full flex items-center justify-center gap-2">
-            <Calendar className="w-4 h-4" />
-            Lihat Template
-          </button>
-        </div>
-      </section>
+      {/* Advanced Settings - Collapsible */}
+      <div>
+        <button
+          onClick={() => setShowAdvanced(!showAdvanced)}
+          className="w-full flex items-center justify-between rounded-xl border border-gray-200 dark:border-dark-border px-4 py-3 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-dark-card transition-colors min-h-tap"
+          aria-expanded={showAdvanced}
+        >
+          <span className="section-title">Pengaturan Lanjutan</span>
+          <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${showAdvanced ? 'rotate-180' : ''}`} />
+        </button>
+      </div>
 
-      <section>
-        <h3 className="section-title mb-3 flex items-center gap-2">
-          <Printer className="w-3.5 h-3.5" />
-          Laporan Mingguan
-        </h3>
-        <div className="card-border p-4">
-          <button onClick={() => setShowWeeklyReport(true)} className="btn-primary w-full flex items-center justify-center gap-2">
-            <Printer className="w-4 h-4" />
-            Cetak / PDF
-          </button>
-        </div>
-      </section>
+      {showAdvanced && (
+        <div className="space-y-6">
+          <section>
+            <h3 className="section-title mb-3 flex items-center gap-2">
+              <Calendar className="w-3.5 h-3.5" />
+              Template Jadwal
+            </h3>
+            <div className="card-border p-4">
+              <button onClick={() => setShowTemplates(true)} className="btn-primary w-full flex items-center justify-center gap-2">
+                <Calendar className="w-4 h-4" />
+                Lihat Template
+              </button>
+            </div>
+          </section>
 
-      <section>
-        <h3 className="section-title mb-3 flex items-center gap-2">
-          <FileText className="w-3.5 h-3.5" />
-          {t('settings.export')}
-        </h3>
-        <div className="card-border p-4">
-          <button
-            onClick={() => setExportModal(true)}
-            className="btn-primary w-full flex items-center justify-center gap-2"
-          >
-            <FileText className="w-4 h-4" />
-            {t('settings.exportBtn')}
-          </button>
-        </div>
-      </section>
+          <section>
+            <h3 className="section-title mb-3 flex items-center gap-2">
+              <Printer className="w-3.5 h-3.5" />
+              Laporan Mingguan
+            </h3>
+            <div className="card-border p-4">
+              <button onClick={() => setShowWeeklyReport(true)} className="btn-primary w-full flex items-center justify-center gap-2">
+                <Printer className="w-4 h-4" />
+                Cetak / PDF
+              </button>
+            </div>
+          </section>
 
-      <section>
-        <h3 className="section-title mb-3 flex items-center gap-2">
-          <ShieldCheck className="w-3.5 h-3.5" />
-          {t('settings.dataPrivacy')}
-        </h3>
-        <div className="card-border divide-y divide-gray-100 dark:divide-dark-border">
-          <div className="p-4 bg-primary-50/50 dark:bg-primary-900/10">
-            <div className="flex items-start gap-3">
-              <ShieldCheck className="w-5 h-5 text-primary-500 mt-0.5 flex-shrink-0" />
-              <div>
-                <p className="text-sm font-medium text-primary-800 dark:text-primary-300">{t('settings.consentTitle')}</p>
-                <p className="text-xs text-primary-600 dark:text-primary-400 mt-1 leading-relaxed">{t('settings.consentText')}</p>
+          <section>
+            <h3 className="section-title mb-3 flex items-center gap-2">
+              <FileText className="w-3.5 h-3.5" />
+              {t('settings.export')}
+            </h3>
+            <div className="card-border p-4">
+              <button
+                onClick={() => setExportModal(true)}
+                className="btn-primary w-full flex items-center justify-center gap-2"
+              >
+                <FileText className="w-4 h-4" />
+                {t('settings.exportBtn')}
+              </button>
+            </div>
+          </section>
+
+          <section>
+            <h3 className="section-title mb-3 flex items-center gap-2">
+              <ShieldCheck className="w-3.5 h-3.5" />
+              {t('settings.dataPrivacy')}
+            </h3>
+            <div className="card-border divide-y divide-gray-100 dark:divide-dark-border">
+              <div className="p-4 bg-primary-50/50 dark:bg-primary-900/10">
+                <div className="flex items-start gap-3">
+                  <ShieldCheck className="w-5 h-5 text-primary-500 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <p className="text-sm font-medium text-primary-800 dark:text-primary-300">{t('settings.consentTitle')}</p>
+                    <p className="text-xs text-primary-600 dark:text-primary-400 mt-1 leading-relaxed">{t('settings.consentText')}</p>
+                  </div>
+                </div>
+              </div>
+              <div className="p-4 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div>
+                    <p className="text-sm font-medium text-gray-900 dark:text-white">Bantu kami perbaiki aplikasi</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">Kirim data penggunaan anonim</p>
+                  </div>
+                </div>
+                <ToggleSwitch
+                  enabled={analyticsEnabled}
+                  onToggle={() => {
+                    const newVal = !analyticsEnabled
+                    setAnalyticsLocal(newVal)
+                    setAnalyticsEnabled(newVal)
+                  }}
+                  ariaLabel={t('settings.analytics')}
+                />
+              </div>
+              <div className="p-4 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div>
+                    <p className="text-sm font-medium text-gray-900 dark:text-white">Laporkan error otomatis</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">Kirim laporan crash untuk perbaikan</p>
+                  </div>
+                </div>
+                <ToggleSwitch
+                  enabled={sentryEnabled}
+                  onToggle={() => {
+                    const newVal = !sentryEnabled
+                    setSentryLocal(newVal)
+                    localStorage.setItem('avora_sentry_enabled', String(newVal))
+                  }}
+                  ariaLabel={t('settings.sentry')}
+                />
+              </div>
+              <div className="p-4 space-y-3">
+                <button
+                  onClick={handleExportAllData}
+                  disabled={exportAllLoading}
+                  className="btn-primary w-full flex items-center justify-center gap-2"
+                >
+                  <Download className="w-4 h-4" />
+                  {exportAllLoading ? t('settings.exportGenerating') : t('settings.exportAllData')}
+                </button>
+                <button
+                  onClick={handleDeleteAllData}
+                  className="btn-ghost w-full text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center justify-center gap-2"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  {t('settings.deleteAllData')}
+                </button>
               </div>
             </div>
-          </div>
-          <div className="p-4 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div>
-                <p className="text-sm font-medium text-gray-900 dark:text-white">{t('settings.analytics')}</p>
-                <p className="text-xs text-gray-500 dark:text-gray-400">{t('settings.analyticsDesc')}</p>
-              </div>
+          </section>
+
+          <section>
+            <h3 className="section-title mb-3">Advanced</h3>
+            <div className="card-border p-4">
+              <BackupSettings />
             </div>
-            <ToggleSwitch
-              enabled={analyticsEnabled}
-              onToggle={() => {
-                const newVal = !analyticsEnabled
-                setAnalyticsLocal(newVal)
-                setAnalyticsEnabled(newVal)
-              }}
-              ariaLabel={t('settings.analytics')}
-            />
-          </div>
-          <div className="p-4 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div>
-                <p className="text-sm font-medium text-gray-900 dark:text-white">{t('settings.sentry')}</p>
-                <p className="text-xs text-gray-500 dark:text-gray-400">{t('settings.sentryDesc')}</p>
-              </div>
-            </div>
-            <ToggleSwitch
-              enabled={sentryEnabled}
-              onToggle={() => {
-                const newVal = !sentryEnabled
-                setSentryLocal(newVal)
-                localStorage.setItem('avora_sentry_enabled', String(newVal))
-              }}
-              ariaLabel={t('settings.sentry')}
-            />
-          </div>
-          <div className="p-4 space-y-3">
-            <button
-              onClick={handleExportAllData}
-              disabled={exportAllLoading}
-              className="btn-primary w-full flex items-center justify-center gap-2"
-            >
-              <Download className="w-4 h-4" />
-              {exportAllLoading ? t('settings.exportGenerating') : t('settings.exportAllData')}
-            </button>
-            <button
-              onClick={handleDeleteAllData}
-              className="btn-ghost w-full text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center justify-center gap-2"
-            >
-              <Trash2 className="w-4 h-4" />
-              {t('settings.deleteAllData')}
-            </button>
-          </div>
+          </section>
         </div>
-      </section>
+      )}
 
       {/* Export Modal */}
       {exportModal && (
@@ -485,13 +510,6 @@ export default function Settings() {
       {showFamilyMode && <FamilyMode onClose={() => setShowFamilyMode(false)} />}
       {showTemplates && <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-6"><div className="bg-white dark:bg-dark-surface rounded-3xl p-6 w-full max-w-md max-h-[80vh] overflow-y-auto"><ScheduleTemplates onApplied={() => setShowTemplates(false)} /></div></div>}
       {showWeeklyReport && <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-6"><div className="bg-white dark:bg-dark-surface rounded-3xl p-6 w-full max-w-sm"><WeeklyReport onClose={() => setShowWeeklyReport(false)} /></div></div>}
-
-      <section>
-        <h3 className="section-title mb-3">Advanced</h3>
-        <div className="card-border p-4">
-          <BackupSettings />
-        </div>
-      </section>
     </div>
   )
 }

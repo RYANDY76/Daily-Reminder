@@ -66,7 +66,7 @@ Deno.serve(async (req) => {
 
       try {
         await sendPushToSubscription(sub.subscription, {
-          title: 'Daily Reminder',
+          title: 'Avora',
           body: `Waktunya: ${task.title}`,
           url: '/',
           tag: logId

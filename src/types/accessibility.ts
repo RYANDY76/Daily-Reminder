@@ -13,7 +13,7 @@ export const DEFAULT_ACCESSIBILITY: AccessibilitySettings = {
   highContrast: false,
   reducedMotion: false,
   bigButtons: false,
-  appMode: 'pelajar'
+  appMode: 'mudah'
 }
 
 export interface ModeConfig {
@@ -84,11 +84,11 @@ export function isFeatureHidden(feature: string): boolean {
 export function getCurrentMode(): AppMode {
   try {
     const raw = localStorage.getItem('avora_accessibility')
-    if (!raw) return 'pelajar'
+    if (!raw) return 'mudah'
     const settings: AccessibilitySettings = JSON.parse(raw)
-    return settings.appMode || 'pelajar'
+    return settings.appMode || 'mudah'
   } catch {
-    return 'pelajar'
+    return 'mudah'
   }
 }
 
