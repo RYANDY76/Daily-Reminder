@@ -32,7 +32,7 @@ export default class ErrorBoundary extends Component<Props, State> {
 
   private getLang(): string {
     try {
-      return JSON.parse(localStorage.getItem('daily_reminder_lang') || '"id"')
+      return JSON.parse(localStorage.getItem('avora_lang') || '"id"')
     } catch { return 'id' }
   }
 

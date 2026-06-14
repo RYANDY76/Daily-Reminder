@@ -75,7 +75,7 @@ export default function DisplaySettings() {
               key={theme.name}
               onClick={() => {
                 applyAccentColor(theme.color)
-                localStorage.setItem('daily_reminder_accent', theme.color)
+                localStorage.setItem('avora_accent', theme.color)
               }}
               className="flex flex-col items-center gap-1 min-h-tap"
             >

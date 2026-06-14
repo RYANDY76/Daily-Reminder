@@ -56,8 +56,8 @@ export default function ProfileManager() {
     })
     if (!ok) return
     await useAuthStore.getState().signOut()
-    localStorage.removeItem('daily_reminder_guest')
-    localStorage.removeItem('daily_reminder_last_profile')
+    localStorage.removeItem('avora_guest')
+    localStorage.removeItem('avora_last_profile')
   }
 
   const handleSaveEdit = async (_id: string) => {

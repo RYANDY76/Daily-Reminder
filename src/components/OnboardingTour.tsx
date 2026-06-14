@@ -4,7 +4,7 @@ import { useT } from '../i18n'
 import { PAGE_TO_ROUTE } from '../router'
 import { X, ChevronRight } from 'lucide-react'
 
-const ONBOARDING_KEY = 'daily_reminder_onboarding_done'
+const ONBOARDING_KEY = 'avora_onboarding_done'
 
 export function isOnboardingComplete(): boolean {
   return localStorage.getItem(ONBOARDING_KEY) === 'true'

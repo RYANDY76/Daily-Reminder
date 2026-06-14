@@ -55,7 +55,7 @@ export default function DashboardHeader({
       <div>
         <h2 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
           {getTimeGreeting(t)}
-          <span className="text-xs font-normal text-gray-400 dark:text-gray-500 tabular-nums">{timeStr}</span>
+          <span className="text-xs font-normal text-gray-500 dark:text-gray-500 tabular-nums">{timeStr}</span>
         </h2>
         <div className="flex items-center gap-3">
           <p className="text-sm text-gray-500 dark:text-gray-400">{profileName || t('dashboard.welcome')}</p>

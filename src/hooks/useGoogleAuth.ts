@@ -1,6 +1,6 @@
 import { useState, useCallback, useRef } from 'react'
 
-const CLIENT_ID_KEY = 'daily_reminder_google_client_id'
+const CLIENT_ID_KEY = 'avora_google_client_id'
 
 export interface GoogleUserInfo {
   id: string

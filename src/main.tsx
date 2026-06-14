@@ -4,6 +4,9 @@ import { HashRouter } from 'react-router-dom'
 import * as Sentry from '@sentry/react'
 import App from './App'
 import './index.css'
+import { migrateStorageKeys, STORAGE_KEYS } from './constants'
+
+migrateStorageKeys()
 
 // Force-unregister any service worker from previous builds
 // Prevents stale cache from interfering with dev server HMR
@@ -21,7 +24,7 @@ if (SENTRY_DSN) {
     tracesSampleRate: 0.1,
     environment: import.meta.env.PROD ? 'production' : 'development',
     beforeSend(event) {
-      const enabled = localStorage.getItem('daily_reminder_sentry_enabled')
+      const enabled = localStorage.getItem(STORAGE_KEYS.SENTRY_ENABLED)
       if (enabled === 'false') return null
       return event
     }

@@ -86,17 +86,17 @@ export default function WeeklyReview() {
             <div className="bg-gray-50 dark:bg-dark-surface rounded-xl p-3 text-center">
               <Target className="w-4 h-4 text-primary-500 mx-auto mb-1" />
               <p className="text-lg font-bold text-primary-500">{totalDone}</p>
-              <p className="text-[10px] text-gray-400">{t('weeklyReview.tasksDone')}</p>
+              <p className="text-[11px] text-gray-500 dark:text-gray-500">{t('weeklyReview.tasksDone')}</p>
             </div>
             <div className="bg-gray-50 dark:bg-dark-surface rounded-xl p-3 text-center">
               <Flame className="w-4 h-4 text-orange-500 mx-auto mb-1" />
               <p className="text-lg font-bold text-orange-500">{workPomos.length}</p>
-              <p className="text-[10px] text-gray-400">{t('weeklyReview.pomos')}</p>
+              <p className="text-[11px] text-gray-500 dark:text-gray-500">{t('weeklyReview.pomos')}</p>
             </div>
             <div className="bg-gray-50 dark:bg-dark-surface rounded-xl p-3 text-center">
               <Trophy className="w-4 h-4 text-yellow-500 mx-auto mb-1" />
               <p className="text-lg font-bold text-yellow-500">{totalFocusMinutes}</p>
-              <p className="text-[10px] text-gray-400">{t('weeklyReview.focusMin')}</p>
+              <p className="text-[11px] text-gray-500 dark:text-gray-500">{t('weeklyReview.focusMin')}</p>
             </div>
           </div>
 
@@ -113,7 +113,7 @@ export default function WeeklyReview() {
                       className="w-full rounded-t-sm bg-primary-500 transition-all"
                       style={{ height: `${Math.max(pct, 4)}%` }}
                     />
-                    <span className="text-[8px] text-gray-400">{formatDateShort(date).split(' ')[0]}</span>
+                    <span className="text-[11px] text-gray-500 dark:text-gray-500">{formatDateShort(date).split(' ')[0]}</span>
                   </div>
                 )
               })}

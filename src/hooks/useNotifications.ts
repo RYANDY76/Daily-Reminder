@@ -4,7 +4,7 @@ import { getTasksForDate } from '../database'
 import { getTodayDate, getTomorrowDate } from '../dates'
 
 const CHECK_INTERVAL = 60_000
-const STORAGE_KEY = 'daily_reminder_notif_prefs'
+const STORAGE_KEY = 'avora_notif_prefs'
 
 export interface NotifPrefs {
   enabled: boolean

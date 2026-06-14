@@ -1,3 +1,5 @@
+import { STORAGE_KEYS } from './constants'
+
 const V2_PREFIX = 'v2:'
 
 function timingSafeEqual(a: string, b: string): boolean {
@@ -26,12 +28,12 @@ export async function verifyPin(pin: string, hash: string, salt: string): Promis
 
 async function getKeyFromStorage(): Promise<CryptoKey | null> {
   try {
-    let stored = sessionStorage.getItem('daily_reminder_crypto_key_v2')
+    let stored = sessionStorage.getItem(STORAGE_KEYS.CRYPTO_KEY_V2)
     if (!stored) {
       // Migration: check localStorage as fallback (read-only)
-      const legacy = localStorage.getItem('daily_reminder_crypto_key_v2')
+      const legacy = localStorage.getItem(STORAGE_KEYS.CRYPTO_KEY_V2)
       if (legacy) {
-        sessionStorage.setItem('daily_reminder_crypto_key_v2', legacy)
+        sessionStorage.setItem(STORAGE_KEYS.CRYPTO_KEY_V2, legacy)
         localStorage.removeItem('daily_reminder_crypto_key_v2')
         stored = legacy
       } else {
@@ -57,7 +59,7 @@ async function generateAndStoreKey(): Promise<CryptoKey> {
   const exported = await crypto.subtle.exportKey('raw', key)
   const keyId = crypto.randomUUID()
   const encoded = btoa(String.fromCharCode(...new Uint8Array(exported)))
-  sessionStorage.setItem('daily_reminder_crypto_key_v2', `${keyId}:${encoded}`)
+  sessionStorage.setItem(STORAGE_KEYS.CRYPTO_KEY_V2, `${keyId}:${encoded}`)
   return key
 }
 

@@ -168,7 +168,7 @@ export default function BottomNav() {
                 }`}>
                   <Icon className="w-5 h-5" />
                 </div>
-                <span className="text-[10px] font-medium leading-none mt-0.5">{t(tab.label)}</span>
+                <span className="text-xs font-semibold leading-none mt-0.5">{t(tab.label)}</span>
               </button>
             )
           })}
@@ -189,7 +189,7 @@ export default function BottomNav() {
             }`}>
               <MoreHorizontal className="w-5 h-5" />
             </div>
-            <span className="text-[10px] font-medium leading-none mt-0.5">{t('nav.more')}</span>
+            <span className="text-xs font-semibold leading-none mt-0.5">{t('nav.more')}</span>
           </button>
         </div>
       </nav>

@@ -27,7 +27,7 @@ export default function Settings() {
   const [exportModal, setExportModal] = useState(false)
   const t = useT()
   const [analyticsEnabled, setAnalyticsLocal] = useState(isAnalyticsEnabled())
-  const [sentryEnabled, setSentryLocal] = useState(localStorage.getItem('daily_reminder_sentry_enabled') !== 'false')
+  const [sentryEnabled, setSentryLocal] = useState(localStorage.getItem('avora_sentry_enabled') !== 'false')
   const [exportAllLoading, setExportAllLoading] = useState(false)
   const { register, isAvailable, loading: bioLoading } = useBiometricAuth()
   const [bioSupported, setBioSupported] = useState(false)
@@ -317,7 +317,7 @@ export default function Settings() {
               onToggle={() => {
                 const newVal = !sentryEnabled
                 setSentryLocal(newVal)
-                localStorage.setItem('daily_reminder_sentry_enabled', String(newVal))
+                localStorage.setItem('avora_sentry_enabled', String(newVal))
               }}
               ariaLabel={t('settings.sentry')}
             />

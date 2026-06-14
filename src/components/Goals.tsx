@@ -172,7 +172,7 @@ export default function Goals() {
                 {goal.title}
               </p>
               {goal.description && (
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 line-clamp-2">{goal.description}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-500 mt-0.5 line-clamp-2">{goal.description}</p>
               )}
               {goal.targetDate && (
                 <div className={`flex items-center gap-1 mt-1.5 text-xs ${
@@ -221,7 +221,7 @@ export default function Goals() {
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-lg font-bold text-gray-900 dark:text-white">{t('goals.title')}</h2>
-            <p className="text-xs text-gray-500 dark:text-gray-400">{t('goals.subtitle')}</p>
+            <p className="text-xs text-gray-500 dark:text-gray-500">{t('goals.subtitle')}</p>
           </div>
           <button
             onClick={openAdd}
@@ -237,11 +237,11 @@ export default function Goals() {
         <div className="grid grid-cols-2 gap-3">
           <div className="card p-3 text-center">
             <p className="text-xl font-bold text-primary-500">{activeGoals.length}</p>
-            <p className="text-xs text-gray-500 dark:text-gray-400">{t('goals.active')}</p>
+            <p className="text-xs text-gray-500 dark:text-gray-500">{t('goals.active')}</p>
           </div>
           <div className="card p-3 text-center">
             <p className="text-xl font-bold text-green-500">{completedGoals.length}</p>
-            <p className="text-xs text-gray-500 dark:text-gray-400">{t('goals.completed')}</p>
+            <p className="text-xs text-gray-500 dark:text-gray-500">{t('goals.completed')}</p>
           </div>
         </div>
       )}

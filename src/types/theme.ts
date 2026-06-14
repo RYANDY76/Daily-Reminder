@@ -134,9 +134,9 @@ export function getThemeById(id: string): Theme | undefined {
 }
 
 export function saveThemePreference(themeId: string): void {
-  localStorage.setItem('daily_reminder_theme', themeId)
+  localStorage.setItem('avora_theme', themeId)
 }
 
 export function loadThemePreference(): string {
-  return localStorage.getItem('daily_reminder_theme') || 'default'
+  return localStorage.getItem('avora_theme') || 'default'
 }

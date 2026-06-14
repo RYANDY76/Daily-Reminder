@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import type { PublicHoliday } from '../types'
 
-const STORAGE_KEY = 'daily_reminder_holidays_cache'
+const STORAGE_KEY = 'avora_holidays_cache'
 const CACHE_TTL = 24 * 60 * 60 * 1000
 const CACHE_VERSION = 2
 

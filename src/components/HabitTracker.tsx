@@ -191,15 +191,15 @@ export default function HabitTracker() {
         <div className="grid grid-cols-3 gap-2">
           <div className="card p-3 text-center">
             <p className="text-xl font-bold text-primary-500">{completedToday}</p>
-            <p className="text-[10px] text-gray-500 dark:text-gray-400">{t('habits.todayDone')}</p>
+            <p className="text-[11px] text-gray-500 dark:text-gray-500">{t('habits.todayDone')}</p>
           </div>
           <div className="card p-3 text-center">
             <p className="text-xl font-bold text-gray-900 dark:text-white">{totalHabits}</p>
-            <p className="text-[10px] text-gray-500 dark:text-gray-400">{t('habits.totalHabits')}</p>
+            <p className="text-[11px] text-gray-500 dark:text-gray-500">{t('habits.totalHabits')}</p>
           </div>
           <div className="card p-3 text-center">
             <p className="text-xl font-bold text-orange-500">{bestStreakAll}</p>
-            <p className="text-[10px] text-gray-500 dark:text-gray-400">{t('habits.bestStreakAll')}</p>
+            <p className="text-[11px] text-gray-500 dark:text-gray-500">{t('habits.bestStreakAll')}</p>
           </div>
         </div>
       )}
