@@ -7,8 +7,10 @@ import { useTaskStore } from './stores/useTaskStore'
 import { useRecurringStore } from './stores/useRecurringStore'
 import { useIdleTimeout } from './hooks/useIdleTimeout'
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts'
+import { useKeyboardNav } from './hooks/useKeyboardNav'
 import { useAnalytics } from './hooks/useAnalytics'
 import { loadAccentColor } from './utils/theme'
+import { initAccessibility } from './components/AccessibilitySettings'
 import { useT } from './i18n'
 import Layout from './components/Layout'
 import Welcome from './components/Welcome'
@@ -20,6 +22,8 @@ import KeyboardShortcutsHelp from './components/KeyboardShortcutsHelp'
 import InstallPrompt from './components/InstallPrompt'
 import UpdatePrompt from './components/UpdatePrompt'
 import OnboardingTour from './components/OnboardingTour'
+import ModeSelector from './components/ModeSelector'
+import DesktopSidebar from './components/DesktopSidebar'
 import Landing from './components/Landing'
 import LoginPage from './components/LoginPage'
 import AppRoutes, { ROUTE_TO_PAGE, preloadRoutes } from './router'
@@ -77,6 +81,8 @@ export default function App() {
 
   const [initialized, setInitialized] = useState(false)
   const [showShortcutsHelp, setShowShortcutsHelp] = useState(false)
+  const [showModeSelector, setShowModeSelector] = useState(false)
+  const [isDesktop, setIsDesktop] = useState(false)
   const dataLoadedRef = useRef(false)
   const lastRefreshRef = useRef(0)
 
@@ -84,6 +90,16 @@ export default function App() {
 
   useIdleTimeout()
   useAnalytics()
+  useKeyboardNav()
+
+  // Desktop detection
+  useEffect(() => {
+    const mq = window.matchMedia('(min-width: 1024px)')
+    setIsDesktop(mq.matches)
+    const handler = (e: MediaQueryListEvent) => setIsDesktop(e.matches)
+    mq.addEventListener('change', handler)
+    return () => mq.removeEventListener('change', handler)
+  }, [])
 
   // Sync URL to Zustand state
   useEffect(() => {
@@ -134,13 +150,20 @@ export default function App() {
   useEffect(() => {
     initAuth()
     loadAccentColor()
+    initAccessibility()
     loadProfiles()
       .then(async () => {
         setInitialized(true)
         preloadRoutes()
 
-        // Apply system preference only if profile has no explicit setting
+        // Check if mode selector should be shown
         const profile = useProfileStore.getState().currentProfile
+        const modeChosen = localStorage.getItem('avora_accessibility')
+        if (profile && !modeChosen) {
+          setShowModeSelector(true)
+        }
+
+        // Apply system preference only if profile has no explicit setting
         if (!profile || profile.darkMode === 'system') {
           const prefersDark = window.matchMedia?.('(prefers-color-scheme: dark)').matches ?? false
           if (prefersDark) {
@@ -277,12 +300,28 @@ export default function App() {
     <>
       <ToastContainer toasts={toastQueue} onRemove={removeToast} />
       <KeyboardShortcutsHelp isOpen={showShortcutsHelp} onClose={() => setShowShortcutsHelp(false)} />
+      {showModeSelector && (
+        <ModeSelector onSelect={() => setShowModeSelector(false)} />
+      )}
       {pinLocked && <PinModal />}
-      <Layout>
-        <ErrorBoundary>
-          <AppRoutes />
-        </ErrorBoundary>
-      </Layout>
+      {isDesktop ? (
+        <div className="flex min-h-screen">
+          <DesktopSidebar />
+          <main className="flex-1 desktop-main">
+            <Layout>
+              <ErrorBoundary>
+                <AppRoutes />
+              </ErrorBoundary>
+            </Layout>
+          </main>
+        </div>
+      ) : (
+        <Layout>
+          <ErrorBoundary>
+            <AppRoutes />
+          </ErrorBoundary>
+        </Layout>
+      )}
       {/* Floating Action Button only on dashboard */}
       {currentPage === 'dashboard' && (
         <FAB

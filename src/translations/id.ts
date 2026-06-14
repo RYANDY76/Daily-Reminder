@@ -20,7 +20,7 @@ const id: Record<string, string> = {
     'dashboard.progress': 'Progres Hari Ini',
     'dashboard.totalTasks': 'Total Tugas',
     'dashboard.streakDays': 'hari berturut-turut',
-    'dashboard.search': 'Cari tugas... (Ctrl+K)',
+    'dashboard.search': 'Cari tugas...',
     'dashboard.archive': 'Lihat Arsip',
     'dashboard.overdueTitle': 'Tugas Terlambat',
     'dashboard.notificationBtn': 'Notifikasi',

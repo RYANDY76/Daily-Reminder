@@ -20,7 +20,7 @@ const en: Record<string, string> = {
     'dashboard.progress': "Today's Progress",
     'dashboard.totalTasks': 'Total Tasks',
     'dashboard.streakDays': 'day streak',
-    'dashboard.search': 'Search tasks... (Ctrl+K)',
+    'dashboard.search': 'Search tasks...',
     'dashboard.archive': 'View Archive',
     'dashboard.overdueTitle': 'Overdue Tasks',
     'dashboard.notificationBtn': 'Notifications',

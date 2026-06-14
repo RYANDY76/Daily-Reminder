@@ -9,7 +9,7 @@ const Calendar = lazy(() => import('./components/Calendar'))
 const Pomodoro = lazy(() => import('./components/Pomodoro'))
 const HabitTracker = lazy(() => import('./components/HabitTracker'))
 const CoupleDashboard = lazy(() => import('./components/CoupleDashboard'))
-const Stats = lazy(() => import('./components/Stats'))
+const Progress = lazy(() => import('./components/Progress'))
 const ProfileManager = lazy(() => import('./components/ProfileManager'))
 const Settings = lazy(() => import('./components/Settings'))
 const Goals = lazy(() => import('./components/Goals'))
@@ -23,7 +23,7 @@ export function preloadRoutes() {
     () => import('./components/Pomodoro'),
     () => import('./components/HabitTracker'),
     () => import('./components/CoupleDashboard'),
-    () => import('./components/Stats'),
+    () => import('./components/Progress'),
     () => import('./components/ProfileManager'),
     () => import('./components/Settings'),
     () => import('./components/Goals'),
@@ -126,7 +126,7 @@ export default function AppRoutes() {
         <Route path="/habits" element={<PageTransition><LazyPage Component={HabitTracker as LazyComponent} skeleton="habits" /></PageTransition>} />
         <Route path="/couple" element={<PageTransition><LazyPage Component={CoupleDashboard as LazyComponent} skeleton="couple" /></PageTransition>} />
         <Route path="/goals" element={<PageTransition><LazyPage Component={Goals as LazyComponent} skeleton="goals" /></PageTransition>} />
-        <Route path="/stats" element={<PageTransition><LazyPage Component={Stats as LazyComponent} skeleton="stats" /></PageTransition>} />
+        <Route path="/stats" element={<PageTransition><LazyPage Component={Progress as LazyComponent} skeleton="stats" /></PageTransition>} />
         <Route path="/profile" element={<PageTransition><LazyPage Component={ProfileManager as LazyComponent} skeleton="profile" /></PageTransition>} />
         <Route path="/settings" element={<PageTransition><LazyPage Component={Settings as LazyComponent} skeleton="settings" /></PageTransition>} />
         <Route path="/about" element={<PageTransition><LazyPage Component={Landing as LazyComponent} skeleton="landing" /></PageTransition>} />

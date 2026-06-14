@@ -220,3 +220,61 @@
   max-height: 60vh;
   overflow-y: auto;
 }
+
+/* ─── Accessibility Modes ──────────────────────────────────────────────── */
+.high-contrast * {
+  border-color: #333 !important;
+}
+.high-contrast .card,
+.high-contrast .card-border {
+  border-width: 2px !important;
+  box-shadow: 0 0 0 1px #333 !important;
+}
+.dark.high-contrast * {
+  border-color: #666 !important;
+}
+.dark.high-contrast .card,
+.dark.high-contrast .card-border {
+  border-color: #666 !important;
+  box-shadow: 0 0 0 1px #666 !important;
+}
+
+.big-buttons button,
+.big-buttons [role="button"] {
+  min-height: 48px;
+  padding-left: 1.25rem;
+  padding-right: 1.25rem;
+}
+.big-buttons .min-h-tap {
+  min-height: 48px;
+  min-width: 48px;
+}
+
+.reduced-motion * {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+}
+
+@media (min-width: 1024px) {
+  .desktop-sidebar {
+    position: fixed;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 240px;
+    z-index: 40;
+    display: flex;
+    flex-direction: column;
+    background: white;
+    border-right: 1px solid #e5e7eb;
+    padding: 1rem 0;
+  }
+  .dark .desktop-sidebar {
+    background: #0f0f1a;
+    border-color: #2a2a3a;
+  }
+  .desktop-main {
+    margin-left: 240px;
+  }
+}

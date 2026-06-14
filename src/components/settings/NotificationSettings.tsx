@@ -1,10 +1,12 @@
 import { useNotifications } from '../../hooks/useNotifications'
-import { Bell, BellOff, Clock } from 'lucide-react'
+import { useDndDetection } from '../../hooks/useDndDetection'
+import { Bell, BellOff, Clock, Moon } from 'lucide-react'
 import { useT } from '../../i18n'
 
 export default function NotificationSettings() {
   const t = useT()
   const { prefs, updatePrefs, permission, requestPermission } = useNotifications()
+  const { isDnd, setDnd } = useDndDetection()
 
   const handleToggle = async (enabled: boolean) => {
     if (enabled) {
@@ -88,6 +90,23 @@ export default function NotificationSettings() {
               />
             </div>
           )}
+
+          <div className="flex items-center justify-between pt-2 border-t border-gray-100 dark:border-dark-border">
+            <div className="flex items-center gap-2">
+              <Moon className="w-4 h-4 text-purple-500" />
+              <label className="text-xs font-medium text-gray-700 dark:text-gray-300">Jangan Ganggu</label>
+            </div>
+            <button
+              onClick={() => setDnd(!isDnd)}
+              className={`relative w-9 h-5 rounded-full transition-colors flex-shrink-0 ${
+                isDnd ? 'bg-purple-500' : 'bg-gray-300'
+              }`}
+            >
+              <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${
+                isDnd ? 'translate-x-4.5' : 'translate-x-0.5'
+              }`} />
+            </button>
+          </div>
         </div>
       )}
 

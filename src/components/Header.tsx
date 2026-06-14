@@ -118,7 +118,7 @@ export default function Header() {
               <Search className="w-4 h-4" />
             </div>
             <span>{t('search.title')}</span>
-            <span className="ml-auto text-[10px] text-gray-400">Ctrl+K</span>
+            <span className="ml-auto text-[10px] text-gray-400 hidden lg:inline">Ctrl+K</span>
           </button>
           <button
             onClick={toggleDarkMode}

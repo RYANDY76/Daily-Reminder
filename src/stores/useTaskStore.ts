@@ -217,10 +217,22 @@ export const useTaskStore = create<TaskState>((set, get) => ({
       }
     }
 
+    // Gamification XP
+    if (newDone) {
+      const { useGamificationStore } = await import('./useGamificationStore')
+      useGamificationStore.getState().addXP(10, 'Task selesai')
+    }
+
     const profile = useProfileStore.getState().currentProfile
     if (profile) {
       const todayTasks = await getTasksForDate(profile.id, getTodayDate())
       await populateDailyHistory(profile.id, getTodayDate(), todayTasks)
+      // Record day completion for gamification
+      const { useGamificationStore } = await import('./useGamificationStore')
+      const doneCount = todayTasks.filter(t => t.done).length
+      const total = todayTasks.length
+      const pct = total > 0 ? Math.round((doneCount / total) * 100) : 0
+      useGamificationStore.getState().recordDay(pct)
     }
     scheduleAutoCloudSync()
   },

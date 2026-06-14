@@ -6,6 +6,7 @@ import { formatDateShort } from '../dates'
 import type { DailyHistory, PomodoroSession, MoodLog, MoodLevel } from '../types'
 import { BarChart3, TrendingUp, Calendar, Flame, Target, Clock, Trophy, Smile } from 'lucide-react'
 import EmptyState from './EmptyState'
+import GamificationPanel from './GamificationPanel'
 
 type ViewRange = '7' | '30'
 
@@ -179,6 +180,8 @@ export default function Stats() {
           {avgCompletion >= 80 ? t('stats.excellent') : avgCompletion >= 50 ? t('stats.good') : t('stats.improve')}
         </p>
       </div>
+
+      <GamificationPanel />
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <div className="card p-4">

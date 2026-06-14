@@ -26,6 +26,8 @@ import TaskForm from './TaskForm'
 import LoadingOverlay from './LoadingOverlay'
 import { DashboardSkeleton } from './Skeleton'
 import { Search, ArchiveIcon, WifiOff, Sun, Sunrise, Sunset, Moon } from 'lucide-react'
+import SmartReminder from './SmartReminder'
+import VoiceToTask from './VoiceToTask'
 
 // Sub-components
 import DashboardHeader from './dashboard/DashboardHeader'
@@ -369,6 +371,9 @@ export default function Dashboard() {
           pending={pending}
           missed={missed}
         />
+
+        <SmartReminder />
+        <VoiceToTask />
 
         <ProgressBar
           progress={progress}

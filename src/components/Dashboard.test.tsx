@@ -59,6 +59,8 @@ vi.mock('../hooks/usePerformance', () => ({ usePerformance: vi.fn() }))
 vi.mock('../hooks/useOffline', () => ({
   useOffline: () => ({ isOffline: false, queueToggleDone: vi.fn(), queueDelete: vi.fn() })
 }))
+vi.mock('./SmartReminder', () => ({ default: () => null }))
+vi.mock('./VoiceToTask', () => ({ default: () => null }))
 
 import Dashboard from './Dashboard'
 

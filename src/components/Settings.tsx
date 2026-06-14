@@ -12,8 +12,13 @@ import { isAnalyticsEnabled, setAnalyticsEnabled } from '../utils/analytics'
 import { AppErrorHandler } from '../utils/errorHandler'
 import DisplaySettings from './settings/DisplaySettings'
 import NotificationSettings from './settings/NotificationSettings'
+import BackupSettings from './settings/BackupSettings'
+import AccessibilitySettingsPanel from './AccessibilitySettings'
 import ToggleSwitch from './ToggleSwitch'
-import { FileText, ShieldCheck, Download, Trash2, Fingerprint, Lock, Bell, Smartphone, Share2 } from 'lucide-react'
+import FamilyMode from './FamilyMode'
+import ScheduleTemplates from './ScheduleTemplates'
+import WeeklyReport from './WeeklyReport'
+import { FileText, ShieldCheck, Download, Trash2, Fingerprint, Lock, Bell, Smartphone, Share2, Eye, Users, Calendar, Printer } from 'lucide-react'
 
 export default function Settings() {
   const profile = useProfileStore((s) => s.currentProfile)
@@ -34,6 +39,9 @@ export default function Settings() {
   const [bioError, setBioError] = useState('')
   const { installPrompt, promptInstall, isStandalone } = useInstallPrompt()
   const { confirm, ConfirmDialog } = useConfirm()
+  const [showFamilyMode, setShowFamilyMode] = useState(false)
+  const [showTemplates, setShowTemplates] = useState(false)
+  const [showWeeklyReport, setShowWeeklyReport] = useState(false)
 
   useEffect(() => {
     isAvailable().then(setBioSupported)
@@ -161,6 +169,16 @@ export default function Settings() {
         </div>
       </section>
 
+      <section>
+        <h3 className="section-title mb-3 flex items-center gap-2">
+          <Eye className="w-3.5 h-3.5" />
+          Aksesibilitas & Mode
+        </h3>
+        <div className="card-border p-4">
+          <AccessibilitySettingsPanel />
+        </div>
+      </section>
+
       {!isStandalone && (
       <section>
         <h3 className="section-title mb-3 flex items-center gap-2">
@@ -254,6 +272,45 @@ export default function Settings() {
           {typeof navigator.share === 'undefined' && (
             <p className="text-xs text-gray-400 text-center mt-2">{t('settings.shareNotSupported')}</p>
           )}
+        </div>
+      </section>
+
+      <section>
+        <h3 className="section-title mb-3 flex items-center gap-2">
+          <Users className="w-3.5 h-3.5" />
+          Mode Keluarga
+        </h3>
+        <div className="card-border p-4">
+          <button onClick={() => setShowFamilyMode(true)} className="btn-primary w-full flex items-center justify-center gap-2">
+            <Users className="w-4 h-4" />
+            Buka Mode Keluarga
+          </button>
+        </div>
+      </section>
+
+      <section>
+        <h3 className="section-title mb-3 flex items-center gap-2">
+          <Calendar className="w-3.5 h-3.5" />
+          Template Jadwal
+        </h3>
+        <div className="card-border p-4">
+          <button onClick={() => setShowTemplates(true)} className="btn-primary w-full flex items-center justify-center gap-2">
+            <Calendar className="w-4 h-4" />
+            Lihat Template
+          </button>
+        </div>
+      </section>
+
+      <section>
+        <h3 className="section-title mb-3 flex items-center gap-2">
+          <Printer className="w-3.5 h-3.5" />
+          Laporan Mingguan
+        </h3>
+        <div className="card-border p-4">
+          <button onClick={() => setShowWeeklyReport(true)} className="btn-primary w-full flex items-center justify-center gap-2">
+            <Printer className="w-4 h-4" />
+            Cetak / PDF
+          </button>
         </div>
       </section>
 
@@ -424,6 +481,17 @@ export default function Settings() {
           </div>
         </div>
       )}
+
+      {showFamilyMode && <FamilyMode onClose={() => setShowFamilyMode(false)} />}
+      {showTemplates && <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-6"><div className="bg-white dark:bg-dark-surface rounded-3xl p-6 w-full max-w-md max-h-[80vh] overflow-y-auto"><ScheduleTemplates onApplied={() => setShowTemplates(false)} /></div></div>}
+      {showWeeklyReport && <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-6"><div className="bg-white dark:bg-dark-surface rounded-3xl p-6 w-full max-w-sm"><WeeklyReport onClose={() => setShowWeeklyReport(false)} /></div></div>}
+
+      <section>
+        <h3 className="section-title mb-3">Advanced</h3>
+        <div className="card-border p-4">
+          <BackupSettings />
+        </div>
+      </section>
     </div>
   )
 }
