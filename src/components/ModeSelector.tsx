@@ -9,10 +9,12 @@ interface ModeSelectorProps {
 
 export default function ModeSelector({ onSelect }: ModeSelectorProps) {
   const [selected, setSelected] = useState<AppMode>('pelajar')
+  const [step, setStep] = useState<'select' | 'prompt'>('select')
   const updateProfile = useProfileStore(s => s.updateProfile)
 
+  const config = MODE_CONFIG[selected]
+
   const handleSelect = async () => {
-    const config = MODE_CONFIG[selected]
     await updateProfile({
       accentColor: config.accentColor,
       darkMode: 'system'
@@ -27,6 +29,34 @@ export default function ModeSelector({ onSelect }: ModeSelectorProps) {
     onSelect()
   }
 
+  if (step === 'prompt') {
+    return (
+      <div className="fixed inset-0 z-50 bg-gradient-to-br from-slate-900 via-indigo-950 to-purple-950 flex items-center justify-center p-6">
+        <div className="w-full max-w-lg space-y-6">
+          <div className="text-center space-y-3">
+            <span className="text-5xl block">{config.icon}</span>
+            <h1 className="text-2xl font-black text-white">{config.prompts.title}</h1>
+          </div>
+
+          <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-5">
+            <p className="text-white/80 text-sm leading-relaxed whitespace-pre-line">{config.prompts.body}</p>
+          </div>
+
+          <button
+            onClick={handleSelect}
+            className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-primary-500 to-purple-500 text-white font-bold text-base flex items-center justify-center gap-2 shadow-lg shadow-primary-500/30 active:scale-[0.98] transition-transform"
+          >
+            Mulai <ArrowRight className="w-4 h-4" />
+          </button>
+
+          <button onClick={() => setStep('select')} className="w-full text-center text-white/40 text-xs hover:text-white/60">
+            ← Kembali
+          </button>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="fixed inset-0 z-50 bg-gradient-to-br from-slate-900 via-indigo-950 to-purple-950 flex items-center justify-center p-6">
       <div className="w-full max-w-lg space-y-6">
@@ -37,7 +67,7 @@ export default function ModeSelector({ onSelect }: ModeSelectorProps) {
 
         <div className="space-y-3">
           {(Object.keys(MODE_CONFIG) as AppMode[]).map(mode => {
-            const config = MODE_CONFIG[mode]
+            const cfg = MODE_CONFIG[mode]
             const isSelected = selected === mode
             return (
               <button
@@ -50,10 +80,10 @@ export default function ModeSelector({ onSelect }: ModeSelectorProps) {
                 }`}
               >
                 <div className="flex items-center gap-3">
-                  <span className="text-2xl">{config.icon}</span>
+                  <span className="text-2xl">{cfg.icon}</span>
                   <div className="flex-1">
-                    <p className="font-bold text-white">{config.label}</p>
-                    <p className="text-xs text-white/50">{config.description}</p>
+                    <p className="font-bold text-white">{cfg.label}</p>
+                    <p className="text-xs text-white/50">{cfg.description}</p>
                   </div>
                   {isSelected && (
                     <div className="w-6 h-6 rounded-full bg-primary-500 flex items-center justify-center">
@@ -61,25 +91,13 @@ export default function ModeSelector({ onSelect }: ModeSelectorProps) {
                     </div>
                   )}
                 </div>
-                {mode === 'anak' && isSelected && (
-                  <div className="mt-3 flex gap-2">
-                    {['🌈', '🏆', '⭐', '🎮'].map(e => (
-                      <span key={e} className="text-xl bg-white/10 rounded-lg px-2 py-1">{e}</span>
-                    ))}
-                  </div>
-                )}
-                {mode === 'pelajar' && isSelected && (
-                  <div className="mt-3 flex gap-2">
-                    {['📋', '⏱️', '📊', '🎯'].map(e => (
-                      <span key={e} className="text-lg bg-white/10 rounded-lg px-2 py-1">{e}</span>
-                    ))}
-                  </div>
-                )}
-                {mode === 'mudah' && isSelected && (
-                  <div className="mt-3 flex gap-2">
-                    {['🌟', '👁️', '🔊', '✋'].map(e => (
-                      <span key={e} className="text-xl bg-white/10 rounded-lg px-2 py-1">{e}</span>
-                    ))}
+                {isSelected && (
+                  <div className="mt-3 flex flex-wrap gap-1.5">
+                    {cfg.hiddenFeatures.length === 0 ? (
+                      <span className="text-[10px] text-white/40">Semua fitur aktif</span>
+                    ) : (
+                      <span className="text-[10px] text-white/40">{cfg.hiddenFeatures.length} fitur disembunyikan</span>
+                    )}
                   </div>
                 )}
               </button>
@@ -88,10 +106,10 @@ export default function ModeSelector({ onSelect }: ModeSelectorProps) {
         </div>
 
         <button
-          onClick={handleSelect}
+          onClick={() => setStep('prompt')}
           className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-primary-500 to-purple-500 text-white font-bold text-base flex items-center justify-center gap-2 shadow-lg shadow-primary-500/30 active:scale-[0.98] transition-transform"
         >
-          Mulai <ArrowRight className="w-4 h-4" />
+          Lanjut <ArrowRight className="w-4 h-4" />
         </button>
 
         <p className="text-center text-white/30 text-[10px]">Bisa diubah kapan saja di Pengaturan</p>

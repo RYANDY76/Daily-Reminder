@@ -3,6 +3,7 @@ import type { GamificationProfile, Badge } from '../types/gamification'
 import { BADGE_DEFINITIONS, calculateLevel, XP_REWARDS } from '../types/gamification'
 import { useProfileStore } from './useProfileStore'
 import { useAppStore } from './useAppStore'
+import { showConfetti } from '../utils/confetti'
 
 const STORAGE_KEY = 'daily_reminder_gamification'
 
@@ -143,6 +144,7 @@ export const useGamificationStore = create<GamificationState>((set, get) => ({
           type: 'success',
           duration: 4000
         })
+        showConfetti(40)
       }
     }
   },

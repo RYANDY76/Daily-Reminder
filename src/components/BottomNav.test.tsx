@@ -25,8 +25,13 @@ vi.mock('../i18n', () => ({
     const map: Record<string, string> = {
       'nav.today': 'Today',
       'nav.calendar': 'Calendar',
+      'nav.stats': 'Stats',
+      'nav.profile': 'Profile',
       'nav.focus': 'Focus',
       'nav.habits': 'Habits',
+      'nav.couple': 'Couple',
+      'nav.goals': 'Goals',
+      'nav.settings': 'Settings',
       'nav.more': 'More',
       'common.close': 'Close'
     }
@@ -48,13 +53,17 @@ vi.mock('../router', () => ({
   }
 }))
 
+vi.mock('../types/accessibility', () => ({
+  isFeatureHidden: () => false
+}))
+
 describe('BottomNav', () => {
   it('renders main tab buttons', () => {
     render(<BottomNav />)
     expect(screen.getByText('Today')).toBeInTheDocument()
     expect(screen.getByText('Calendar')).toBeInTheDocument()
-    expect(screen.getByText('Focus')).toBeInTheDocument()
-    expect(screen.getByText('Habits')).toBeInTheDocument()
+    expect(screen.getByText('Stats')).toBeInTheDocument()
+    expect(screen.getByText('Profile')).toBeInTheDocument()
   })
 
   it('renders more button', () => {
@@ -73,10 +82,10 @@ describe('BottomNav', () => {
     render(<BottomNav />)
     const moreButton = screen.getByLabelText('More')
     fireEvent.click(moreButton)
-    expect(screen.getByText('nav.couple')).toBeInTheDocument()
-    expect(screen.getByText('nav.goals')).toBeInTheDocument()
-    expect(screen.getByText('nav.profile')).toBeInTheDocument()
-    expect(screen.getByText('nav.settings')).toBeInTheDocument()
+    expect(screen.getByText('Focus')).toBeInTheDocument()
+    expect(screen.getByText('Habits')).toBeInTheDocument()
+    expect(screen.getByText('Goals')).toBeInTheDocument()
+    expect(screen.getByText('Settings')).toBeInTheDocument()
   })
 
   it('closes more menu when close button clicked', () => {
@@ -85,24 +94,22 @@ describe('BottomNav', () => {
     fireEvent.click(moreButton)
     const closeButton = screen.getByLabelText('Close')
     fireEvent.click(closeButton)
-    expect(screen.queryByText('nav.couple')).not.toBeInTheDocument()
+    expect(screen.queryByText('Focus')).not.toBeInTheDocument()
   })
 
   it('closes more menu when backdrop clicked', () => {
     render(<BottomNav />)
     const moreButton = screen.getByLabelText('More')
     fireEvent.click(moreButton)
-    // Backdrop has aria-hidden="true"
-    const backdrop = document.querySelector('[aria-hidden="true"]')
+    const backdrop = document.querySelector('.fixed.inset-0.z-40')
     if (backdrop) {
       fireEvent.click(backdrop)
-      expect(screen.queryByText('nav.couple')).not.toBeInTheDocument()
+      expect(screen.queryByText('Focus')).not.toBeInTheDocument()
     }
   })
 
   it('sets aria-current on active page tab', () => {
     render(<BottomNav />)
-    // Dashboard (currentPage) should have aria-current
     const activeTab = screen.getByLabelText('Today')
     expect(activeTab.getAttribute('aria-current')).toBe('page')
   })

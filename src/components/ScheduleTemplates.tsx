@@ -68,6 +68,23 @@ const TEMPLATES: Template[] = [
       { title: 'Makan Malam', time: '18:00', session: 'malam' },
       { title: 'Mandi & Tidur', time: '19:30', session: 'malam' },
     ]
+  },
+  {
+    id: 'lansia',
+    name: 'Jadwal Lansia Sehat',
+    icon: '🧓',
+    tasks: [
+      { title: 'Minum Obat Pagi', time: '06:00', session: 'pagi' },
+      { title: 'Jalan Pagi / Senam Ringan', time: '06:30', session: 'pagi' },
+      { title: 'Sarapan Sehat', time: '07:30', session: 'pagi' },
+      { title: 'Istirahat & Baca', time: '09:00', session: 'pagi' },
+      { title: 'Makan Siang', time: '12:00', session: 'siang' },
+      { title: 'Tidur Siang', time: '13:00', session: 'siang' },
+      { title: 'Jalan Santai / Berkebun', time: '16:00', session: 'sore' },
+      { title: 'Telepon Keluarga', time: '17:00', session: 'sore' },
+      { title: 'Makan Malam & Minum Obat', time: '18:30', session: 'malam' },
+      { title: 'Istirahat / Tonton TV', time: '20:00', session: 'malam' },
+    ]
   }
 ]
 

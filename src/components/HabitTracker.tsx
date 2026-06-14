@@ -138,6 +138,12 @@ export default function HabitTracker() {
     })
     await loadHabits()
     scheduleAutoCloudSync()
+
+    // Gamification XP for habit completion
+    if (!completed) {
+      const { useGamificationStore } = await import('../stores/useGamificationStore')
+      useGamificationStore.getState().addXP(15, 'Habit selesai')
+    }
   }
 
   const removeHabit = async (id: string) => {

@@ -1,12 +1,14 @@
 import { useNotifications } from '../../hooks/useNotifications'
 import { useDndDetection } from '../../hooks/useDndDetection'
-import { Bell, BellOff, Clock, Moon } from 'lucide-react'
+import { Bell, BellOff, Clock, Moon, Volume2 } from 'lucide-react'
 import { useT } from '../../i18n'
+import { useState } from 'react'
 
 export default function NotificationSettings() {
   const t = useT()
   const { prefs, updatePrefs, permission, requestPermission } = useNotifications()
   const { isDnd, setDnd } = useDndDetection()
+  const [ttsEnabled, setTtsEnabled] = useState(() => localStorage.getItem('avora_tts_enabled') === 'true')
 
   const handleToggle = async (enabled: boolean) => {
     if (enabled) {
@@ -104,6 +106,23 @@ export default function NotificationSettings() {
             >
               <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${
                 isDnd ? 'translate-x-4.5' : 'translate-x-0.5'
+              }`} />
+            </button>
+          </div>
+
+          <div className="flex items-center justify-between pt-2 border-t border-gray-100 dark:border-dark-border">
+            <div className="flex items-center gap-2">
+              <Volume2 className="w-4 h-4 text-blue-500" />
+              <label className="text-xs font-medium text-gray-700 dark:text-gray-300">Baca Pengingat (TTS)</label>
+            </div>
+            <button
+              onClick={() => { const next = !ttsEnabled; setTtsEnabled(next); localStorage.setItem('avora_tts_enabled', String(next)) }}
+              className={`relative w-9 h-5 rounded-full transition-colors flex-shrink-0 ${
+                ttsEnabled ? 'bg-blue-500' : 'bg-gray-300'
+              }`}
+            >
+              <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${
+                ttsEnabled ? 'translate-x-4.5' : 'translate-x-0.5'
               }`} />
             </button>
           </div>

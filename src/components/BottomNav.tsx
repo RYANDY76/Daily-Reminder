@@ -4,16 +4,17 @@ import { useNavigate } from 'react-router-dom'
 import { PAGE_TO_ROUTE } from '../router'
 import { useProfileStore } from '../stores/useProfileStore'
 import { useT } from '../i18n'
+import { isFeatureHidden } from '../types/accessibility'
 import {
   LayoutDashboard,
   CalendarDays,
+  BarChart3,
+  User,
+  MoreHorizontal,
+  Settings,
   Timer,
   Target,
-  MoreHorizontal,
   Flag,
-  BarChart3,
-  Settings,
-  User,
   Heart,
   X
 } from 'lucide-react'
@@ -22,15 +23,15 @@ import type { Page } from '../types'
 const mainTabs: { id: Page; label: string; icon: typeof LayoutDashboard }[] = [
   { id: 'dashboard', label: 'nav.today', icon: LayoutDashboard },
   { id: 'calendar', label: 'nav.calendar', icon: CalendarDays },
-  { id: 'pomodoro', label: 'nav.focus', icon: Timer },
-  { id: 'habits', label: 'nav.habits', icon: Target },
-]
-
-const moreTabs: { id: Page; label: string; icon: typeof LayoutDashboard }[] = [
-  { id: 'couple', label: 'nav.couple', icon: Heart },
-  { id: 'goals', label: 'nav.goals', icon: Flag },
   { id: 'stats', label: 'nav.stats', icon: BarChart3 },
   { id: 'profile', label: 'nav.profile', icon: User },
+]
+
+const moreTabs: { id: Page; label: string; icon: typeof LayoutDashboard; feature?: string }[] = [
+  { id: 'pomodoro', label: 'nav.focus', icon: Timer, feature: 'pomodoro' },
+  { id: 'habits', label: 'nav.habits', icon: Target, feature: 'habits' },
+  { id: 'goals', label: 'nav.goals', icon: Flag, feature: 'goals' },
+  { id: 'couple', label: 'nav.couple', icon: Heart, feature: 'couple' },
   { id: 'settings', label: 'nav.settings', icon: Settings },
 ]
 
@@ -50,7 +51,6 @@ export default function BottomNav() {
     const profile = currentProfile
     if (!profile || coupleLoadedRef.current) return
     coupleLoadedRef.current = true
-    const profileId = profile.id
 
     async function initCouple() {
       try {
@@ -58,45 +58,27 @@ export default function BottomNav() {
         const state = useCoupleStore.getState()
 
         if (state.connection?.status === 'active') {
-          await state.loadLoveNotes(profileId)
-          const notes = useCoupleStore.getState().loveNotes
-          setUnreadCount(notes.filter(n => !n.read && n.toProfileId === profileId).length)
-
-          pollRef.current = setInterval(async () => {
-            await state.loadLoveNotes(profileId)
-            const updated = useCoupleStore.getState().loveNotes
-            setUnreadCount(updated.filter(n => !n.read && n.toProfileId === profileId).length)
-          }, 30000)
+          setUnreadCount(0)
         }
-      } catch { /* couple feature unavailable */ }
+      } catch {}
     }
-
     initCouple()
     return () => { if (pollRef.current) clearInterval(pollRef.current) }
-  }, [currentProfile?.id])
+  }, [currentProfile])
 
-  useEffect(() => {
-    if (!showMore) return
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setShowMore(false) }
-    document.addEventListener('keydown', onKey)
-    return () => document.removeEventListener('keydown', onKey)
-  }, [showMore])
-
-  const isMoreActive = allMoreIds.includes(currentPage)
+  const isMoreActive = allMoreIds.includes(currentPage as Page)
 
   const handleTabClick = (id: Page) => {
     navigate(PAGE_TO_ROUTE[id])
     setShowMore(false)
   }
 
+  const visibleMoreTabs = moreTabs.filter(tab => !tab.feature || !isFeatureHidden(tab.feature))
+
   return (
     <>
       {showMore && (
-        <div
-          className="md:hidden fixed inset-0 z-40 bg-black/30 backdrop-blur-sm"
-          onClick={() => setShowMore(false)}
-          aria-hidden="true"
-        />
+        <div className="fixed inset-0 z-40" onClick={() => setShowMore(false)} />
       )}
 
       {showMore && (
@@ -112,7 +94,7 @@ export default function BottomNav() {
             </button>
           </div>
           <div className="p-2">
-            {moreTabs.map((tab) => {
+            {visibleMoreTabs.map((tab) => {
               const isActive = currentPage === tab.id
               const Icon = tab.icon
               const showBadge = tab.id === 'couple' && unreadCount > 0

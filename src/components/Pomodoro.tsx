@@ -114,6 +114,12 @@ export default function Pomodoro() {
     await savePomodoroSession(session)
     setSessions(prev => [session, ...prev])
     scheduleAutoCloudSync()
+
+    // Gamification XP for pomodoro completion
+    if (completedMode === 'work') {
+      const { useGamificationStore } = await import('../stores/useGamificationStore')
+      useGamificationStore.getState().addXP(20, 'Pomodoro selesai')
+    }
   }, [profile, selectedTaskId, selectedTask, sessionStartedAt, t])
 
   const startTimer = useCallback(() => {

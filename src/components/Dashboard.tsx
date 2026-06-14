@@ -28,6 +28,7 @@ import { DashboardSkeleton } from './Skeleton'
 import { Search, ArchiveIcon, WifiOff, Sun, Sunrise, Sunset, Moon } from 'lucide-react'
 import SmartReminder from './SmartReminder'
 import VoiceToTask from './VoiceToTask'
+import DailyChallenge from './DailyChallenge'
 
 // Sub-components
 import DashboardHeader from './dashboard/DashboardHeader'
@@ -374,6 +375,7 @@ export default function Dashboard() {
 
         <SmartReminder />
         <VoiceToTask />
+        <DailyChallenge />
 
         <ProgressBar
           progress={progress}

@@ -41,6 +41,10 @@ export function applyAccessibility(s: AccessibilitySettings) {
   } else {
     root.classList.remove('reduced-motion')
   }
+  // Mode-specific classes
+  root.classList.remove('mode-anak', 'mode-mudah')
+  if (s.appMode === 'anak') root.classList.add('mode-anak')
+  if (s.appMode === 'mudah') root.classList.add('mode-mudah')
 }
 
 export function initAccessibility() {
