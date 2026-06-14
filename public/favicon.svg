@@ -1,86 +1,132 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
   <defs>
-    <radialGradient id="bg" cx="50%" cy="50%" r="50%">
-      <stop offset="0%" stop-color="#1A2038"/>
+    <!-- Background -->
+    <radialGradient id="bg" cx="50%" cy="45%" r="55%">
+      <stop offset="0%" stop-color="#141B2D"/>
       <stop offset="100%" stop-color="#070B1A"/>
     </radialGradient>
-    <linearGradient id="chrome" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#B0C4DE"/>
-      <stop offset="15%" stop-color="#E8EEF6"/>
+    <!-- Chrome body - main metallic surface -->
+    <linearGradient id="chrome-main" x1="0.1" y1="0" x2="0.9" y2="1">
+      <stop offset="0%" stop-color="#A8B8D0"/>
+      <stop offset="12%" stop-color="#D8E4F0"/>
+      <stop offset="25%" stop-color="#F0F4FA"/>
+      <stop offset="38%" stop-color="#FFFFFF"/>
+      <stop offset="50%" stop-color="#C8D8EC"/>
+      <stop offset="62%" stop-color="#8898B8"/>
+      <stop offset="75%" stop-color="#B0C0D8"/>
+      <stop offset="88%" stop-color="#6878A0"/>
+      <stop offset="100%" stop-color="#98A8C0"/>
+    </linearGradient>
+    <!-- Chrome dark side -->
+    <linearGradient id="chrome-shadow" x1="0.9" y1="0" x2="0.1" y2="1">
+      <stop offset="0%" stop-color="#506078"/>
+      <stop offset="25%" stop-color="#7888A8"/>
+      <stop offset="50%" stop-color="#405068"/>
+      <stop offset="75%" stop-color="#607090"/>
+      <stop offset="100%" stop-color="#283040"/>
+    </linearGradient>
+    <!-- Blue reflection - left side -->
+    <linearGradient id="reflect-blue" x1="0" y1="0.2" x2="0.4" y2="0.8">
+      <stop offset="0%" stop-color="#7DD4FF" stop-opacity="0.95"/>
+      <stop offset="30%" stop-color="#55C8FF" stop-opacity="0.8"/>
+      <stop offset="60%" stop-color="#3AA8E8" stop-opacity="0.5"/>
+      <stop offset="100%" stop-color="#2080C0" stop-opacity="0.15"/>
+    </linearGradient>
+    <!-- Pink reflection - right side -->
+    <linearGradient id="reflect-pink" x1="1" y1="0.2" x2="0.6" y2="0.8">
+      <stop offset="0%" stop-color="#F080FF" stop-opacity="0.95"/>
+      <stop offset="30%" stop-color="#EC6BFF" stop-opacity="0.8"/>
+      <stop offset="60%" stop-color="#D050E0" stop-opacity="0.5"/>
+      <stop offset="100%" stop-color="#A030C0" stop-opacity="0.15"/>
+    </linearGradient>
+    <!-- Purple accent -->
+    <linearGradient id="reflect-purple" x1="0.3" y1="0" x2="0.7" y2="1">
+      <stop offset="0%" stop-color="#A070FF" stop-opacity="0.7"/>
+      <stop offset="50%" stop-color="#8B5CF6" stop-opacity="0.4"/>
+      <stop offset="100%" stop-color="#6D3FD6" stop-opacity="0.1"/>
+    </linearGradient>
+    <!-- Chrome highlight streak -->
+    <linearGradient id="highlight" x1="0.3" y1="0" x2="0.7" y2="1">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.9"/>
+      <stop offset="40%" stop-color="#E8F0FF" stop-opacity="0.5"/>
+      <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0.05"/>
+    </linearGradient>
+    <!-- Loop gradient -->
+    <linearGradient id="loop-chrome" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#E0E8F4"/>
       <stop offset="30%" stop-color="#FFFFFF"/>
-      <stop offset="45%" stop-color="#C0D0E8"/>
-      <stop offset="60%" stop-color="#8898B8"/>
-      <stop offset="75%" stop-color="#D0DAE8"/>
-      <stop offset="90%" stop-color="#6878A0"/>
-      <stop offset="100%" stop-color="#B0C0D8"/>
+      <stop offset="50%" stop-color="#B8C8E0"/>
+      <stop offset="70%" stop-color="#8898B8"/>
+      <stop offset="100%" stop-color="#D0DAE8"/>
     </linearGradient>
-    <linearGradient id="chrome-dark" x1="1" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#405068"/>
-      <stop offset="30%" stop-color="#8898B8"/>
-      <stop offset="60%" stop-color="#506880"/>
-      <stop offset="100%" stop-color="#303848"/>
-    </linearGradient>
-    <linearGradient id="blue-left" x1="0" y1="0" x2="0.5" y2="1">
-      <stop offset="0%" stop-color="#55C8FF" stop-opacity="0.9"/>
-      <stop offset="40%" stop-color="#3AA8E8" stop-opacity="0.7"/>
-      <stop offset="100%" stop-color="#2080C0" stop-opacity="0.3"/>
-    </linearGradient>
-    <linearGradient id="pink-right" x1="1" y1="0" x2="0.5" y2="1">
-      <stop offset="0%" stop-color="#EC6BFF" stop-opacity="0.9"/>
-      <stop offset="40%" stop-color="#D050E0" stop-opacity="0.7"/>
-      <stop offset="100%" stop-color="#A030C0" stop-opacity="0.3"/>
-    </linearGradient>
-    <linearGradient id="purple-accent" x1="0.5" y1="0" x2="0.5" y2="1">
-      <stop offset="0%" stop-color="#8B5CF6" stop-opacity="0.6"/>
-      <stop offset="100%" stop-color="#6D3FD6" stop-opacity="0.2"/>
-    </linearGradient>
-    <linearGradient id="chrome-highlight" x1="0.2" y1="0" x2="0.8" y2="1">
-      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.8"/>
-      <stop offset="50%" stop-color="#E0E8F4" stop-opacity="0.4"/>
-      <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0.1"/>
-    </linearGradient>
+    <!-- Filters -->
     <filter id="glow-blue">
-      <feGaussianBlur stdDeviation="8" result="blur"/>
-      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+      <feGaussianBlur stdDeviation="10" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
     </filter>
     <filter id="glow-pink">
-      <feGaussianBlur stdDeviation="6" result="blur"/>
-      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+      <feGaussianBlur stdDeviation="8" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
     </filter>
     <filter id="soft-shadow">
-      <feDropShadow dx="0" dy="4" stdDeviation="8" flood-color="#000000" flood-opacity="0.4"/>
+      <feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="#000000" flood-opacity="0.6"/>
+    </filter>
+    <filter id="inner-glow">
+      <feGaussianBlur stdDeviation="4" result="b"/>
+      <feComposite in="b" in2="SourceGraphic" operator="atop"/>
     </filter>
   </defs>
+  <!-- Background -->
   <rect width="512" height="512" fill="url(#bg)"/>
   <!-- Ambient glow behind A -->
-  <ellipse cx="256" cy="300" rx="140" ry="80" fill="#55C8FF" opacity="0.06" filter="url(#glow-blue)"/>
-  <ellipse cx="256" cy="300" rx="120" ry="70" fill="#EC6BFF" opacity="0.04" filter="url(#glow-pink)"/>
-  <!-- Main A body - left leg -->
-  <path d="M256 60 L120 420 C115 435 118 445 125 450 L180 450 L220 340" fill="url(#chrome)" filter="url(#soft-shadow)"/>
-  <!-- Main A body - right leg -->
-  <path d="M256 60 L392 420 C397 435 394 445 387 450 L332 450 L292 340" fill="url(#chrome-dark)" filter="url(#soft-shadow)"/>
-  <!-- A crossbar - flowing liquid shape -->
-  <path d="M180 340 C200 310 230 295 256 295 C282 295 312 310 332 340 C340 355 335 365 328 370 C310 380 282 385 256 385 C230 385 202 380 184 370 C177 365 172 355 180 340Z" fill="url(#chrome)"/>
-  <!-- Inner cutout of A -->
-  <path d="M256 120 L340 340 C345 352 340 358 332 362 C318 368 290 372 256 372 C222 372 194 368 180 362 C172 358 167 352 172 340 L256 120Z" fill="url(#bg)"/>
-  <!-- Chrome highlight on top-left of A -->
-  <path d="M256 65 L240 110" stroke="url(#chrome-highlight)" stroke-width="6" stroke-linecap="round" opacity="0.7"/>
-  <!-- Blue reflection - left side of A -->
-  <path d="M256 65 L130 420 L160 420 L256 130Z" fill="url(#blue-left)" opacity="0.5"/>
-  <!-- Blue glow on left leg -->
-  <path d="M130 420 L145 420 L256 115 L256 65Z" fill="url(#blue-left)" opacity="0.3" filter="url(#glow-blue)"/>
-  <!-- Pink reflection - right side of A -->
-  <path d="M256 65 L382 420 L352 420 L256 130Z" fill="url(#pink-right)" opacity="0.5"/>
-  <!-- Pink glow on right leg -->
-  <path d="M382 420 L367 420 L256 115 L256 65Z" fill="url(#pink-right)" opacity="0.3" filter="url(#glow-pink)"/>
-  <!-- Crossbar chrome highlight -->
-  <path d="M190 345 C210 320 235 310 256 310 C277 310 302 320 322 345" stroke="url(#chrome-highlight)" stroke-width="2" stroke-linecap="round" fill="none" opacity="0.6"/>
-  <!-- Purple accent line on crossbar -->
-  <path d="M195 350 C215 325 238 315 256 315 C274 315 297 325 317 350" stroke="url(#purple-accent)" stroke-width="1.5" stroke-linecap="round" fill="none" opacity="0.4"/>
-  <!-- Chrome edge highlights -->
-  <path d="M256 65 L125 418" stroke="#FFFFFF" stroke-width="1.5" stroke-linecap="round" opacity="0.3"/>
-  <path d="M256 65 L387 418" stroke="#A0B0C8" stroke-width="1.5" stroke-linecap="round" opacity="0.3"/>
-  <!-- Bottom feet chrome accents -->
-  <ellipse cx="135" cy="448" rx="30" ry="4" fill="#FFFFFF" opacity="0.15"/>
-  <ellipse cx="377" cy="448" rx="30" ry="4" fill="#FFFFFF" opacity="0.1"/>
+  <ellipse cx="256" cy="280" rx="160" ry="100" fill="#55C8FF" opacity="0.06" filter="url(#glow-blue)"/>
+  <ellipse cx="256" cy="280" rx="130" ry="85" fill="#EC6BFF" opacity="0.04" filter="url(#glow-pink)"/>
+  <!-- Main A shape with fluid/rounded legs -->
+  <g filter="url(#soft-shadow)">
+    <!-- Left leg - chrome body -->
+    <path d="M256 55 C250 55 240 58 232 65 L105 400 C95 428 100 448 115 455 C125 460 140 458 155 450 L195 335 C210 305 235 290 256 290" 
+          fill="url(#chrome-main)"/>
+    <!-- Right leg - chrome shadow -->
+    <path d="M256 55 C262 55 272 58 280 65 L407 400 C417 428 412 448 397 455 C387 460 372 458 357 450 L317 335 C302 305 277 290 256 290" 
+          fill="url(#chrome-shadow)"/>
+    <!-- Crossbar - flowing liquid shape -->
+    <path d="M195 335 C215 305 238 290 256 290 C274 290 297 305 317 335 C330 355 325 370 315 378 C300 390 278 395 256 395 C234 395 212 390 197 378 C187 370 182 355 195 335Z" 
+          fill="url(#chrome-main)"/>
+    <!-- Inner cutout -->
+    <path d="M256 110 C262 110 270 115 278 125 L355 330 C362 348 358 360 348 368 C335 378 310 385 256 385 C202 385 177 378 164 368 C154 360 150 348 157 330 L234 125 C242 115 250 110 256 110Z" 
+          fill="url(#bg)"/>
+    <!-- Blue reflection - left side of A -->
+    <path d="M232 65 L105 400 C95 428 100 448 115 455 C125 460 140 458 155 450 L195 335 C210 305 235 290 256 290 L256 55 C248 55 238 58 232 65Z" 
+          fill="url(#reflect-blue)" opacity="0.7"/>
+    <!-- Pink reflection - right side of A -->
+    <path d="M280 65 L407 400 C417 428 412 448 397 455 C387 460 372 458 357 450 L317 335 C302 305 277 290 256 290 L256 55 C264 55 274 58 280 65Z" 
+          fill="url(#reflect-pink)" opacity="0.7"/>
+    <!-- Purple accent on crossbar -->
+    <path d="M200 340 C218 312 240 298 256 298 C272 298 294 312 312 340 C322 355 318 365 310 372 C298 382 278 388 256 388 C234 388 214 382 202 372 C194 365 190 355 200 340Z" 
+          fill="url(#reflect-purple)" opacity="0.35"/>
+    <!-- Chrome highlight streaks - top of A -->
+    <path d="M256 60 C252 60 246 63 242 70 L236 95" 
+          stroke="url(#highlight)" stroke-width="5" stroke-linecap="round" fill="none"/>
+    <!-- Chrome highlight on left leg edge -->
+    <path d="M232 68 L115 445" 
+          stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" opacity="0.4"/>
+    <!-- Chrome highlight on right leg edge -->
+    <path d="M280 68 L397 445" 
+          stroke="#98A8C0" stroke-width="2" stroke-linecap="round" opacity="0.3"/>
+    <!-- Bottom chrome reflection on feet -->
+    <ellipse cx="130" cy="452" rx="35" ry="5" fill="#FFFFFF" opacity="0.12"/>
+    <ellipse cx="382" cy="452" rx="35" ry="5" fill="#FFFFFF" opacity="0.08"/>
+    <!-- Crossbar chrome highlight -->
+    <path d="M205 342 C222 318 242 305 256 305 C270 305 290 318 307 342" 
+          stroke="url(#highlight)" stroke-width="2.5" stroke-linecap="round" fill="none" opacity="0.6"/>
+    <!-- Fluid loop in the center -->
+    <path d="M220 345 C215 325 228 310 256 310 C284 310 297 325 292 345 C288 360 274 370 256 370 C238 370 224 360 220 345Z" 
+          fill="none" stroke="url(#loop-chrome)" stroke-width="4" stroke-linecap="round"/>
+    <!-- Loop inner highlight -->
+    <path d="M225 342 C222 328 232 316 256 316 C280 316 290 328 287 342" 
+          stroke="#FFFFFF" stroke-width="1.5" stroke-linecap="round" fill="none" opacity="0.35"/>
+    <!-- Bottom reflection dots -->
+    <circle cx="120" cy="448" r="3" fill="#55C8FF" opacity="0.5" filter="url(#glow-blue)"/>
+    <circle cx="392" cy="448" r="2.5" fill="#EC6BFF" opacity="0.4" filter="url(#glow-pink)"/>
+  </g>
 </svg>
